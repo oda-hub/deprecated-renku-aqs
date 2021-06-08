@@ -11,3 +11,5 @@ SDSS is used in the first example
 ## Generic astroquery conceptss
 
 astroquery has some generic interface, it can be leveraged (e.g. to say "uses SDSS", "requests service ..." etc)
+
+odahub.io/ontology/
