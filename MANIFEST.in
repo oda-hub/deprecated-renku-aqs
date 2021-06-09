@@ -1,4 +1,4 @@
 include LICENSE VERSION
-recursive-include renkuastroquery *
+recursive-include renkuaqs *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

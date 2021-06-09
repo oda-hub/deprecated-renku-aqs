@@ -1,1 +1,1 @@
-# renku-astroquery
+# renku-aqs

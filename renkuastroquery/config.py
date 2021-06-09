@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ASTROQUERY_DIR = 'astroquery'
-ASTROQUERY_METADATA_FILE = 'metadata.jsonld'
+AQS_DIR = 'aqs'
+AQS_METADATA_FILE = 'metadata.jsonld'
