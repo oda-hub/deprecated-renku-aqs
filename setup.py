@@ -19,22 +19,22 @@
 import os
 from setuptools import find_packages, setup
 
-install_requires = ['mlschema-converters', 'deepdiff']
+install_requires = ['aqsmodel-converters', 'deepdiff']
 packages = find_packages()
 version_file = open('VERSION')
 
 setup(
-    name='renku-astroquery',
-    description='Renku Astroquery plugin',
-    keywords='Renku Astroquery',
+    name='renku-aqs',
+    description='Renku AQS plugin',
+    keywords='Renku AQS',
     license='Apache License 2.0',
-    author='Gabriele Barni',
+    author='Gabriele Barni, Volodymyr Savchenko',
     author_email='',
     install_requires=install_requires,
     packages=packages,
     entry_points={
-        "renku": ["name_of_plugin = renkuastroquery.plugin"],
-        "renku.cli_plugins": ["mls = renkuastroquery.plugin:mls"]
+        "renku": ["name_of_plugin = renkuaqs.plugin"],
+        "renku.cli_plugins": ["aqs = renkuaqs.plugin:aqs"]
     },
     zip_safe=False,
     include_package_data=True,
