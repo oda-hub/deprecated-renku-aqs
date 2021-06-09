@@ -19,8 +19,8 @@ import click
 import rdflib
 from copy import deepcopy
 from pathlib import Path
-
-from renku.core.commands.client import pass_local_client
+# no longer supported
+# from renku.core.commands.client import pass_local_client
 from renku.core.commands.graph import Graph
 from renku.core.commands.format.graph import _conjunctive_graph
 from renku.core.models.cwl.annotation import Annotation
@@ -45,7 +45,7 @@ class Astroquery(object):
     @property
     def renku_astroquery_path(self):
         """Return a ``Path`` instance of Renku Astroquery metadata folder."""
-        return Path(self.run.client.renku_home).joinpath(ASTOQUERY_DIR)
+        return Path(self.run.client.renku_home).joinpath(ASTROQUERY_DIR)
 
     def load_model(self, path):
         """Load MLS reference file."""
@@ -60,7 +60,7 @@ def process_run_annotations(run):
     astroquery = Astroquery(run)
 
     for p in run.paths:
-        if p.startswith(str(mls.renku_mls_path)):
+        if p.startswith(str(astroquery.renku_astroquery_path)):
             path = Path(p)
             annotation_id = "{activity}/annotations/mls/{id}".format(
                 activity=run._id, id=path.parts[-2]
@@ -69,7 +69,7 @@ def process_run_annotations(run):
                 Annotation(
                     id=annotation_id,
                     source="MLS plugin",
-                    body=mls.load_model(path)
+                    body=astroquery.load_model(path)
                 )
             ]
 
@@ -118,16 +118,16 @@ def _create_leaderboard(data, metric, format=None):
 
 
 @click.group()
-def astroquery):
+def astroquery():
     pass
 
 
-.command()
+@astroquery.command()
 @click.option("--revision", default="HEAD", help="The git revision to generate the log for, default: HEAD")
 @click.option("--format", default="ascii", help="Choose an output format.")
 @click.option("--metric", default="accuracy", help="Choose metric for the leaderboard")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
-@pass_local_client()
+# @pass_local_client()
 def leaderboard(client, revision, format, metric, paths):
     """Leaderboard based on evaluation metrics of machine learning models"""
     graph = _graph(client, revision, None)
@@ -161,12 +161,12 @@ def leaderboard(client, revision, format, metric, paths):
         print(_create_leaderboard(leaderboard, metric))
 
 
-@mls.command()
+@astroquery.command()
 @click.option("--revision", default="HEAD", help="The git revision to generate the log for, default: HEAD")
 @click.option("--format", default="ascii", help="Choose an output format.")
 @click.option("--diff", nargs=2, help="Print the difference between two model revisions")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
-@pass_local_client()
+# @pass_local_client()
 def params(client, revision, format, paths, diff):
     """List the hyper-parameter settings of machine learning models"""
     def _param_value(rdf_iteral):
