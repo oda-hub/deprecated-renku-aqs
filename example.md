@@ -18,16 +18,7 @@ Real example:
 ```bash
 $ renku run papermill final-an.ipynb  output.ipynb
 Executing: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 13/13 [00:08<00:00,  1.58cell/s]
-{
-    "aq_module": "SimbadClass",
-    "args": [
-        "Mrk 421"
-    ],
-    "kwargs": {
-        "wildcard": "True"
-    }
-}
-found annotation: .renku/aq/run-38146.json
+found annotation: .renku/aq/run-21382.json
 {
     "aq_module": "SDSSClass",
     "args": [
@@ -37,6 +28,16 @@ found annotation: .renku/aq/run-38146.json
         "data_release": "16",
         "photoobj_fields": "['run', 'rerun', 'camcol', 'field', 'ra', 'dec', 'mode', 'psfFlux_u', 'psfFlux_g', 'psfFlux_r', 'psfFlux_i', 'psfFlux_z', 'psfFluxIvar_u', 'psfFluxIvar_g', 'psfFluxIvar_r', 'psfFluxIvar_i', 'psfFluxIvar_z', 'TAI_u', 'TAI_g', 'TAI_r', 'TAI_i', 'TAI_z', 'objID', 'thingId']",
         "radius": "3arcmin"
+    }
+}
+found annotation: .renku/aq/run-30479.json
+{
+    "aq_module": "SimbadClass",
+    "args": [
+        "Mrk 421"
+    ],
+    "kwargs": {
+        "wildcard": "True"
     }
 }
 ```
