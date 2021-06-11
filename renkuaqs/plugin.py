@@ -18,6 +18,7 @@
 
 import os
 import re
+import sys
 import json
 import click
 import rdflib
@@ -40,11 +41,13 @@ from aqsconverters.io import AQS_DIR, COMMON_DIR
 class AQS(object):
     def __init__(self, run):
         self.run = run
+        self.use_fake_models = True
 
     @property
     def renku_aqs_path(self):
         """Return a ``Path`` instance of Renku AQS metadata folder."""
-        return Path(self.run.client.renku_home).joinpath(AQS_DIR).joinpath(COMMON_DIR)
+        return Path(".renku/aq")
+        #return Path(self.run.client.renku_home).joinpath(AQS_DIR).joinpath(COMMON_DIR)
 
     def load_model(self, path):
         """Load AQS reference file."""
@@ -59,25 +62,27 @@ def process_run_annotations(run):
     aqs = AQS(run)
 
     #os.remove(os.path.join(aqs.renku_aqs_path, "site.py"))
-    os.remove("sitecustomize.py")
+    os.remove("../sitecustomize.py")
     
     annotations = []
 
     if os.path.exists(aqs.renku_aqs_path):
         for p in aqs.renku_aqs_path.iterdir():
-            aqs_annotation = aqs.load_model(p)
-            model_id = aqs_annotation["@id"]
-            annotation_id = "{activity}/annotations/aqs/{id}".format(
-                activity=run._id, id=model_id
-            )
-            p.unlink()
-            annotations.append(
-                Annotation(id=annotation_id, source="AQS plugin", body=aqs_annotation)
-            )
+            if aqs.use_fake_models:
+                print(f"found annotation: {p}")
+                print(open(p).read())
+            else:
+                aqs_annotation = aqs.load_model(p)
+                model_id = aqs_annotation["@id"]
+                annotation_id = "{activity}/annotations/aqs/{id}".format(
+                    activity=run._id, id=model_id
+                )
+                p.unlink()
+                annotations.append(
+                    Annotation(id=annotation_id, source="AQS plugin", body=aqs_annotation)
+                )
     else:
         print("nothing to process in process_run_annotations")
-
-    os.removedirs(".renku/aq/")
 
     return annotations
 
@@ -86,14 +91,72 @@ def pre_run(tool):
     # we print
     print(f"\033[31mhere we will prepare hooks for astroquery, tool given is {tool}\033[0m")    
 
-    # where to get renku.client?
-    os.makedirs(".renku/aq", exist_ok=True)
+    # where to get renku.client and dir?
 
-    open("sitecustomize.py", "w").write("""
-print(f"\033[31mHERE enable hooks for astroquery\033[0m")    
-""")
+    annotations_dir = os.path.abspath(".renku/aq")
+    os.makedirs(annotations_dir, exist_ok=True)
+
+    #fn = os.path.join(sys.path[0], "sitecustomize.py")
+    fn = "../sitecustomize.py"
+
+    print(f"\033[34msitecustomize.py as {fn}\033[0m")    
+
+    open(fn, "w").write("""
+print(f"\033[31mHERE enable hooks for astroquery\033[0m")  
+
+import os
+import json
+import random
+
+import astroquery
+astroquery.hooked = True
+
+import astroquery.query
+
+def produce_annotation(self, *args, **kwargs):
+    aq_module_name = self.__class__.__name__    
+
+    print("\033[33mpatched query_object with:\033[0m", args, kwargs)    
+    print("\033[33mwriting annotation here:\033[0m", aq_module_name, args, kwargs)    
+
+    json.dump(
+        {
+            "aq_module": aq_module_name,
+            "args": [str(a) for a in args],
+            "kwargs": {k:str(v) for k,v in kwargs.items()}
+        },
+        open(os.path.join("%s", f"run-{random.randint(0, 100000)}.json"), "w"),
+        sort_keys=True,
+        indent=4,
+    )
 
 
+def aqs_query_object(self, *args, **kwargs):
+    produce_annotation(self, *args, **kwargs)
+
+    return object.__getattribute__(self, 'query_object')(*args, **kwargs)
+
+def aqs_query_region(self, *args, **kwargs):
+    produce_annotation(self, *args, **kwargs)
+
+    return object.__getattribute__(self, 'query_region')(*args, **kwargs)
+    
+    
+def asq_BaseQuery_getattribute(self, name):
+    if name == "query_object":
+        return lambda *a, **aa: aqs_query_object(self, *a, **aa)
+
+    if name == "query_region":
+        return lambda *a, **aa: aqs_query_region(self, *a, **aa)
+
+    #print("\033[33mpatching BaseQuery_getattr!\033[0m", name)
+    return object.__getattribute__(self, name)
+
+astroquery.query.BaseQuery.__getattribute__ = asq_BaseQuery_getattribute
+
+"""%annotations_dir)
+
+    from astroquery.query import BaseQuery
 
 def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
