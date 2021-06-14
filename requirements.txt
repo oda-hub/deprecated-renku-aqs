@@ -1,0 +1,1 @@
+-e git+https://github.com/oda-hub/astroquery.git#egg=astroquery
