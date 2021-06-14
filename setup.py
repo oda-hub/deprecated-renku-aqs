@@ -19,7 +19,7 @@
 import os
 from setuptools import find_packages, setup
 
-install_requires = ['deepdiff']
+install_requires = ['deepdiff', 'astroquery']
 #install_requires = ['aqsmodel-converters', 'deepdiff']
 packages = find_packages()
 version_file = open('VERSION')
