@@ -100,6 +100,8 @@ def pre_run(tool):
 
     # find appropriate location for sitecustomize
     # maybe `tool` can be modified to load sitecustomize
+
+    # put this in `aqs.autolog` and only use sitecustomize as an option.
     fn = "../sitecustomize.py"
 
     print(f"\033[34msitecustomize.py as {fn}\033[0m")    
