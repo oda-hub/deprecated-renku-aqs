@@ -72,6 +72,7 @@ def process_run_annotations(run):
                 print(f"found annotation: {p}")
                 print(open(p).read())
             else:
+                # this will make annotations according to https://odahub.io/ontology/
                 aqs_annotation = aqs.load_model(p)
                 model_id = aqs_annotation["@id"]
                 annotation_id = "{activity}/annotations/aqs/{id}".format(
