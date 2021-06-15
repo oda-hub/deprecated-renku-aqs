@@ -97,6 +97,9 @@ def pre_run(tool):
     os.makedirs(annotations_dir, exist_ok=True)
 
     #fn = os.path.join(sys.path[0], "sitecustomize.py")
+
+    # find appropriate location for sitecustomize
+    # maybe `tool` can be modified to load sitecustomize
     fn = "../sitecustomize.py"
 
     print(f"\033[34msitecustomize.py as {fn}\033[0m")    
@@ -113,14 +116,15 @@ astroquery.hooked = True
 
 import astroquery.query
 
-def produce_annotation(self, *args, **kwargs):
+def produce_annotation(self, query_type, *args, **kwargs):
     aq_module_name = self.__class__.__name__    
 
-    print("\033[33mpatched query_object with:\033[0m", args, kwargs)    
+    print(f"\033[33mpatched {query_type} with:\033[0m", args, kwargs)    
     print("\033[33mwriting annotation here:\033[0m", aq_module_name, args, kwargs)    
 
     json.dump(
         {
+            "query_type": query_type,
             "aq_module": aq_module_name,
             "args": [str(a) for a in args],
             "kwargs": {k:str(v) for k,v in kwargs.items()}
@@ -132,12 +136,12 @@ def produce_annotation(self, *args, **kwargs):
 
 
 def aqs_query_object(self, *args, **kwargs):
-    produce_annotation(self, *args, **kwargs)
+    produce_annotation(self, 'query_object', *args, **kwargs)
 
     return object.__getattribute__(self, 'query_object')(*args, **kwargs)
 
 def aqs_query_region(self, *args, **kwargs):
-    produce_annotation(self, *args, **kwargs)
+    produce_annotation(self, 'query_region', *args, **kwargs)
 
     return object.__getattribute__(self, 'query_region')(*args, **kwargs)
     
