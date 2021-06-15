@@ -36,8 +36,11 @@ def fetch_example_oda_repo(fresh=False, reset=False) -> str:
 
 # on purpose from shell
 def run_renku_cli(cmd: list, repo_dir: str):
+    
 
-    subprocess.check_call(["renku", "run"] + cmd, cwd=repo_dir)
+    subprocess.check_call(["renku", "run"] + cmd, cwd=repo_dir, env=dict(
+            {**os.environ, "PYTHONPATH": ".:"+os.environ.get('PYTHONPATH')}
+        ))
 
 
 def test_example_oda_repo_code_py():
