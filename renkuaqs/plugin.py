@@ -34,7 +34,7 @@ from renku.core.errors import RenkuException
 from prettytable import PrettyTable
 from deepdiff import DeepDiff
 
-from aqsconverters.models import Run
+#from aqsconverters.models import Run
 from aqsconverters.io import AQS_DIR, COMMON_DIR
 
 
@@ -45,9 +45,8 @@ class AQS(object):
 
     @property
     def renku_aqs_path(self):
-        """Return a ``Path`` instance of Renku AQS metadata folder."""
-        return Path(".renku/aq")
-        #return Path(self.run.client.renku_home).joinpath(AQS_DIR).joinpath(COMMON_DIR)
+        """Return a ``Path`` instance of Renku AQS metadata folder."""        
+        return Path(self.run.client.renku_home).joinpath(AQS_DIR).joinpath(COMMON_DIR)
 
     def load_model(self, path):
         """Load AQS reference file."""
@@ -66,13 +65,18 @@ def process_run_annotations(run):
     
     annotations = []
 
+    print("process_run_annotations")
+
     if os.path.exists(aqs.renku_aqs_path):
         for p in aqs.renku_aqs_path.iterdir():
-            if aqs.use_fake_models:
-                if p.match("*json"):
-                    print(f"found annotation: {p}")
-                    print(open(p).read())
-            else:
+            if p.match("*json"):
+                print(f"found json annotation: {p}")
+                print(open(p).read())
+        
+            elif p.match("*jsonld"):
+                print(f"found jsonLD annotation: {p}\n", json.dumps(json.load(p.open()), sort_keys=True, indent=4))
+                
+
                 # this will make annotations according to https://odahub.io/ontology/
                 aqs_annotation = aqs.load_model(p)
                 model_id = aqs_annotation["@id"]
@@ -108,7 +112,7 @@ aqsconverters.aq.autolog()
 
 """)
 
-    from astroquery.query import BaseQuery
+    from astroquery.query import BaseQuery # ??
 
 def _run_id(activity_id):
     return str(activity_id).split("/")[-1]

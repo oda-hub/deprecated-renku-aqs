@@ -46,7 +46,7 @@ def run_renku_cli(cmd: list, repo_dir: str):
 def test_example_oda_repo_code_py():
     repo_dir = fetch_example_oda_repo()
 
-    run_renku_cli(["python", "code.py", "--output", "test-output.txt"], repo_dir=repo_dir)
+    run_renku_cli(["python", "example_code.py", "--output", "test-output.txt"], repo_dir=repo_dir)
 
 def test_example_oda_repo_papermill():
     repo_dir = fetch_example_oda_repo()
