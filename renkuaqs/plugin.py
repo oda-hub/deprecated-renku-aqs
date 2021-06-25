@@ -281,8 +281,13 @@ def params(revision, format, paths, diff):
     G.bind("oda", "http://odahub.io/ontology#")  
     G.bind("odas", "https://odahub.io/ontology#")   # the same
     G.bind("local-renku", "file:///home/savchenk/work/oda/renku/renku-aqs/renku-aqs-test-case/.renku/") #??
+
+    serial = G.serialize(format="n3").decode()
     
-    print(G.serialize(format="n3").decode())
+    print(serial)
+
+    with open("subgraph.ttl", "w") as f:
+        f.write(serial)
 
     #TODO: do construct and ingest into ODA KG
     #TODO: plot construct

@@ -48,6 +48,10 @@ def test_example_oda_repo_code_py():
 
     run_renku_cli(["python", "example_code.py", "--output", "test-output.txt"], repo_dir=repo_dir)
 
+    #TODO:
+    #renku aqs params
+    #rdf2dot renku-aqs-test-case/subgraph.ttl  | dot -Tpng -o subgraph.png
+
 def test_example_oda_repo_papermill():
     repo_dir = fetch_example_oda_repo()
 
