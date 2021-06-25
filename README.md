@@ -1,7 +1,8 @@
 # renku-aqs
 
 
-[/] savchenk@savchenk-NG-VN7-793G-79EG:~/work/oda/renku/renku-aqs$ (cd renku-aqs-test-case/; renku aqs params)
+```bash
+$ (cd renku-aqs-test-case/; renku aqs params)
 +--------------------------------------+-------------------+--------------+
 | Run ID                               | AstroQuery Module | Astro Object |
 +--------------------------------------+-------------------+--------------+
@@ -24,5 +25,7 @@ local-renku:53e67e80-d5ea-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
 local-renku:dd481450-d5e4-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
     oda:isRequestingAstroObject odas:AstroObjectMrk_421 ;
     oda:isUsing odas:AQModuleSimbadClass .
+ ```
 
 
+![](subgraph.png)
