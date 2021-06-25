@@ -69,8 +69,9 @@ def process_run_annotations(run):
     if os.path.exists(aqs.renku_aqs_path):
         for p in aqs.renku_aqs_path.iterdir():
             if aqs.use_fake_models:
-                print(f"found annotation: {p}")
-                print(open(p).read())
+                if p.match("*json"):
+                    print(f"found annotation: {p}")
+                    print(open(p).read())
             else:
                 # this will make annotations according to https://odahub.io/ontology/
                 aqs_annotation = aqs.load_model(p)
@@ -92,17 +93,9 @@ def pre_run(tool):
     # we print
     print(f"\033[31mhere we will prepare hooks for astroquery, tool given is {tool}\033[0m")    
 
-    # where to get renku.client and dir?
+    # TODO: where to get renku.client and dir?
 
-    annotations_dir = os.path.abspath(".renku/aq")
-    os.makedirs(annotations_dir, exist_ok=True)
-
-    #fn = os.path.join(sys.path[0], "sitecustomize.py")
-
-    # find appropriate location for sitecustomize
-    # maybe `tool` can be modified to load sitecustomize
-
-    # put this in `aqs.autolog` and only use sitecustomize as an option.
+    # TODO: how to write provide this to `tool`?
     fn = "../sitecustomize.py"
 
     print(f"\033[34msitecustomize.py as {fn}\033[0m")    
@@ -110,58 +103,10 @@ def pre_run(tool):
     open(fn, "w").write("""
 print(f"\033[31mHERE enable hooks for astroquery\033[0m")  
 
-import os
-import json
-import random
+import aqsconverters.aq
+aqsconverters.aq.autolog()
 
-import astroquery
-astroquery.hooked = True
-
-import astroquery.query
-
-def produce_annotation(self, query_type, *args, **kwargs):
-    aq_module_name = self.__class__.__name__    
-
-    print(f"\033[33mpatched {query_type} with:\033[0m", args, kwargs)    
-    print("\033[33mwriting annotation here:\033[0m", aq_module_name, args, kwargs)    
-
-    json.dump(
-        {
-            "query_type": query_type,
-            "aq_module": aq_module_name,
-            "args": [str(a) for a in args],
-            "kwargs": {k:str(v) for k,v in kwargs.items()}
-        },
-        open(os.path.join("%s", f"run-{random.randint(0, 100000)}.json"), "w"),
-        sort_keys=True,
-        indent=4,
-    )
-
-
-def aqs_query_object(self, *args, **kwargs):
-    produce_annotation(self, 'query_object', *args, **kwargs)
-
-    return object.__getattribute__(self, 'query_object')(*args, **kwargs)
-
-def aqs_query_region(self, *args, **kwargs):
-    produce_annotation(self, 'query_region', *args, **kwargs)
-
-    return object.__getattribute__(self, 'query_region')(*args, **kwargs)
-    
-    
-def asq_BaseQuery_getattribute(self, name):
-    if name == "query_object":
-        return lambda *a, **aa: aqs_query_object(self, *a, **aa)
-
-    if name == "query_region":
-        return lambda *a, **aa: aqs_query_region(self, *a, **aa)
-
-    #print("\033[33mpatching BaseQuery_getattr!\033[0m", name)
-    return object.__getattribute__(self, name)
-
-astroquery.query.BaseQuery.__getattribute__ = asq_BaseQuery_getattribute
-
-"""%annotations_dir)
+""")
 
     from astroquery.query import BaseQuery
 

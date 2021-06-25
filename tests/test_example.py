@@ -3,7 +3,7 @@ import shutil
 import os
 
 # make fixture
-def fetch_example_oda_repo(fresh=False, reset=False) -> str:
+def fetch_example_oda_repo(fresh=False, reset=True) -> str:
     repo_name = "renku-aqs-test-case"
     repo_dir = repo_name
 
