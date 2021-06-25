@@ -41,7 +41,6 @@ from aqsconverters.io import AQS_DIR, COMMON_DIR
 class AQS(object):
     def __init__(self, run):
         self.run = run
-        self.use_fake_models = True
 
     @property
     def renku_aqs_path(self):
@@ -67,22 +66,22 @@ def process_run_annotations(run):
     annotations = []
 
     if os.path.exists(aqs.renku_aqs_path):
-        for p in aqs.renku_aqs_path.iterdir():
-            if aqs.use_fake_models:
-                if p.match("*json"):
-                    print(f"found annotation: {p}")
-                    print(open(p).read())
-            else:
-                # this will make annotations according to https://odahub.io/ontology/
-                aqs_annotation = aqs.load_model(p)
-                model_id = aqs_annotation["@id"]
-                annotation_id = "{activity}/annotations/aqs/{id}".format(
-                    activity=run._id, id=model_id
-                )
-                p.unlink()
-                annotations.append(
-                    Annotation(id=annotation_id, source="AQS plugin", body=aqs_annotation)
-                )
+        print(f"will find annotations in {aqs.renku_aqs_path}")
+        for p in aqs.renku_aqs_path.rglob("*jsonld"):
+            if p.match("*json"):
+                print(f"found annotation: {p}")
+                print(open(p).read())
+        
+            # this will make annotations according to https://odahub.io/ontology/
+            aqs_annotation = aqs.load_model(p)
+            model_id = aqs_annotation["@id"]
+            annotation_id = "{activity}/annotations/aqs/{id}".format(
+                activity=run._id, id=model_id
+            )
+            p.unlink()
+            annotations.append(
+                Annotation(id=annotation_id, source="AQS plugin", body=aqs_annotation)
+            )
     else:
         print("nothing to process in process_run_annotations")
 
@@ -101,14 +100,13 @@ def pre_run(tool):
     print(f"\033[34msitecustomize.py as {fn}\033[0m")    
 
     open(fn, "w").write("""
-print(f"\033[31mHERE enable hooks for astroquery\033[0m")  
+print(f"\033[31menabling hooks for astroquery\033[0m")  
 
 import aqsconverters.aq
 aqsconverters.aq.autolog()
 
 """)
 
-    from astroquery.query import BaseQuery
 
 def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
