@@ -245,21 +245,27 @@ def params(revision, format, paths, diff):
     output.field_names = ["Run ID", "AstroQuery Module", "Astro Object"]
     output.align["Run ID"] = "l"
 
-    for r in graph.query(
-        """SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name WHERE {{
+    query = """SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name WHERE {{
         ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
              <http://odahub.io/ontology#isUsing> ?aq_module;
              ^oa:hasBody/oa:hasTarget ?runId .
         ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
         ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name
-        }}"""):
+        }}"""
+
+    for r in graph.query(query):
         output.add_row([
                 _run_id(r.runId), 
                 r.aq_module_name,
                 r.a_object_name
             ])
 
+    graph.construct(query)
+    
     print(output)
+
+    #TODO: do construct and ingest into ODA KG
+    #TODO: plot construct
 
     #     output.field_names = ["Run ID", "Model", "Hyper-Parameters"]
     #     output.align["Run ID"] = "l"
