@@ -17,6 +17,7 @@
 # limitations under the License.
 
 import os
+import pathlib
 import re
 import sys
 import json
@@ -60,7 +61,10 @@ def process_run_annotations(run):
     aqs = AQS(run)
 
     #os.remove(os.path.join(aqs.renku_aqs_path, "site.py"))
-    os.remove("../sitecustomize.py")
+
+    path = pathlib.Path("../sitecustomize.py")
+    if path.exists():
+        path.unlink()
     
     annotations = []
 
@@ -173,35 +177,43 @@ def leaderboard(revision, format, metric, paths):
     """Leaderboard based on performance of astroquery requests"""
     graph = _graph(revision, paths)
     leaderboard = dict()
+
+    # how to use ontology
     for r in graph.query(
-        """SELECT DISTINCT ?type ?value ?run ?runId ?dsPath where {{
-        ?em a aqs:ModelEvaluation ;
-        aqs:hasValue ?value ;
-        aqs:specifiedBy ?type ;
-        ^aqs:hasOutput/aqs:implements/rdfs:label ?run ;
-        ^aqs:hasOutput/^oa:hasBody/oa:hasTarget ?runId ;
-        ^aqs:hasOutput/^oa:hasBody/oa:hasTarget/prov:qualifiedUsage/prov:entity/prov:atLocation ?dsPath
-        }}"""
-    ):
-        run_id = _run_id(r.runId)
-        metric_type = r.type.split("#")[1]
-        if run_id in leaderboard:
-            leaderboard[run_id]["inputs"].append(r.dsPath.__str__())
-            continue
-        leaderboard[run_id] = {
-            metric_type: r.value.value,
-            "model": r.run,
-            "inputs": [r.dsPath.__str__()],
-        }
-    if len(paths):
-        filtered_board = dict()
-        for path in paths:
-            filtered_board.update(
-                dict(filter(lambda x: path in x[1]["inputs"], leaderboard.items()))
-            )
-        print(_create_leaderboard(filtered_board, metric))
-    else:
-        print(_create_leaderboard(leaderboard, metric))
+        """SELECT DISTINCT ?a_object ?aq_module WHERE {{
+        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
+             <http://odahub.io/ontology#isUsing> ?aq_module .
+        }}"""):
+
+        print(r)
+    # for r in graph.query(
+    #     """SELECT DISTINCT ?type ?value ?run ?runId ?dsPath where {{
+    #     ?em a aqs:ModelEvaluation ;
+    #     aqs:hasValue ?value ;
+    #     aqs:specifiedBy ?type ;
+    #     ^aqs:hasOutput/aqs:implements/rdfs:label ?run ;
+    #     ^aqs:hasOutput/^oa:hasBody/oa:hasTarget ?runId ;
+    #     ^aqs:hasOutput/^oa:hasBody/oa:hasTarget/prov:qualifiedUsage/prov:entity/prov:atLocation ?dsPath
+    #     }}"""
+    #     run_id = _run_id(r.runId)
+    #     metric_type = r.type.split("#")[1]
+    #     if run_id in leaderboard:
+    #         leaderboard[run_id]["inputs"].append(r.dsPath.__str__())
+    #         continue
+    #     leaderboard[run_id] = {
+    #         metric_type: r.value.value,
+    #         "model": r.run,
+    #         "inputs": [r.dsPath.__str__()],
+    #     }
+    # if len(paths):
+    #     filtered_board = dict()
+    #     for path in paths:
+    #         filtered_board.update(
+    #             dict(filter(lambda x: path in x[1]["inputs"], leaderboard.items()))
+    #         )
+    #     print(_create_leaderboard(filtered_board, metric))
+    # else:
+    #     print(_create_leaderboard(leaderboard, metric))
 
 
 @aqs.command()
@@ -227,61 +239,90 @@ def params(revision, format, paths, diff):
             return rdf_iteral.toPython()
 
     graph = _graph(revision, paths)
-    model_params = dict()
-    for r in graph.query(
-        """SELECT ?runId ?algo ?hp ?value where {{
-        ?run a aqs:Run ;
-        aqs:hasInput ?in .
-        ?in a aqs:HyperParameterSetting .
-        ?in aqs:specifiedBy/rdfs:label ?hp .
-        ?in aqs:hasValue ?value .
-        ?run aqs:implements/rdfs:label ?algo ;
-        ^oa:hasBody/oa:hasTarget ?runId
-        }}"""
-    ):
-        run_id = _run_id(r.runId)
-        if run_id in model_params:
-            model_params[run_id]["hp"][str(r.hp)] = _param_value(r.value)
-        else:
-            model_params[run_id] = dict(
-                {"algorithm": str(r.algo), "hp": {str(r.hp): _param_value(r.value)}}
-            )
+    # model_params = dict()
+       # how to use ontology
+    output = PrettyTable()
+    output.field_names = ["Run ID", "AstroQuery Module", "Astro Object"]
+    output.align["Run ID"] = "l"
 
-    if len(diff) > 0:
-        for r in diff:
-            if r not in model_params:
-                print("Unknown revision provided for diff parameter: {}".format(r))
-                return
-        if model_params[diff[0]]["algorithm"] != model_params[diff[1]]["algorithm"]:
-            print("Model:")
-            print("\t- {}".format(model_params[diff[0]]["algorithm"]))
-            print("\t+ {}".format(model_params[diff[1]]["algorithm"]))
-        else:
-            params_diff = DeepDiff(
-                model_params[diff[0]], model_params[diff[1]], ignore_order=True
-            )
-            output = PrettyTable()
-            output.field_names = ["Hyper-Parameter", "Old", "New"]
-            output.align["Hyper-Parameter"] = "l"
-            if "values_changed" not in params_diff:
-                print(output)
-                return
-            for k, v in params_diff["values_changed"].items():
-                parameter_name = re.search(r"\['(\w+)'\]$", k).group(1)
-                output.add_row(
-                    [
-                        parameter_name,
-                        _param_value(v["new_value"]),
-                        _param_value(v["old_value"]),
-                    ]
-                )
-            print(output)
-    else:
-        output = PrettyTable()
-        output.field_names = ["Run ID", "Model", "Hyper-Parameters"]
-        output.align["Run ID"] = "l"
-        output.align["Model"] = "l"
-        output.align["Hyper-Parameters"] = "l"
-        for runid, v in model_params.items():
-            output.add_row([runid, v["algorithm"], json.dumps(v["hp"])])
-        print(output)
+    for r in graph.query(
+        """SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name WHERE {{
+        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
+             <http://odahub.io/ontology#isUsing> ?aq_module;
+             ^oa:hasBody/oa:hasTarget ?runId .
+        ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+        ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name
+        }}"""):
+        output.add_row([
+                _run_id(r.runId), 
+                r.aq_module_name,
+                r.a_object_name
+            ])
+
+    print(output)
+
+    #     output.field_names = ["Run ID", "Model", "Hyper-Parameters"]
+    #     output.align["Run ID"] = "l"
+    #     output.align["Model"] = "l"
+    #     output.align["Hyper-Parameters"] = "l"
+    #     for runid, v in model_params.items():
+    #         output.add_row([runid, v["algorithm"], json.dumps(v["hp"])])
+    #     print(output)
+
+    # for r in graph.query(
+    #     """SELECT ?runId ?algo ?hp ?value where {{
+    #     ?run a aqs:Run ;
+    #     aqs:hasInput ?in .
+    #     ?in a aqs:HyperParameterSetting .
+    #     ?in aqs:specifiedBy/rdfs:label ?hp .
+    #     ?in aqs:hasValue ?value .
+    #     ?run aqs:implements/rdfs:label ?algo ;
+    #     ^oa:hasBody/oa:hasTarget ?runId
+    #     }}"""
+    # # ):
+    #     run_id = _run_id(r.runId)
+    #     if run_id in model_params:
+    #         model_params[run_id]["hp"][str(r.hp)] = _param_value(r.value)
+    #     else:
+    #         model_params[run_id] = dict(
+    #             {"algorithm": str(r.algo), "hp": {str(r.hp): _param_value(r.value)}}
+    #         )
+
+    # if len(diff) > 0:
+    #     for r in diff:
+    #         if r not in model_params:
+    #             print("Unknown revision provided for diff parameter: {}".format(r))
+    #             return
+    #     if model_params[diff[0]]["algorithm"] != model_params[diff[1]]["algorithm"]:
+    #         print("Model:")
+    #         print("\t- {}".format(model_params[diff[0]]["algorithm"]))
+    #         print("\t+ {}".format(model_params[diff[1]]["algorithm"]))
+    #     else:
+    #         params_diff = DeepDiff(
+    #             model_params[diff[0]], model_params[diff[1]], ignore_order=True
+    #         )
+    #         output = PrettyTable()
+    #         output.field_names = ["Hyper-Parameter", "Old", "New"]
+    #         output.align["Hyper-Parameter"] = "l"
+    #         if "values_changed" not in params_diff:
+    #             print(output)
+    #             return
+    #         for k, v in params_diff["values_changed"].items():
+    #             parameter_name = re.search(r"\['(\w+)'\]$", k).group(1)
+    #             output.add_row(
+    #                 [
+    #                     parameter_name,
+    #                     _param_value(v["new_value"]),
+    #                     _param_value(v["old_value"]),
+    #                 ]
+    #             )
+    #         print(output)
+    # else:
+    #     output = PrettyTable()
+    #     output.field_names = ["Run ID", "Model", "Hyper-Parameters"]
+    #     output.align["Run ID"] = "l"
+    #     output.align["Model"] = "l"
+    #     output.align["Hyper-Parameters"] = "l"
+    #     for runid, v in model_params.items():
+    #         output.add_row([runid, v["algorithm"], json.dumps(v["hp"])])
+    #     print(output)
