@@ -51,6 +51,7 @@ def test_example_oda_repo_code_py():
     #TODO:
     #renku aqs params
     #rdf2dot renku-aqs-test-case/subgraph.ttl  | dot -Tpng -o subgraph.png
+    # add references to the workflow identity and location
 
 def test_example_oda_repo_papermill():
     repo_dir = fetch_example_oda_repo()
