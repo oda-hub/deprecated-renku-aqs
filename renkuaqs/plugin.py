@@ -245,24 +245,44 @@ def params(revision, format, paths, diff):
     output.field_names = ["Run ID", "AstroQuery Module", "Astro Object"]
     output.align["Run ID"] = "l"
 
-    query = """SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name WHERE {{
+    query_where = """WHERE {{
         ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
              <http://odahub.io/ontology#isUsing> ?aq_module;
              ^oa:hasBody/oa:hasTarget ?runId .
         ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
-        ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name
+        ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+        ?run ?p ?o .
+
         }}"""
 
-    for r in graph.query(query):
+    for r in graph.query(f"""
+        SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name 
+        {query_where}
+        """):
         output.add_row([
                 _run_id(r.runId), 
                 r.aq_module_name,
                 r.a_object_name
             ])
-
-    graph.construct(query)
     
     print(output)
+
+    r = graph.query(f"""
+    CONSTRUCT {{
+        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
+        ?run <http://odahub.io/ontology#isUsing> ?aq_module .
+        ?run ?p ?o .
+    }}
+    {query_where}
+    """)      
+
+    G = rdflib.Graph()
+    G.parse(data=r.serialize(format="n3").decode(), format="n3")
+    G.bind("oda", "http://odahub.io/ontology#")  
+    G.bind("odas", "https://odahub.io/ontology#")   # the same
+    G.bind("local-renku", "file:///home/savchenk/work/oda/renku/renku-aqs/renku-aqs-test-case/.renku/") #??
+    
+    print(G.serialize(format="n3").decode())
 
     #TODO: do construct and ingest into ODA KG
     #TODO: plot construct
