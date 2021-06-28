@@ -41,7 +41,7 @@ def run_renku_cli(cmd: list, repo_dir: str, root_dir: str):
 
     subprocess.check_call(["renku", "run"] + cmd, cwd=repo_dir, env=dict(
             {**os.environ,
-             "PYTHONPATH": str(root_dir) + ":" + str(root_dir) + "/tests:" + os.environ.get('PYTHONPATH')}
+             "PYTHONPATH": str(root_dir) + ":" + str(root_dir) + "/tests:" + os.environ.get('PYTHONPATH', "")}
         ))
 
 
