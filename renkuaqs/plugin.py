@@ -26,10 +26,12 @@ import rdflib
 from copy import deepcopy
 from pathlib import Path
 
+import renku.cli
 from renku.core.models.cwl.annotation import Annotation
 from renku.core.incubation.command import Command
 from renku.core.plugins import hookimpl
 from renku.core.models.provenance.provenance_graph import ProvenanceGraph
+from renku.core.commands import format
 from renku.core.errors import RenkuException
 
 from prettytable import PrettyTable
@@ -111,8 +113,8 @@ def pre_run(tool):
 print(f"\033[31menabling hooks for astroquery\033[0m")  
 
 import aqsconverters.aq
-aqsconverters.aq.autolog()
 
+aqsconverters.aq.autolog()
 """)
 
     from astroquery.query import BaseQuery # ??
@@ -128,6 +130,7 @@ def _load_provenance_graph(client):
 Please run 'renku graph generate' to create the project's provenance graph
 """
         )
+    print("graph path: ", client.provenance_graph_path)
     return ProvenanceGraph.from_json(client.provenance_graph_path)
 
 
@@ -141,6 +144,7 @@ def _graph(revision, paths):
         "oa": "http://www.w3.org/ns/oa#",
         "xsd": "http://www.w3.org/2001/XAQSchema#",
     }
+
     return provenance_graph
 
 
@@ -252,18 +256,19 @@ def params(revision, format, paths, diff):
         ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
         ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
         ?run ?p ?o .
-
+        FILTER (!CONTAINS(str(?a_object), " ")) .
+        
         }}"""
 
     for r in graph.query(f"""
-        SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name 
+        SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name
         {query_where}
         """):
         output.add_row([
-                _run_id(r.runId), 
-                r.aq_module_name,
-                r.a_object_name
-            ])
+            _run_id(r.runId),
+            r.aq_module_name,
+            r.a_object_name
+        ])
     
     print(output)
 
@@ -274,7 +279,7 @@ def params(revision, format, paths, diff):
         ?run ?p ?o .
     }}
     {query_where}
-    """)      
+    """)
 
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
