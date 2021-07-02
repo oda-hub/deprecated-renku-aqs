@@ -30,14 +30,12 @@ def fetch_example_oda_repo(fresh=False, reset=True) -> str:
         ["git", "lfs", "install", "--local"],
         cwd=repo_dir
     )
-    
+
     return repo_dir
 
 
 # on purpose from shell
 def run_renku_cli(cmd: list, repo_dir: str, root_dir: str):
-    
-
 
     subprocess.check_call(["renku", "run"] + cmd, cwd=repo_dir, env=dict(
             {**os.environ,
@@ -56,6 +54,6 @@ def test_example_oda_repo_code_py(pytestconfig):
     # add references to the workflow identity and location
 
 def test_example_oda_repo_papermill(pytestconfig):
-    repo_dir = fetch_example_oda_repo()
+    repo_dir = fetch_example_oda_repo(fresh=True)
 
     run_renku_cli(["papermill", "final-an.ipynb", "out.ipynb", "--output", "test-output.txt"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)

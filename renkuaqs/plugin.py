@@ -23,15 +23,17 @@ import sys
 import json
 import click
 import rdflib
+import rdflib.tools.rdf2dot
 from copy import deepcopy
 from pathlib import Path
 
 import renku.cli
+from rdflib.tools import rdf2dot
 from renku.core.models.cwl.annotation import Annotation
 from renku.core.incubation.command import Command
 from renku.core.plugins import hookimpl
 from renku.core.models.provenance.provenance_graph import ProvenanceGraph
-from renku.core.commands import format
+from renku.core.commands.format import graph as renkuGraph
 from renku.core.errors import RenkuException
 
 from prettytable import PrettyTable
@@ -243,8 +245,9 @@ def params(revision, format, paths, diff):
             return rdf_iteral.toPython()
 
     graph = _graph(revision, paths)
+
     # model_params = dict()
-       # how to use ontology
+    # how to use ontology
     output = PrettyTable()
     output.field_names = ["Run ID", "AstroQuery Module", "Astro Object"]
     output.align["Run ID"] = "l"
@@ -285,7 +288,7 @@ def params(revision, format, paths, diff):
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
     G.bind("oda", "http://odahub.io/ontology#")  
     G.bind("odas", "https://odahub.io/ontology#")   # the same
-    G.bind("local-renku", "file:///home/savchenk/work/oda/renku/renku-aqs/renku-aqs-test-case/.renku/") #??
+    G.bind("local-renku", "file:///home/gabriele/Workspace/renku-aqs/renku-aqs-test-case/.renku/") #??
 
     serial = G.serialize(format="n3").decode()
     
@@ -362,3 +365,51 @@ def params(revision, format, paths, diff):
     #     for runid, v in model_params.items():
     #         output.add_row([runid, v["algorithm"], json.dumps(v["hp"])])
     #     print(output)
+
+
+@aqs.command()
+@click.option(
+    "--revision",
+    default="HEAD",
+    help="The git revision to generate the log for, default: HEAD",
+)
+@click.option("--format", default="ascii", help="Choose an output format.")
+@click.argument("paths", type=click.Path(exists=False), nargs=-1)
+def display(revision, paths, format):
+    """Simple graph visualization """
+    import io
+    from IPython.display import display, Image
+    import pydotplus
+
+    graph = _graph(revision, paths)
+
+    query_where = """WHERE {{
+        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
+             <http://odahub.io/ontology#isUsing> ?aq_module;
+             ^oa:hasBody/oa:hasTarget ?runId .
+        ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+        ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+        ?run ?p ?o .
+        FILTER (!CONTAINS(str(?a_object), " ")) .
+
+        }}"""
+
+    r = graph.query(f"""
+        CONSTRUCT {{
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
+            ?run <http://odahub.io/ontology#isUsing> ?aq_module .
+            ?run ?p ?o .
+        }}
+        {query_where}
+        """)
+
+    G = rdflib.Graph()
+    G.parse(data=r.serialize(format="n3").decode(), format="n3")
+    G.bind("oda", "http://odahub.io/ontology#")
+    G.bind("odas", "https://odahub.io/ontology#")  # the same
+    G.bind("local-renku", "file:///home/gabriele/Workspace/renku-aqs/renku-aqs-test-case/.renku/")  # ??
+
+    stream = io.StringIO()
+    rdf2dot.rdf2dot(G, stream, opts = {display})
+    pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
+    pydot_graph.write_png('graph.png')
