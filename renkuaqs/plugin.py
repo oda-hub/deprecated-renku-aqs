@@ -27,17 +27,15 @@ import rdflib.tools.rdf2dot
 from copy import deepcopy
 from pathlib import Path
 
-import renku.cli
 from rdflib.tools import rdf2dot
 from renku.core.models.cwl.annotation import Annotation
 from renku.core.incubation.command import Command
 from renku.core.plugins import hookimpl
 from renku.core.models.provenance.provenance_graph import ProvenanceGraph
-from renku.core.commands.format import graph as renkuGraph
 from renku.core.errors import RenkuException
+from renku.core.management import LocalClient
 
 from prettytable import PrettyTable
-from deepdiff import DeepDiff
 
 #from aqsconverters.models import Run
 from aqsconverters.io import AQS_DIR, COMMON_DIR
@@ -132,7 +130,6 @@ def _load_provenance_graph(client):
 Please run 'renku graph generate' to create the project's provenance graph
 """
         )
-    print("graph path: ", client.provenance_graph_path)
     return ProvenanceGraph.from_json(client.provenance_graph_path)
 
 
@@ -272,7 +269,7 @@ def params(revision, format, paths, diff):
             r.aq_module_name,
             r.a_object_name
         ])
-    
+
     print(output)
 
     r = graph.query(f"""
@@ -286,12 +283,12 @@ def params(revision, format, paths, diff):
 
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
-    G.bind("oda", "http://odahub.io/ontology#")  
+    G.bind("oda", "http://odahub.io/ontology#")
     G.bind("odas", "https://odahub.io/ontology#")   # the same
     G.bind("local-renku", "file:///home/gabriele/Workspace/renku-aqs/renku-aqs-test-case/.renku/") #??
 
     serial = G.serialize(format="n3").decode()
-    
+
     print(serial)
 
     with open("subgraph.ttl", "w") as f:
@@ -373,15 +370,18 @@ def params(revision, format, paths, diff):
     default="HEAD",
     help="The git revision to generate the log for, default: HEAD",
 )
-@click.option("--format", default="ascii", help="Choose an output format.")
+@click.option("--filename", default="graph.png", help="The filename of the output file image")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
-def display(revision, paths, format):
+def display(revision, paths, filename):
     """Simple graph visualization """
     import io
-    from IPython.display import display, Image
+    from IPython.display import display
     import pydotplus
 
     graph = _graph(revision, paths)
+
+    ctx = click.get_current_context()
+    renku_path = ctx.ensure_object(LocalClient).renku_path
 
     query_where = """WHERE {{
         ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
@@ -406,10 +406,10 @@ def display(revision, paths, format):
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
     G.bind("oda", "http://odahub.io/ontology#")
-    G.bind("odas", "https://odahub.io/ontology#")  # the same
-    G.bind("local-renku", "file:///home/gabriele/Workspace/renku-aqs/renku-aqs-test-case/.renku/")  # ??
+    G.bind("odas", "https://odahub.io/ontology#") # the same
+    G.bind("local-renku", f"file://{renku_path}/")
 
     stream = io.StringIO()
-    rdf2dot.rdf2dot(G, stream, opts = {display})
+    rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
-    pydot_graph.write_png('graph.png')
+    pydot_graph.write_png(filename)
