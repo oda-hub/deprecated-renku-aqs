@@ -147,6 +147,11 @@ def _graph(revision, paths):
     return provenance_graph
 
 
+def renku_context():
+    ctx = click.get_current_context().ensure_object(LocalClient)
+    return ctx
+
+
 def _create_leaderboard(data, metric, format=None):
     leaderboard = PrettyTable()
     leaderboard.field_names = ["Run ID", "Module", "Query", metric]
@@ -380,25 +385,30 @@ def display(revision, paths, filename):
 
     graph = _graph(revision, paths)
 
-    ctx = click.get_current_context()
-    renku_path = ctx.ensure_object(LocalClient).renku_path
+    renku_path = renku_context().renku_path
 
     query_where = """WHERE {{
-        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
-             <http://odahub.io/ontology#isUsing> ?aq_module;
-             ^oa:hasBody/oa:hasTarget ?runId .
-        ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
-        ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-        ?run ?p ?o .
-        FILTER (!CONTAINS(str(?a_object), " ")) .
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
+                 <http://odahub.io/ontology#isUsing> ?aq_module;
+                 ^oa:hasBody/oa:hasTarget ?runId .
+            ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+            ?run ?p ?o .
+            FILTER (!CONTAINS(str(?a_object), " ")) .
 
-        }}"""
+            }}"""
 
     r = graph.query(f"""
         CONSTRUCT {{
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
             ?run <http://odahub.io/ontology#isUsing> ?aq_module .
+            ?run <http://purl.org/dc/terms/title> ?a_object_name .
+            
+            ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+            
             ?run ?p ?o .
+            
         }}
         {query_where}
         """)
