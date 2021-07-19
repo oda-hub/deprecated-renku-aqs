@@ -319,11 +319,18 @@ def display(revision, paths, filename):
     renku_path = renku_context().renku_path
 
     query_where = """WHERE {{
-            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
-                 <http://odahub.io/ontology#isUsing> ?aq_module;
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
+                 <http://odahub.io/ontology#isUsing> ?aq_module ;
+                 <http://purl.org/dc/terms/type> ?run_type ;
+                 <http://purl.org/dc/terms/title> ?run_title ;
                  ^oa:hasBody/oa:hasTarget ?runId .
-            ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
-            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+                 
+            ?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
+                <http://purl.org/dc/terms/type> ?a_object_type .
+                
+            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ; 
+                <http://purl.org/dc/terms/type> ?aq_module_type .
+                
             ?run ?p ?o .
             FILTER (!CONTAINS(str(?a_object), " ")) .
 
@@ -333,10 +340,14 @@ def display(revision, paths, filename):
         CONSTRUCT {{
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
-                ?p ?o .
+                <http://purl.org/dc/terms/type> ?run_type ;
+                <http://purl.org/dc/terms/title> ?run_title .
                 
-            ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
-            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+            ?a_object <https://odahub.io/ontology#AstroObject> ?a_object_name ;
+                <http://purl.org/dc/terms/type> ?a_object_type .
+            
+            ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
+                <http://purl.org/dc/terms/type> ?aq_module_type .
             
         }}
         {query_where}
