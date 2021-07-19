@@ -299,75 +299,6 @@ def params(revision, format, paths, diff):
     with open("subgraph.ttl", "w") as f:
         f.write(serial)
 
-    #TODO: do construct and ingest into ODA KG
-    #TODO: plot construct
-
-    #     output.field_names = ["Run ID", "Model", "Hyper-Parameters"]
-    #     output.align["Run ID"] = "l"
-    #     output.align["Model"] = "l"
-    #     output.align["Hyper-Parameters"] = "l"
-    #     for runid, v in model_params.items():
-    #         output.add_row([runid, v["algorithm"], json.dumps(v["hp"])])
-    #     print(output)
-
-    # for r in graph.query(
-    #     """SELECT ?runId ?algo ?hp ?value where {{
-    #     ?run a aqs:Run ;
-    #     aqs:hasInput ?in .
-    #     ?in a aqs:HyperParameterSetting .
-    #     ?in aqs:specifiedBy/rdfs:label ?hp .
-    #     ?in aqs:hasValue ?value .
-    #     ?run aqs:implements/rdfs:label ?algo ;
-    #     ^oa:hasBody/oa:hasTarget ?runId
-    #     }}"""
-    # # ):
-    #     run_id = _run_id(r.runId)
-    #     if run_id in model_params:
-    #         model_params[run_id]["hp"][str(r.hp)] = _param_value(r.value)
-    #     else:
-    #         model_params[run_id] = dict(
-    #             {"algorithm": str(r.algo), "hp": {str(r.hp): _param_value(r.value)}}
-    #         )
-
-    # if len(diff) > 0:
-    #     for r in diff:
-    #         if r not in model_params:
-    #             print("Unknown revision provided for diff parameter: {}".format(r))
-    #             return
-    #     if model_params[diff[0]]["algorithm"] != model_params[diff[1]]["algorithm"]:
-    #         print("Model:")
-    #         print("\t- {}".format(model_params[diff[0]]["algorithm"]))
-    #         print("\t+ {}".format(model_params[diff[1]]["algorithm"]))
-    #     else:
-    #         params_diff = DeepDiff(
-    #             model_params[diff[0]], model_params[diff[1]], ignore_order=True
-    #         )
-    #         output = PrettyTable()
-    #         output.field_names = ["Hyper-Parameter", "Old", "New"]
-    #         output.align["Hyper-Parameter"] = "l"
-    #         if "values_changed" not in params_diff:
-    #             print(output)
-    #             return
-    #         for k, v in params_diff["values_changed"].items():
-    #             parameter_name = re.search(r"\['(\w+)'\]$", k).group(1)
-    #             output.add_row(
-    #                 [
-    #                     parameter_name,
-    #                     _param_value(v["new_value"]),
-    #                     _param_value(v["old_value"]),
-    #                 ]
-    #             )
-    #         print(output)
-    # else:
-    #     output = PrettyTable()
-    #     output.field_names = ["Run ID", "Model", "Hyper-Parameters"]
-    #     output.align["Run ID"] = "l"
-    #     output.align["Model"] = "l"
-    #     output.align["Hyper-Parameters"] = "l"
-    #     for runid, v in model_params.items():
-    #         output.add_row([runid, v["algorithm"], json.dumps(v["hp"])])
-    #     print(output)
-
 
 @aqs.command()
 @click.option(
@@ -400,14 +331,12 @@ def display(revision, paths, filename):
 
     r = graph.query(f"""
         CONSTRUCT {{
-            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
-            ?run <http://odahub.io/ontology#isUsing> ?aq_module .
-            ?run <http://purl.org/dc/terms/title> ?a_object_name .
-            
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
+                <http://odahub.io/ontology#isUsing> ?aq_module ;
+                ?p ?o .
+                
             ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
             ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-            
-            ?run ?p ?o .
             
         }}
         {query_where}
