@@ -319,17 +319,25 @@ def display(revision, paths, filename):
     renku_path = renku_context().renku_path
 
     query_where = """WHERE {{
-            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
+            {?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                  <http://odahub.io/ontology#isUsing> ?aq_module ;
                  <http://purl.org/dc/terms/type> ?run_type ;
-                 <http://purl.org/dc/terms/title> ?run_title ;
-                 ^oa:hasBody/oa:hasTarget ?runId .
+                 <http://purl.org/dc/terms/title> ?run_name ;
+                 ^oa:hasBody/oa:hasTarget ?runId .}
+                UNION
+             {?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
+                 <http://odahub.io/ontology#isUsing> ?aq_module ;
+                 ^oa:hasBody/oa:hasTarget ?runId .}
                  
-            ?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
-                <http://purl.org/dc/terms/type> ?a_object_type .
+            {?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
+                <http://purl.org/dc/terms/type> ?a_object_type .}
+                UNION
+            { ?a_object <http://purl.org/dc/terms/title> ?a_object_name . }
                 
-            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ; 
-                <http://purl.org/dc/terms/type> ?aq_module_type .
+            { ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ;
+                <http://purl.org/dc/terms/type> ?aq_module_type . }
+                UNION
+            { ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name . }
                 
             ?run ?p ?o .
             FILTER (!CONTAINS(str(?a_object), " ")) .
@@ -341,7 +349,7 @@ def display(revision, paths, filename):
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 <http://purl.org/dc/terms/type> ?run_type ;
-                <http://purl.org/dc/terms/title> ?run_title .
+                <http://purl.org/dc/terms/title> ?run_name .
                 
             ?a_object <https://odahub.io/ontology#AstroObject> ?a_object_name ;
                 <http://purl.org/dc/terms/type> ?a_object_type .
