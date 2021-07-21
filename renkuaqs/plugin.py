@@ -26,12 +26,10 @@ import rdflib
 from copy import deepcopy
 from pathlib import Path
 
-import renku.cli
 from renku.core.models.cwl.annotation import Annotation
 from renku.core.incubation.command import Command
 from renku.core.plugins import hookimpl
 from renku.core.models.provenance.provenance_graph import ProvenanceGraph
-from renku.core.commands import format
 from renku.core.errors import RenkuException
 
 from prettytable import PrettyTable
