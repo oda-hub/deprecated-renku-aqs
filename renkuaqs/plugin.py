@@ -236,13 +236,6 @@ def leaderboard(revision, format, metric, paths):
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def params(revision, format, paths, diff):
     """List the parameters of astroquery requests"""
-    # let's detect invalid entries within the graph
-    b = "Invalid"
-    a = "Ok"
-    # Color
-    R = "\033[0;31;40m"  # RED
-    G = "\033[0;32;40m"  # GREEN
-    N = "\033[0m"  # Reset
 
     def _param_value(rdf_iteral):
         if not type(rdf_iteral) != rdflib.term.Literal:
@@ -257,9 +250,9 @@ def params(revision, format, paths, diff):
     renku_path = renku_context().renku_path
 
     # model_params = dict()
-       # how to use ontology
+   # how to use ontology
     output = PrettyTable()
-    output.field_names = ["Run ID", "AstroQuery Module", "Astro Object", "status"]
+    output.field_names = ["Run ID", "AstroQuery Module", "Astro Object"]
     output.align["Run ID"] = "l"
 
     query_where = """WHERE {{
@@ -281,16 +274,14 @@ def params(revision, format, paths, diff):
         SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name
         {query_where}
         """):
-        status = G+a+N
         if " " in r.a_object:
-            status = R+b+N
             invalid_entries += 1
-        output.add_row([
-            _run_id(r.runId),
-            r.aq_module_name,
-            r.a_object_name,
-            status
-        ])
+        else:
+            output.add_row([
+                _run_id(r.runId),
+                r.aq_module_name,
+                r.a_object_name,
+            ])
 
     print(output, "\n")
     if invalid_entries > 0:
