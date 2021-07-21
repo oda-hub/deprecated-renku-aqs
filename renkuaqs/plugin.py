@@ -130,7 +130,6 @@ def _load_provenance_graph(client):
 Please run 'renku graph generate' to create the project's provenance graph
 """
         )
-    print("graph path: ", client.provenance_graph_path)
     return ProvenanceGraph.from_json(client.provenance_graph_path)
 
 
