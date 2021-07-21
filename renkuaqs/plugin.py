@@ -259,11 +259,14 @@ def params(revision, format, paths, diff):
         ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
              <http://odahub.io/ontology#isUsing> ?aq_module;
              ^oa:hasBody/oa:hasTarget ?runId .
+             
         ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
-        ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-        ?run ?p ?o .
-        FILTER (!CONTAINS(str(?a_object), " ")) .
         
+        ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+        
+        ?run ?p ?o .
+        
+        FILTER (!CONTAINS(str(?a_object), " ")) .
         }}"""
 
     for r in graph.query(f"""
