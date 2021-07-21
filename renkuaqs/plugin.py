@@ -31,6 +31,7 @@ from renku.core.incubation.command import Command
 from renku.core.plugins import hookimpl
 from renku.core.models.provenance.provenance_graph import ProvenanceGraph
 from renku.core.errors import RenkuException
+from renku.core.management import LocalClient
 
 from prettytable import PrettyTable
 from deepdiff import DeepDiff
@@ -111,8 +112,8 @@ def pre_run(tool):
 print(f"\033[31menabling hooks for astroquery\033[0m")  
 
 import aqsconverters.aq
-aqsconverters.aq.autolog()
 
+aqsconverters.aq.autolog()
 """)
 
     from astroquery.query import BaseQuery # ??
@@ -141,7 +142,13 @@ def _graph(revision, paths):
         "oa": "http://www.w3.org/ns/oa#",
         "xsd": "http://www.w3.org/2001/XAQSchema#",
     }
+
     return provenance_graph
+
+
+def renku_context():
+    ctx = click.get_current_context().ensure_object(LocalClient)
+    return ctx
 
 
 def _create_leaderboard(data, metric, format=None):
@@ -239,8 +246,11 @@ def params(revision, format, paths, diff):
             return rdf_iteral.toPython()
 
     graph = _graph(revision, paths)
+
+    renku_path = renku_context().renku_path
+
     # model_params = dict()
-       # how to use ontology
+   # how to use ontology
     output = PrettyTable()
     output.field_names = ["Run ID", "AstroQuery Module", "Astro Object"]
     output.align["Run ID"] = "l"
@@ -249,41 +259,67 @@ def params(revision, format, paths, diff):
         ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
              <http://odahub.io/ontology#isUsing> ?aq_module;
              ^oa:hasBody/oa:hasTarget ?runId .
+
         ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+
         ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+
         ?run ?p ?o .
 
         }}"""
 
+    invalid_entries = 0
+
     for r in graph.query(f"""
-        SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name 
+        SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name
         {query_where}
         """):
-        output.add_row([
-                _run_id(r.runId), 
+        if " " in r.a_object:
+            invalid_entries += 1
+        else:
+            output.add_row([
+                _run_id(r.runId),
                 r.aq_module_name,
-                r.a_object_name
+                r.a_object_name,
             ])
-    
-    print(output)
+
+    print(output, "\n")
+    if invalid_entries > 0:
+        print("Some entries within the graph are not valid and therefore the store should be recreated", "\n")
+
+    query_where = """WHERE {{
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
+                 <http://odahub.io/ontology#isUsing> ?aq_module;
+                 ^oa:hasBody/oa:hasTarget ?runId .
+
+            ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+
+            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+
+            ?run ?p ?o .
+
+            FILTER (!CONTAINS(str(?a_object), " ")) .
+
+            }}"""
 
     r = graph.query(f"""
-    CONSTRUCT {{
-        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
-        ?run <http://odahub.io/ontology#isUsing> ?aq_module .
-        ?run ?p ?o .
-    }}
-    {query_where}
-    """)      
+        CONSTRUCT {{
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
+            ?run <http://odahub.io/ontology#isUsing> ?aq_module .
+            ?run ?p ?o .
+        }}
+        {query_where}
+        """)
+
 
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
-    G.bind("oda", "http://odahub.io/ontology#")  
+    G.bind("oda", "http://odahub.io/ontology#")
     G.bind("odas", "https://odahub.io/ontology#")   # the same
-    G.bind("local-renku", "file:///home/savchenk/work/oda/renku/renku-aqs/renku-aqs-test-case/.renku/") #??
+    G.bind("local-renku", f"file://{renku_path}/") #??
 
     serial = G.serialize(format="n3").decode()
-    
+
     print(serial)
 
     with open("subgraph.ttl", "w") as f:
