@@ -247,6 +247,9 @@ def params(revision, format, paths, diff):
             return rdf_iteral.toPython()
 
     graph = _graph(revision, paths)
+
+    renku_path = renku_context().renku_path
+
     # model_params = dict()
     # how to use ontology
     output = PrettyTable()
@@ -257,37 +260,64 @@ def params(revision, format, paths, diff):
         ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
              <http://odahub.io/ontology#isUsing> ?aq_module;
              ^oa:hasBody/oa:hasTarget ?runId .
+
         ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+
         ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+
         ?run ?p ?o .
+
         }}"""
+
+    invalid_entries = 0
 
     for r in graph.query(f"""
         SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name 
         {query_where}
         """):
-        output.add_row([
-            _run_id(r.runId),
-            r.aq_module_name,
-            r.a_object_name
-        ])
+        if " " in r.a_object:
+            invalid_entries += 1
+        else:
+            output.add_row([
+                _run_id(r.runId),
+                r.aq_module_name,
+                r.a_object_name,
+            ])
 
-    print(output)
+    print(output, "\n")
+    if invalid_entries > 0:
+        print("Some entries within the graph are not valid and therefore the store should be recreated", "\n")
+
+    query_where = """WHERE {{
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
+                 <http://odahub.io/ontology#isUsing> ?aq_module;
+                 ^oa:hasBody/oa:hasTarget ?runId .
+
+            ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+
+            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+
+            ?run ?p ?o .
+
+            FILTER (!CONTAINS(str(?a_object), " ")) .
+
+            }}"""
 
     r = graph.query(f"""
-    CONSTRUCT {{
-        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
-        ?run <http://odahub.io/ontology#isUsing> ?aq_module .
-        ?run ?p ?o .
-    }}
-    {query_where}
-    """)
+        CONSTRUCT {{
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
+            ?run <http://odahub.io/ontology#isUsing> ?aq_module .
+            ?run ?p ?o .
+        }}
+        {query_where}
+        """)
+
 
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
     G.bind("oda", "http://odahub.io/ontology#")
-    G.bind("odas", "https://odahub.io/ontology#")  # the same
-    G.bind("local-renku", "file:///home/savchenk/work/oda/renku/renku-aqs/renku-aqs-test-case/.renku/")  # ??
+    G.bind("odas", "https://odahub.io/ontology#")   # the same
+    G.bind("local-renku", f"file://{renku_path}/") #??
 
     serial = G.serialize(format="n3").decode()
 
