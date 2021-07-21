@@ -387,10 +387,10 @@ def display(revision, paths, filename):
     query_where = """WHERE {{
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ; 
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
+                <http://purl.org/dc/terms/title> ?run_name ;
                  ^oa:hasBody/oa:hasTarget ?runId ;
                  rdf:type ?run_rdf_type .
                  
-             OPTIONAL { ?run <http://purl.org/dc/terms/title> ?run_name . }
                  
             ?a_object <http://purl.org/dc/terms/title> ?a_object_name ; 
                 rdf:type ?a_obj_rdf_type .
