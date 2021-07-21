@@ -31,6 +31,7 @@ from renku.core.incubation.command import Command
 from renku.core.plugins import hookimpl
 from renku.core.models.provenance.provenance_graph import ProvenanceGraph
 from renku.core.errors import RenkuException
+from renku.core.management import LocalClient
 
 from prettytable import PrettyTable
 from deepdiff import DeepDiff
@@ -145,6 +146,11 @@ def _graph(revision, paths):
     return provenance_graph
 
 
+def renku_context():
+    ctx = click.get_current_context().ensure_object(LocalClient)
+    return ctx
+
+
 def _create_leaderboard(data, metric, format=None):
     leaderboard = PrettyTable()
     leaderboard.field_names = ["Run ID", "Module", "Query", metric]
@@ -240,6 +246,9 @@ def params(revision, format, paths, diff):
             return rdf_iteral.toPython()
 
     graph = _graph(revision, paths)
+
+    renku_path = renku_context().renku_path
+
     # model_params = dict()
        # how to use ontology
     output = PrettyTable()
@@ -282,7 +291,7 @@ def params(revision, format, paths, diff):
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
     G.bind("oda", "http://odahub.io/ontology#")  
     G.bind("odas", "https://odahub.io/ontology#")   # the same
-    G.bind("local-renku", "file:///home/savchenk/work/oda/renku/renku-aqs/renku-aqs-test-case/.renku/") #??
+    G.bind("local-renku", f"file://{renku_path}/") #??
 
     serial = G.serialize(format="n3").decode()
     
