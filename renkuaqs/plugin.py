@@ -236,6 +236,13 @@ def leaderboard(revision, format, metric, paths):
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def params(revision, format, paths, diff):
     """List the parameters of astroquery requests"""
+    # let's detect invalid entries within the graph
+    b = "Invalid"
+    a = "Ok"
+    # Color
+    R = "\033[0;31;40m"  # RED
+    G = "\033[0;32;40m"  # GREEN
+    N = "\033[0m"  # Reset
 
     def _param_value(rdf_iteral):
         if not type(rdf_iteral) != rdflib.term.Literal:
@@ -252,52 +259,76 @@ def params(revision, format, paths, diff):
     # model_params = dict()
        # how to use ontology
     output = PrettyTable()
-    output.field_names = ["Run ID", "AstroQuery Module", "Astro Object"]
+    output.field_names = ["Run ID", "AstroQuery Module", "Astro Object", "status"]
     output.align["Run ID"] = "l"
 
     query_where = """WHERE {{
         ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
              <http://odahub.io/ontology#isUsing> ?aq_module;
              ^oa:hasBody/oa:hasTarget ?runId .
-             
+
         ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
-        
+
         ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-        
+
         ?run ?p ?o .
-        
-        FILTER (!CONTAINS(str(?a_object), " ")) .
+
         }}"""
+
+    invalid_entries = 0
 
     for r in graph.query(f"""
         SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name
         {query_where}
         """):
+        status = G+a+N
+        if " " in r.a_object:
+            status = R+b+N
+            invalid_entries += 1
         output.add_row([
             _run_id(r.runId),
             r.aq_module_name,
-            r.a_object_name
+            r.a_object_name,
+            status
         ])
-    
-    print(output)
+
+    print(output, "\n")
+    if invalid_entries > 0:
+        print("Some entries within the graph are not valid and therefore the store should be recreated", "\n")
+
+    query_where = """WHERE {{
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
+                 <http://odahub.io/ontology#isUsing> ?aq_module;
+                 ^oa:hasBody/oa:hasTarget ?runId .
+
+            ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+
+            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+
+            ?run ?p ?o .
+
+            FILTER (!CONTAINS(str(?a_object), " ")) .
+
+            }}"""
 
     r = graph.query(f"""
-    CONSTRUCT {{
-        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
-        ?run <http://odahub.io/ontology#isUsing> ?aq_module .
-        ?run ?p ?o .
-    }}
-    {query_where}
-    """)
+        CONSTRUCT {{
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
+            ?run <http://odahub.io/ontology#isUsing> ?aq_module .
+            ?run ?p ?o .
+        }}
+        {query_where}
+        """)
+
 
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
-    G.bind("oda", "http://odahub.io/ontology#")  
+    G.bind("oda", "http://odahub.io/ontology#")
     G.bind("odas", "https://odahub.io/ontology#")   # the same
     G.bind("local-renku", f"file://{renku_path}/") #??
 
     serial = G.serialize(format="n3").decode()
-    
+
     print(serial)
 
     with open("subgraph.ttl", "w") as f:
