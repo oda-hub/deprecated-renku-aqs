@@ -194,34 +194,6 @@ def leaderboard(revision, format, metric, paths):
         }}"""):
 
         print(r)
-    # for r in graph.query(
-    #     """SELECT DISTINCT ?type ?value ?run ?runId ?dsPath where {{
-    #     ?em a aqs:ModelEvaluation ;
-    #     aqs:hasValue ?value ;
-    #     aqs:specifiedBy ?type ;
-    #     ^aqs:hasOutput/aqs:implements/rdfs:label ?run ;
-    #     ^aqs:hasOutput/^oa:hasBody/oa:hasTarget ?runId ;
-    #     ^aqs:hasOutput/^oa:hasBody/oa:hasTarget/prov:qualifiedUsage/prov:entity/prov:atLocation ?dsPath
-    #     }}"""
-    #     run_id = _run_id(r.runId)
-    #     metric_type = r.type.split("#")[1]
-    #     if run_id in leaderboard:
-    #         leaderboard[run_id]["inputs"].append(r.dsPath.__str__())
-    #         continue
-    #     leaderboard[run_id] = {
-    #         metric_type: r.value.value,
-    #         "model": r.run,
-    #         "inputs": [r.dsPath.__str__()],
-    #     }
-    # if len(paths):
-    #     filtered_board = dict()
-    #     for path in paths:
-    #         filtered_board.update(
-    #             dict(filter(lambda x: path in x[1]["inputs"], leaderboard.items()))
-    #         )
-    #     print(_create_leaderboard(filtered_board, metric))
-    # else:
-    #     print(_create_leaderboard(leaderboard, metric))
 
 
 @aqs.command()
@@ -326,75 +298,6 @@ def params(revision, format, paths, diff):
     with open("subgraph.ttl", "w") as f:
         f.write(serial)
 
-    # TODO: do construct and ingest into ODA KG
-    # TODO: plot construct
-
-    #     output.field_names = ["Run ID", "Model", "Hyper-Parameters"]
-    #     output.align["Run ID"] = "l"
-    #     output.align["Model"] = "l"
-    #     output.align["Hyper-Parameters"] = "l"
-    #     for runid, v in model_params.items():
-    #         output.add_row([runid, v["algorithm"], json.dumps(v["hp"])])
-    #     print(output)
-
-    # for r in graph.query(
-    #     """SELECT ?runId ?algo ?hp ?value where {{
-    #     ?run a aqs:Run ;
-    #     aqs:hasInput ?in .
-    #     ?in a aqs:HyperParameterSetting .
-    #     ?in aqs:specifiedBy/rdfs:label ?hp .
-    #     ?in aqs:hasValue ?value .
-    #     ?run aqs:implements/rdfs:label ?algo ;
-    #     ^oa:hasBody/oa:hasTarget ?runId
-    #     }}"""
-    # # ):
-    #     run_id = _run_id(r.runId)
-    #     if run_id in model_params:
-    #         model_params[run_id]["hp"][str(r.hp)] = _param_value(r.value)
-    #     else:
-    #         model_params[run_id] = dict(
-    #             {"algorithm": str(r.algo), "hp": {str(r.hp): _param_value(r.value)}}
-    #         )
-
-    # if len(diff) > 0:
-    #     for r in diff:
-    #         if r not in model_params:
-    #             print("Unknown revision provided for diff parameter: {}".format(r))
-    #             return
-    #     if model_params[diff[0]]["algorithm"] != model_params[diff[1]]["algorithm"]:
-    #         print("Model:")
-    #         print("\t- {}".format(model_params[diff[0]]["algorithm"]))
-    #         print("\t+ {}".format(model_params[diff[1]]["algorithm"]))
-    #     else:
-    #         params_diff = DeepDiff(
-    #             model_params[diff[0]], model_params[diff[1]], ignore_order=True
-    #         )
-    #         output = PrettyTable()
-    #         output.field_names = ["Hyper-Parameter", "Old", "New"]
-    #         output.align["Hyper-Parameter"] = "l"
-    #         if "values_changed" not in params_diff:
-    #             print(output)
-    #             return
-    #         for k, v in params_diff["values_changed"].items():
-    #             parameter_name = re.search(r"\['(\w+)'\]$", k).group(1)
-    #             output.add_row(
-    #                 [
-    #                     parameter_name,
-    #                     _param_value(v["new_value"]),
-    #                     _param_value(v["old_value"]),
-    #                 ]
-    #             )
-    #         print(output)
-    # else:
-    #     output = PrettyTable()
-    #     output.field_names = ["Run ID", "Model", "Hyper-Parameters"]
-    #     output.align["Run ID"] = "l"
-    #     output.align["Model"] = "l"
-    #     output.align["Hyper-Parameters"] = "l"
-    #     for runid, v in model_params.items():
-    #         output.add_row([runid, v["algorithm"], json.dumps(v["hp"])])
-    #     print(output)
-
 
 @aqs.command()
 @click.option(
@@ -472,17 +375,6 @@ def display(revision, paths, filename):
     # list of edges and simple color change
     for edge in pydot_graph.get_edge_list():
 
-        # dest_node = pydot_graph.get_node(edge.get_destination())[0]
-        # if dest_node.obj_dict['attributes']['label'] is not None:
-        #     print(dest_node.obj_dict['attributes']['label'])
-        #     label = dest_node.obj_dict['attributes']['label']
-        #     table = etree.HTML(label).find("body/table")
-        #     table.set('color', '#008000')
-        #     str_table = str(etree.tostring(table)).replace('&gt;\'', '>').replace('b\'', '< ')
-        #     print(str_table)
-        #     dest_node.obj_dict['attributes']['label'] = str_table
-        # print("\n")
-        # src_node = pydot_graph.get_node(edge.get_source())[0]
         # simple color code
         if 'rdf:type' in edge.obj_dict['attributes']['label']:
             edge.obj_dict['attributes']['color'] = 'RED'
