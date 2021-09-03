@@ -409,27 +409,28 @@ def display(revision, paths, filename):
     import io
     from IPython.display import display
     import pydotplus
+    import collections
+    from lxml import etree
 
     graph = _graph(revision, paths)
 
     renku_path = renku_context().renku_path
 
     query_where = """WHERE {{
-            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ; 
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 <http://purl.org/dc/terms/title> ?run_name ;
                  ^oa:hasBody/oa:hasTarget ?runId ;
-                 rdf:type ?run_rdf_type .
-                 
+                 a ?run_rdf_type .
                  
             ?a_object <http://purl.org/dc/terms/title> ?a_object_name ; 
-                rdf:type ?a_obj_rdf_type .
+                a ?a_obj_rdf_type .
                 
             ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ; 
-                rdf:type ?aq_mod_rdf_type .
+                a ?aq_mod_rdf_type .
                 
             FILTER (!CONTAINS(str(?a_object), " ")) .
-
+            
             }}"""
 
     r = graph.query(f"""
@@ -437,13 +438,13 @@ def display(revision, paths, filename):
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 <http://purl.org/dc/terms/title> ?run_name ;
-                rdf:type ?run_rdf_type .
+                a ?run_rdf_type .
                 
             ?a_object <https://odahub.io/ontology#AstroObject> ?a_object_name ;
-                rdf:type ?a_obj_rdf_type .
+                a ?a_obj_rdf_type .
                 
             ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
-                rdf:type ?aq_mod_rdf_type .
+                a ?aq_mod_rdf_type .
             
         }}
         {query_where}
@@ -465,4 +466,30 @@ def display(revision, paths, filename):
     stream = io.StringIO()
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
+
+    edges = collections.defaultdict(list)
+
+    # list of edges and simple color change
+    for edge in pydot_graph.get_edge_list():
+
+        # dest_node = pydot_graph.get_node(edge.get_destination())[0]
+        # if dest_node.obj_dict['attributes']['label'] is not None:
+        #     print(dest_node.obj_dict['attributes']['label'])
+        #     label = dest_node.obj_dict['attributes']['label']
+        #     table = etree.HTML(label).find("body/table")
+        #     table.set('color', '#008000')
+        #     str_table = str(etree.tostring(table)).replace('&gt;\'', '>').replace('b\'', '< ')
+        #     print(str_table)
+        #     dest_node.obj_dict['attributes']['label'] = str_table
+        # print("\n")
+        # src_node = pydot_graph.get_node(edge.get_source())[0]
+        # simple color code
+        if 'rdf:type' in edge.obj_dict['attributes']['label']:
+            edge.obj_dict['attributes']['color'] = 'RED'
+        if 'oda:isRequestingAstroObject' in edge.obj_dict['attributes']['label']:
+            edge.obj_dict['attributes']['color'] = 'BLUE'
+        if 'oda:isUsing' in edge.obj_dict['attributes']['label']:
+            edge.obj_dict['attributes']['color'] = 'GREEN'
+        edges[edge.get_source()].append(edge.get_destination())
+
     pydot_graph.write_png(filename)
