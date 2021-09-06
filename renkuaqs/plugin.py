@@ -140,6 +140,7 @@ def _graph(revision, paths):
         "aqs": "http://www.w3.org/ns/aqs#",
         "oa": "http://www.w3.org/ns/oa#",
         "xsd": "http://www.w3.org/2001/XAQSchema#",
+        #oda
     }
     return provenance_graph
 
@@ -227,7 +228,8 @@ def leaderboard(revision, format, metric, paths):
     "--diff", nargs=2, help="Print the difference between two model revisions"
 )
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
-def params(revision, format, paths, diff):
+@click.option("-f", "--full", is_flag=True)
+def params(revision, format, paths, diff, full):
     """List the parameters of astroquery requests"""
 
     def _param_value(rdf_iteral):
@@ -245,15 +247,18 @@ def params(revision, format, paths, diff):
     output.field_names = ["Run ID", "AstroQuery Module", "Astro Object"]
     output.align["Run ID"] = "l"
 
-    query_where = """WHERE {{
-        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
-             <http://odahub.io/ontology#isUsing> ?aq_module;
-             ^oa:hasBody/oa:hasTarget ?runId .
-        ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
-        ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-        ?run ?p ?o .
+    if full:
+        query_where = """WHERE {{ ?run ?p ?o . }}""" # some loose selection here
+    else:
+        query_where = """WHERE {{
+            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
+                <http://odahub.io/ontology#isUsing> ?aq_module;
+                ^oa:hasBody/oa:hasTarget ?runId .
+            ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+            ?run ?p ?o .
 
-        }}"""
+            }}"""
 
     for r in graph.query(f"""
         SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name 
@@ -274,7 +279,7 @@ def params(revision, format, paths, diff):
         ?run ?p ?o .
     }}
     {query_where}
-    """)      
+    """)          
 
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")

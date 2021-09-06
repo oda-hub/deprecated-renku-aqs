@@ -35,21 +35,23 @@ def fetch_example_oda_repo(fresh=False, reset=True) -> str:
 
 
 # on purpose from shell
-def run_renku_cli(cmd: list, repo_dir: str, root_dir: str):
-    
-
-
-    subprocess.check_call(["renku", "run"] + cmd, cwd=repo_dir, env=dict(
+def renku_cli(cmd: list, repo_dir: str, root_dir: str):
+  
+    subprocess.check_call(["renku"] + cmd, cwd=repo_dir, env=dict(
             {**os.environ,
              "PYTHONPATH": str(root_dir) + ":" + str(root_dir) + "/tests:" + os.environ.get('PYTHONPATH', "")}
         ))
 
 
 def test_example_oda_repo_code_py(pytestconfig):
-    repo_dir = fetch_example_oda_repo()
+    repo_dir = fetch_example_oda_repo(fresh=True, reset=True)
 
-    run_renku_cli(["python", "example_code.py", "--output", "test-output.txt"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    renku_cli(["run", "python", "example_code.py", "--output", "test-output.txt"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
 
+    renku_cli(["graph", "generate", "--force"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+
+    renku_cli(["aqs", "params"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    
     #TODO:
     #renku aqs params
     #rdf2dot renku-aqs-test-case/subgraph.ttl  | dot -Tpng -o subgraph.png
@@ -58,4 +60,4 @@ def test_example_oda_repo_code_py(pytestconfig):
 def test_example_oda_repo_papermill(pytestconfig):
     repo_dir = fetch_example_oda_repo()
 
-    run_renku_cli(["papermill", "final-an.ipynb", "out.ipynb", "--output", "test-output.txt"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    renku_cli(["run", "papermill", "final-an.ipynb", "out.ipynb", "--output", "test-output.txt"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
