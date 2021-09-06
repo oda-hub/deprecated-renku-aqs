@@ -370,11 +370,8 @@ def display(revision, paths, filename):
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
 
-    edges = collections.defaultdict(list)
-
     # list of edges and simple color change
     for edge in pydot_graph.get_edge_list():
-
         # simple color code
         if 'rdf:type' in edge.obj_dict['attributes']['label']:
             edge.obj_dict['attributes']['color'] = 'RED'
@@ -382,6 +379,5 @@ def display(revision, paths, filename):
             edge.obj_dict['attributes']['color'] = 'BLUE'
         if 'oda:isUsing' in edge.obj_dict['attributes']['label']:
             edge.obj_dict['attributes']['color'] = 'GREEN'
-        edges[edge.get_source()].append(edge.get_destination())
 
     pydot_graph.write_png(filename)
