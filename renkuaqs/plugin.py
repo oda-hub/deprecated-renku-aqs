@@ -389,11 +389,6 @@ def display(revision, paths, filename):
             G.remove(t)
 
     rdf2dot.rdf2dot(G, stream, opts={display})
-
-    print("----------------------------------")
-    print("label_values_dict: ", label_values_dict)
-    print("----------------------------------")
-
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
 
     # list of edges and simple color change
@@ -411,10 +406,6 @@ def display(revision, paths, filename):
             b_content = re.search('<B>(.*?)</B>', node.obj_dict['attributes']['label'], flags=re.DOTALL)
             if b_content:
                 b_content = b_content.group(1)
-                print("b_content: ", b_content)
-                print("node before: ", node.obj_dict['attributes']['label'])
                 node.obj_dict['attributes']['label'] = node.obj_dict['attributes']['label'].replace(f'<B>{b_content}</B>', f'<B>{label_values_dict[b_content]}</B>')
-                print("node after: ", node.obj_dict['attributes']['label'])
-            print("----------------------------------")
 
     pydot_graph.write_png(filename)
