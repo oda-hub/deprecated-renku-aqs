@@ -17,14 +17,13 @@
 # limitations under the License.
 
 import os
-import pathlib
 import re
-import sys
+import pathlib
 import json
 import click
 import rdflib
 import rdflib.tools.rdf2dot
-from copy import deepcopy
+
 from pathlib import Path
 
 from rdflib.tools import rdf2dot
@@ -37,7 +36,6 @@ from renku.core.management import LocalClient
 
 from prettytable import PrettyTable
 
-#from aqsconverters.models import Run
 from aqsconverters.io import AQS_DIR, COMMON_DIR
 
 
@@ -284,7 +282,6 @@ def params(revision, format, paths, diff):
         {query_where}
         """)
 
-
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
     G.bind("oda", "http://odahub.io/ontology#")
@@ -311,9 +308,29 @@ def display(revision, paths, filename):
     """Simple graph visualization """
     import io
     from IPython.display import display
+    from rdflib.tools.rdf2dot import LABEL_PROPERTIES
     import pydotplus
-    import collections
-    from lxml import etree
+
+
+    def qname(x, g):
+        """Compute qname."""
+        try:
+            q = g.compute_qname(x)
+            return q[0] + ":" + q[2]
+        except Exception:
+            return x
+
+    def label(x, g):
+
+        for labelProp in LABEL_PROPERTIES:
+            l = g.value(x, labelProp)
+            if l:
+                return l
+
+        try:
+            return g.namespace_manager.compute_qname(x)[2]
+        except:
+            return x
 
     graph = _graph(revision, paths)
 
@@ -323,14 +340,14 @@ def display(revision, paths, filename):
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 <http://purl.org/dc/terms/title> ?run_name ;
-                 ^oa:hasBody/oa:hasTarget ?runId ;
-                 a ?run_rdf_type .
+                rdf:type ?run_rdf_type ;
+                 ^oa:hasBody/oa:hasTarget ?runId .
                  
             ?a_object <http://purl.org/dc/terms/title> ?a_object_name ; 
-                a ?a_obj_rdf_type .
+                rdf:type ?a_obj_rdf_type .
                 
             ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ; 
-                a ?aq_mod_rdf_type .
+                rdf:type ?aq_mod_rdf_type .
                 
             FILTER (!CONTAINS(str(?a_object), " ")) .
             
@@ -341,14 +358,13 @@ def display(revision, paths, filename):
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 <http://purl.org/dc/terms/title> ?run_name ;
-                a ?run_rdf_type .
+                rdf:type ?run_rdf_type .
                 
             ?a_object <https://odahub.io/ontology#AstroObject> ?a_object_name ;
-                a ?a_obj_rdf_type .
+                rdf:type ?a_obj_rdf_type .
                 
             ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
-                a ?aq_mod_rdf_type .
-            
+                rdf:type ?aq_mod_rdf_type .
         }}
         {query_where}
         """)
@@ -359,15 +375,25 @@ def display(revision, paths, filename):
     G.bind("odas", "https://odahub.io/ontology#") # the same
     G.bind("local-renku", f"file://{renku_path}/")
 
-    serial = G.serialize(format="n3").decode()
-
-    print(serial)
-
-    with open("subgraph.ttl", "w") as f:
-        f.write(serial)
-
     stream = io.StringIO()
+
+    label_values_dict = {}
+
+    for t in G.triples((None, None, None)):
+        s, p, o = t
+        if p == rdflib.RDF.type:
+            rdf_type_label = label(s, G)
+            rdf_type_value = qname(o, G)
+            label_values_dict[rdf_type_label] = rdf_type_value
+            # G.add((s, p, rdflib.term.Literal(rdf_type_value)))
+            G.remove(t)
+
     rdf2dot.rdf2dot(G, stream, opts={display})
+
+    print("----------------------------------")
+    print("label_values_dict: ", label_values_dict)
+    print("----------------------------------")
+
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
 
     # list of edges and simple color change
@@ -379,5 +405,16 @@ def display(revision, paths, filename):
             edge.obj_dict['attributes']['color'] = 'BLUE'
         if 'oda:isUsing' in edge.obj_dict['attributes']['label']:
             edge.obj_dict['attributes']['color'] = 'GREEN'
+
+    for node in pydot_graph.get_nodes():
+        if 'label' in node.obj_dict['attributes']:
+            b_content = re.search('<B>(.*?)</B>', node.obj_dict['attributes']['label'], flags=re.DOTALL)
+            if b_content:
+                b_content = b_content.group(1)
+                print("b_content: ", b_content)
+                print("node before: ", node.obj_dict['attributes']['label'])
+                node.obj_dict['attributes']['label'] = node.obj_dict['attributes']['label'].replace(f'<B>{b_content}</B>', f'<B>{label_values_dict[b_content]}</B>')
+                print("node after: ", node.obj_dict['attributes']['label'])
+            print("----------------------------------")
 
     pydot_graph.write_png(filename)
