@@ -38,6 +38,7 @@ from renku.core.management import LocalClient
 from prettytable import PrettyTable
 
 from aqsconverters.io import AQS_DIR, COMMON_DIR
+from six import b
 
 
 class AQS(object):
@@ -304,8 +305,9 @@ def params(revision, format, paths, diff):
     help="The git revision to generate the log for, default: HEAD",
 )
 @click.option("--filename", default="graph.png", help="The filename of the output file image")
+@click.option("--no_oda_info", is_flag=True, help="Exclude oda related out in the output graph")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
-def display(revision, paths, filename):
+def display(revision, paths, filename, no_oda_info):
     """Simple graph visualization """
     import io
     from IPython.display import display
@@ -378,8 +380,7 @@ def display(revision, paths, filename):
             FILTER (!CONTAINS(str(?a_object), " ")) .
             }}"""
 
-    r = graph.query(f"""
-        CONSTRUCT {{
+    query_construct_action = """
             ?action a <http://schema.org/Action> ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                 ?has ?actionParam .
@@ -389,12 +390,16 @@ def display(revision, paths, filename):
                 <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
                 <http://schema.org/valueReference> ?parameter_value ;
                 <http://schema.org/defaultValue> ?actionParamValue .
-                
+    """
+
+    query_construct_oda_info = ""
+    if not no_oda_info:
+        query_construct_oda_info += """
             ?parameter_value a ?parameter_valueType .
-        
+
             ?activity a ?activityType ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value .
-            
+
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 <http://purl.org/dc/terms/title> ?run_name ;
@@ -406,9 +411,20 @@ def display(revision, paths, filename):
 
             ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
                 a ?aq_mod_rdf_type .
-        }}
+        """
+    query_construct = f"""CONSTRUCT {{
+            {query_construct_action}
+                
+            {query_construct_oda_info}
+                
+        }}"""
+
+    query = f"""{query_construct}
         {query_where}
-        """)
+        """
+    print("query: ", query)
+
+    r = graph.query(query)
 
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
@@ -427,7 +443,6 @@ def display(revision, paths, filename):
 
     args_default_value_dict = {}
     args_prefixes_default_value_dict = {}
-    args_positions_default_value_dict = {}
 
     in_default_value_dict = {}
 
@@ -442,9 +457,12 @@ def display(revision, paths, filename):
         if s_label not in in_default_value_dict:
             in_default_value_dict[s_label] = []
         input_obj_list = list(G[o])
-        for input_s, input_o in input_obj_list:
-            if input_s.n3() == "<http://schema.org/defaultValue>":
+        for input_p, input_o in input_obj_list:
+            if input_p.n3() == "<http://schema.org/defaultValue>":
                 in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
+                G.remove((o, input_p, input_o))
+            if input_p.n3() == "<https://swissdatasciencecenter.github.io/renku-ontology#position>":
+                G.remove((o, input_p, input_o))
         G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), o))
 
     # print("-------------------------------------------------------------")
@@ -458,15 +476,18 @@ def display(revision, paths, filename):
         if s_label not in args_prefixes_default_value_dict:
             args_prefixes_default_value_dict[s_label] = []
         arg_obj_list = list(G[o])
-        for arg_s, arg_o in arg_obj_list:
-            if arg_s.n3() == "<https://swissdatasciencecenter.github.io/renku-ontology#prefix>":
+        for arg_p, arg_o in arg_obj_list:
+            if arg_p.n3() == "<https://swissdatasciencecenter.github.io/renku-ontology#prefix>":
                 args_prefixes_default_value_dict[s_label].append(arg_o.n3().strip('\"'))
-            if arg_s.n3() == "<http://schema.org/defaultValue>":
+                G.remove((o, arg_p, arg_o))
+            if arg_p.n3() == "<http://schema.org/defaultValue>":
                 # get the position
                 position_o = list(G.objects(
                     subject=o,
                     predicate=rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position')))[0]
                 args_default_value_dict[s_label].append((arg_o.n3().strip('\"'), position_o.value))
+                G.remove((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), position_o))
+                G.remove((o, arg_p, arg_o))
         G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), o))
 
     # print("-------------------------------------------------------------")
@@ -476,12 +497,17 @@ def display(revision, paths, filename):
     for s, o in outputs_list:
         s_label = label(s, G)
         if s_label not in out_default_value_dict:
-            out_default_value_dict[s] = []
+            out_default_value_dict[s_label] = []
         output_obj_list = list(G[o])
         for output_s, output_o in output_obj_list:
             if output_s.n3() == "<http://schema.org/defaultValue>":
-                out_default_value_dict[s].append(output_o.n3().strip('\"'))
+                out_default_value_dict[s_label].append(output_o.n3().strip('\"'))
 
+    # remove value reference in case we plot no_oda_info
+    if no_oda_info:
+        outputs_list = G[:rdflib.URIRef('http://schema.org/valueReference')]
+        for s, o in outputs_list:
+            G.remove((s, rdflib.URIRef('http://schema.org/valueReference'), o))
     # analyze types
     types_list = G[:rdflib.RDF.type]
     for s, o in types_list:
@@ -503,7 +529,6 @@ def display(revision, paths, filename):
         if 'oda:isUsing' in edge.obj_dict['attributes']['label']:
             edge.obj_dict['attributes']['color'] = 'GREEN'
 
-    # print("-------------------------------------------------------------")
     default_value_table_row = "<tr>" \
                               "<td align='left'>{attribute_id}</td>" \
                               "<td align='left'>&quot;{attribute_default_value}&quot;</td>" \
@@ -514,6 +539,9 @@ def display(revision, paths, filename):
             b_content = b_content.group(1)
             if b_content and b_content in type_label_values_dict:
                 node.obj_dict['attributes']['label'] = node.obj_dict['attributes']['label'].replace(f'<B>{b_content}</B>', f'<B>{type_label_values_dict[b_content]}</B>')
+                # put the arguments in the action tree node
+                # parse the whole node table into a lxml object
+                table_html = etree.fromstring(node.obj_dict['attributes']['label'][1:-1])
                 if b_content in args_default_value_dict.keys():
                     # order the arguments according to their position
                     args_pos_list = args_default_value_dict[b_content].copy()
@@ -529,14 +557,26 @@ def display(revision, paths, filename):
                         attribute_id="inputs",
                         attribute_default_value=(' '.join(in_default_value_dict[b_content]))
                     )
-                    # parse the whole node table into a lxml object
-                    table_html = etree.fromstring(node.obj_dict['attributes']['label'][1:-1])
                     # parse the arguments and inputs table rows into a lxml object
                     table_args_row_element = etree.fromstring(table_args_row_str)
                     table_inputs_row_element = etree.fromstring(table_inputs_row_str)
                     # add the row to the table
                     table_html.append(table_inputs_row_element)
                     table_html.append(table_args_row_element)
+                    node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
+                # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
+                if 'CommandOutput' in type_label_values_dict[b_content]:
+                    for tr in table_html.findall('tr'):
+                        list_td = tr.findall('td')
+                        if len(list_td) == 2:
+                            left_row_element_str = etree.tostring(list_td[0], encoding='unicode')
+                            if 'defaultValue' in left_row_element_str:
+                                tr.remove(list_td[0])
+                                if 'align' in list_td[1].keys():
+                                    list_td[1].attrib['align'] = 'center'
+                                    list_td[1].attrib['colspan'] = '2'
+                            if 'position' in left_row_element_str:
+                                table_html.remove(tr)
                     node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
 
     pydot_graph.write_png(filename)
