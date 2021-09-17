@@ -315,14 +315,6 @@ def display(revision, paths, filename, no_oda_info):
     import pydotplus
     from lxml import etree
 
-    def qname(x, g):
-        """Compute qname."""
-        try:
-            q = g.compute_qname(x)
-            return q[0] + ":" + q[2]
-        except Exception:
-            return x
-
     def label(x, g):
 
         for labelProp in LABEL_PROPERTIES:
@@ -412,6 +404,7 @@ def display(revision, paths, filename, no_oda_info):
             ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
                 a ?aq_mod_rdf_type .
         """
+
     query_construct = f"""CONSTRUCT {{
             {query_construct_action}
                 
@@ -422,6 +415,7 @@ def display(revision, paths, filename, no_oda_info):
     query = f"""{query_construct}
         {query_where}
         """
+    print("query: " , query)
 
     r = graph.query(query)
 
@@ -457,10 +451,6 @@ def display(revision, paths, filename, no_oda_info):
         for input_p, input_o in input_obj_list:
             if input_p.n3() == "<http://schema.org/defaultValue>":
                 in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
-                G.remove((o, input_p, input_o))
-            if input_p.n3() == "<https://swissdatasciencecenter.github.io/renku-ontology#position>":
-                G.remove((o, input_p, input_o))
-        G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), o))
 
     # analyze arguments
     args_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments')]
@@ -504,9 +494,7 @@ def display(revision, paths, filename, no_oda_info):
     # analyze types
     types_list = G[:rdflib.RDF.type]
     for s, o in types_list:
-        rdf_type_label = label(s, G)
-        rdf_type_value = qname(o, G)
-        type_label_values_dict[rdf_type_label] = rdf_type_value
+        type_label_values_dict[label(s, G)] = G.compute_qname(o)[2]
         G.remove((s, rdflib.RDF.type, o))
 
     rdf2dot.rdf2dot(G, stream, opts={display})
@@ -546,19 +534,21 @@ def display(revision, paths, filename, no_oda_info):
                         attribute_default_value=(' '.join(args_prefixes_default_value_dict[b_content])
                                                  + sorted_args)
                     )
-                    table_inputs_row_str = default_value_table_row.format(
-                        attribute_id="inputs",
-                        attribute_default_value=(' '.join(in_default_value_dict[b_content]))
-                    )
                     # parse the arguments and inputs table rows into a lxml object
                     table_args_row_element = etree.fromstring(table_args_row_str)
-                    table_inputs_row_element = etree.fromstring(table_inputs_row_str)
+                    # table_inputs_row_element = etree.fromstring(table_inputs_row_str)
                     # add the row to the table
-                    table_html.append(table_inputs_row_element)
                     table_html.append(table_args_row_element)
                     node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
                 # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
-                if 'CommandOutput' in type_label_values_dict[b_content]:
+                if 'CommandOutput' in type_label_values_dict[b_content] or 'CommandInput' in type_label_values_dict[b_content]:
+                    # color change
+                    table_html.attrib['border'] = '2'
+                    table_html.attrib['cellborder'] = '1'
+                    if 'CommandOutput' in type_label_values_dict[b_content]:
+                        table_html.attrib['color'] = '#FFFF00'
+                    else:
+                        table_html.attrib['color'] = '#00CC00'
                     for tr in table_html.findall('tr'):
                         list_td = tr.findall('td')
                         if len(list_td) == 2:
