@@ -26,6 +26,7 @@ import rdflib.tools.rdf2dot
 
 from pathlib import Path
 
+from matplotlib.table import table
 from rdflib.tools import rdf2dot
 from renku.core.models.cwl.annotation import Annotation
 from renku.core.incubation.command import Command
@@ -266,7 +267,7 @@ def params(revision, format, paths, diff):
             ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
 
             ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-
+    
             ?run ?p ?o .
 
             FILTER (!CONTAINS(str(?a_object), " ")) .
@@ -310,7 +311,7 @@ def display(revision, paths, filename):
     from IPython.display import display
     from rdflib.tools.rdf2dot import LABEL_PROPERTIES
     import pydotplus
-
+    from lxml import etree
 
     def qname(x, g):
         """Compute qname."""
@@ -337,34 +338,74 @@ def display(revision, paths, filename):
     renku_path = renku_context().renku_path
 
     query_where = """WHERE {{
+            ?action a <http://schema.org/Action> ; 
+                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
+                ?has ?actionParam .
+                
+            FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>, 
+                <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>, 
+                <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs>))
+            
+            ?actionParam a ?actionParamType ;
+                <http://schema.org/valueReference> ?parameter_value ;
+                <http://schema.org/defaultValue> ?actionParamValue .
+                
+            OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#prefix> ?actionPrefix }
+            OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition }
+                 
+             FILTER (?actionParamType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput>, 
+                <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput>, 
+                <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>))
+            
+            ?parameter_value a ?parameter_valueType .
+            
+            ?activity a ?activityType ;
+                <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value .
+            
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 <http://purl.org/dc/terms/title> ?run_name ;
-                rdf:type ?run_rdf_type ;
-                 ^oa:hasBody/oa:hasTarget ?runId .
-                 
-            ?a_object <http://purl.org/dc/terms/title> ?a_object_name ; 
-                rdf:type ?a_obj_rdf_type .
-                
-            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ; 
-                rdf:type ?aq_mod_rdf_type .
+                a ?run_rdf_type ;
+                ^oa:hasBody/oa:hasTarget ?runId ;
+                ^oa:hasBody/oa:hasTarget ?activity .
+
+            ?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
+                a ?a_obj_rdf_type .
+
+            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ;
+                a ?aq_mod_rdf_type .
                 
             FILTER (!CONTAINS(str(?a_object), " ")) .
-            
             }}"""
 
     r = graph.query(f"""
         CONSTRUCT {{
+            ?action a <http://schema.org/Action> ;
+                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
+                ?has ?actionParam .
+        
+            ?actionParam a ?actionParamType ;
+                <https://swissdatasciencecenter.github.io/renku-ontology#prefix> ?actionPrefix ;
+                <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
+                <http://schema.org/valueReference> ?parameter_value ;
+                <http://schema.org/defaultValue> ?actionParamValue .
+                
+            ?parameter_value a ?parameter_valueType .
+        
+            ?activity a ?activityType ;
+                <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value .
+            
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 <http://purl.org/dc/terms/title> ?run_name ;
-                rdf:type ?run_rdf_type .
-                
+                oa:hasTarget ?activity ;
+                a ?run_rdf_type .
+
             ?a_object <https://odahub.io/ontology#AstroObject> ?a_object_name ;
-                rdf:type ?a_obj_rdf_type .
-                
+                a ?a_obj_rdf_type .
+
             ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
-                rdf:type ?aq_mod_rdf_type .
+                a ?aq_mod_rdf_type .
         }}
         {query_where}
         """)
@@ -375,18 +416,79 @@ def display(revision, paths, filename):
     G.bind("odas", "https://odahub.io/ontology#") # the same
     G.bind("local-renku", f"file://{renku_path}/")
 
+    serial = G.serialize(format="n3").decode()
+
+    with open("subgraph.ttl", "w") as f:
+        f.write(serial)
+
     stream = io.StringIO()
 
-    label_values_dict = {}
+    type_label_values_dict = {}
 
-    for t in G.triples((None, None, None)):
-        s, p, o = t
-        if p == rdflib.RDF.type:
-            rdf_type_label = label(s, G)
-            rdf_type_value = qname(o, G)
-            label_values_dict[rdf_type_label] = rdf_type_value
-            # G.add((s, p, rdflib.term.Literal(rdf_type_value)))
-            G.remove(t)
+    args_default_value_dict = {}
+    args_prefixes_default_value_dict = {}
+    args_positions_default_value_dict = {}
+
+    in_default_value_dict = {}
+
+    out_default_value_dict = {}
+
+    # print("-------------------------------------------------------------")
+    # print("Inputs:")
+    # analyze inputs
+    inputs_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs')]
+    for s, o in inputs_list:
+        s_label = label(s, G)
+        if s_label not in in_default_value_dict:
+            in_default_value_dict[s_label] = []
+        input_obj_list = list(G[o])
+        for input_s, input_o in input_obj_list:
+            if input_s.n3() == "<http://schema.org/defaultValue>":
+                in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
+        G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), o))
+
+    # print("-------------------------------------------------------------")
+    # print("Arguments:")
+    # analyze arguments
+    args_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments')]
+    for s, o in args_list:
+        s_label = label(s, G)
+        if s_label not in args_default_value_dict:
+            args_default_value_dict[s_label] = []
+        if s_label not in args_prefixes_default_value_dict:
+            args_prefixes_default_value_dict[s_label] = []
+        arg_obj_list = list(G[o])
+        for arg_s, arg_o in arg_obj_list:
+            if arg_s.n3() == "<https://swissdatasciencecenter.github.io/renku-ontology#prefix>":
+                args_prefixes_default_value_dict[s_label].append(arg_o.n3().strip('\"'))
+            if arg_s.n3() == "<http://schema.org/defaultValue>":
+                # get the position
+                position_o = list(G.objects(
+                    subject=o,
+                    predicate=rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position')))[0]
+                args_default_value_dict[s_label].append((arg_o.n3().strip('\"'), position_o.value))
+        G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), o))
+
+    # print("-------------------------------------------------------------")
+    # print("Outputs:")
+    # analyze outputs
+    outputs_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs')]
+    for s, o in outputs_list:
+        s_label = label(s, G)
+        if s_label not in out_default_value_dict:
+            out_default_value_dict[s] = []
+        output_obj_list = list(G[o])
+        for output_s, output_o in output_obj_list:
+            if output_s.n3() == "<http://schema.org/defaultValue>":
+                out_default_value_dict[s].append(output_o.n3().strip('\"'))
+
+    # analyze types
+    types_list = G[:rdflib.RDF.type]
+    for s, o in types_list:
+        rdf_type_label = label(s, G)
+        rdf_type_value = qname(o, G)
+        type_label_values_dict[rdf_type_label] = rdf_type_value
+        G.remove((s, rdflib.RDF.type, o))
 
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
@@ -401,11 +503,41 @@ def display(revision, paths, filename):
         if 'oda:isUsing' in edge.obj_dict['attributes']['label']:
             edge.obj_dict['attributes']['color'] = 'GREEN'
 
+    # print("-------------------------------------------------------------")
+    default_value_table_row = "<tr>" \
+                              "<td align='left'>{attribute_id}</td>" \
+                              "<td align='left'>&quot;{attribute_default_value}&quot;</td>" \
+                              "</tr>"
     for node in pydot_graph.get_nodes():
         if 'label' in node.obj_dict['attributes']:
             b_content = re.search('<B>(.*?)</B>', node.obj_dict['attributes']['label'], flags=re.DOTALL)
-            if b_content:
-                b_content = b_content.group(1)
-                node.obj_dict['attributes']['label'] = node.obj_dict['attributes']['label'].replace(f'<B>{b_content}</B>', f'<B>{label_values_dict[b_content]}</B>')
+            b_content = b_content.group(1)
+            if b_content and b_content in type_label_values_dict:
+                node.obj_dict['attributes']['label'] = node.obj_dict['attributes']['label'].replace(f'<B>{b_content}</B>', f'<B>{type_label_values_dict[b_content]}</B>')
+                if b_content in args_default_value_dict.keys():
+                    # order the arguments according to their position
+                    args_pos_list = args_default_value_dict[b_content].copy()
+                    args_pos_list.sort(key=lambda y: y[1])
+                    sorted_args = ' '.join(t[0] for t in args_pos_list)
+                    # format the arguments table row
+                    table_args_row_str = default_value_table_row.format(
+                        attribute_id="arguments",
+                        attribute_default_value=(' '.join(args_prefixes_default_value_dict[b_content])
+                                                 + sorted_args)
+                    )
+                    table_inputs_row_str = default_value_table_row.format(
+                        attribute_id="inputs",
+                        attribute_default_value=(' '.join(in_default_value_dict[b_content]))
+                    )
+                    # parse the whole node table into a lxml object
+                    table_html = etree.fromstring(node.obj_dict['attributes']['label'][1:-1])
+                    # parse the arguments and inputs table rows into a lxml object
+                    table_args_row_element = etree.fromstring(table_args_row_str)
+                    table_inputs_row_element = etree.fromstring(table_inputs_row_str)
+                    # add the row to the table
+                    table_html.append(table_inputs_row_element)
+                    table_html.append(table_args_row_element)
+                    node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
 
     pydot_graph.write_png(filename)
+
