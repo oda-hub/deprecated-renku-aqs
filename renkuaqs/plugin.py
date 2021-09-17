@@ -422,7 +422,6 @@ def display(revision, paths, filename, no_oda_info):
     query = f"""{query_construct}
         {query_where}
         """
-    print("query: ", query)
 
     r = graph.query(query)
 
@@ -448,8 +447,6 @@ def display(revision, paths, filename, no_oda_info):
 
     out_default_value_dict = {}
 
-    # print("-------------------------------------------------------------")
-    # print("Inputs:")
     # analyze inputs
     inputs_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs')]
     for s, o in inputs_list:
@@ -465,8 +462,6 @@ def display(revision, paths, filename, no_oda_info):
                 G.remove((o, input_p, input_o))
         G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), o))
 
-    # print("-------------------------------------------------------------")
-    # print("Arguments:")
     # analyze arguments
     args_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments')]
     for s, o in args_list:
@@ -490,8 +485,6 @@ def display(revision, paths, filename, no_oda_info):
                 G.remove((o, arg_p, arg_o))
         G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), o))
 
-    # print("-------------------------------------------------------------")
-    # print("Outputs:")
     # analyze outputs
     outputs_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs')]
     for s, o in outputs_list:
@@ -580,4 +573,3 @@ def display(revision, paths, filename, no_oda_info):
                     node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
 
     pydot_graph.write_png(filename)
-
