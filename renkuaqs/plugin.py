@@ -516,11 +516,15 @@ def display(revision, paths, filename, no_oda_info):
         if 'label' in node.obj_dict['attributes']:
             b_content = re.search('<B>(.*?)</B>', node.obj_dict['attributes']['label'], flags=re.DOTALL)
             b_content = b_content.group(1)
+            # parse the whole node table into a lxml object
+            table_html = etree.fromstring(node.obj_dict['attributes']['label'][1:-1])
+            # removal of the id table row
+            tr_list = table_html.findall('tr')
+            table_html.remove(tr_list[1])
+
             if b_content and b_content in type_label_values_dict:
                 node.obj_dict['attributes']['label'] = node.obj_dict['attributes']['label'].replace(f'<B>{b_content}</B>', f'<B>{type_label_values_dict[b_content]}</B>')
                 # put the arguments in the action tree node
-                # parse the whole node table into a lxml object
-                table_html = etree.fromstring(node.obj_dict['attributes']['label'][1:-1])
                 if b_content in args_default_value_dict.keys():
                     # order the arguments according to their position
                     args_pos_list = args_default_value_dict[b_content].copy()
@@ -537,7 +541,6 @@ def display(revision, paths, filename, no_oda_info):
                     # table_inputs_row_element = etree.fromstring(table_inputs_row_str)
                     # add the row to the table
                     table_html.append(table_args_row_element)
-                    node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
                 # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
                 if 'CommandOutput' in type_label_values_dict[b_content] or 'CommandInput' in type_label_values_dict[b_content]:
                     # color change
@@ -547,7 +550,7 @@ def display(revision, paths, filename, no_oda_info):
                         table_html.attrib['color'] = '#FFFF00'
                     else:
                         table_html.attrib['color'] = '#00CC00'
-                    for tr in table_html.findall('tr'):
+                    for tr in tr_list:
                         list_td = tr.findall('td')
                         if len(list_td) == 2:
                             left_row_element_str = etree.tostring(list_td[0], encoding='unicode')
@@ -558,6 +561,5 @@ def display(revision, paths, filename, no_oda_info):
                                     list_td[1].attrib['colspan'] = '2'
                             if 'position' in left_row_element_str:
                                 table_html.remove(tr)
-                    node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
-
+            node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
     pydot_graph.write_png(filename)
