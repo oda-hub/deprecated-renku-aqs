@@ -305,7 +305,7 @@ def params(revision, format, paths, diff):
     help="The git revision to generate the log for, default: HEAD",
 )
 @click.option("--filename", default="graph.png", help="The filename of the output file image")
-@click.option("--no_oda_info", is_flag=True, help="Exclude oda related out in the output graph")
+@click.option("--no-oda-info", is_flag=True, help="Exclude oda related out in the output graph")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def display(revision, paths, filename, no_oda_info):
     """Simple graph visualization """
@@ -415,8 +415,6 @@ def display(revision, paths, filename, no_oda_info):
     query = f"""{query_construct}
         {query_where}
         """
-    print("query: " , query)
-
     r = graph.query(query)
 
     G = rdflib.Graph()
