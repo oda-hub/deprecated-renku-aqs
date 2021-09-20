@@ -514,39 +514,40 @@ def display(revision, paths, filename, no_oda_info):
                               "</tr>"
     for node in pydot_graph.get_nodes():
         if 'label' in node.obj_dict['attributes']:
-            b_content = re.search('<B>(.*?)</B>', node.obj_dict['attributes']['label'], flags=re.DOTALL)
-            b_content = b_content.group(1)
             # parse the whole node table into a lxml object
             table_html = etree.fromstring(node.obj_dict['attributes']['label'][1:-1])
-            # removal of the id table row
             tr_list = table_html.findall('tr')
-            table_html.remove(tr_list[1])
 
-            if b_content and b_content in type_label_values_dict:
-                node.obj_dict['attributes']['label'] = node.obj_dict['attributes']['label'].replace(f'<B>{b_content}</B>', f'<B>{type_label_values_dict[b_content]}</B>')
+            # modify the first row, hence the title of the node, and then all the rest
+            id_node = None
+            td_list_first_row = tr_list[0].findall('td')
+            if td_list_first_row is not None:
+                b_element_title = td_list_first_row[0].findall('B')
+                if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
+                    id_node = b_element_title[0].text
+                    b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
                 # put the arguments in the action tree node
-                if b_content in args_default_value_dict.keys():
+                if id_node is not None and id_node in args_default_value_dict.keys():
                     # order the arguments according to their position
-                    args_pos_list = args_default_value_dict[b_content].copy()
+                    args_pos_list = args_default_value_dict[id_node].copy()
                     args_pos_list.sort(key=lambda y: y[1])
                     sorted_args = ' '.join(t[0] for t in args_pos_list)
                     # format the arguments table row
                     table_args_row_str = default_value_table_row.format(
                         attribute_id="arguments",
-                        attribute_default_value=(' '.join(args_prefixes_default_value_dict[b_content])
+                        attribute_default_value=(' '.join(args_prefixes_default_value_dict[id_node])
                                                  + sorted_args)
                     )
                     # parse the arguments and inputs table rows into a lxml object
                     table_args_row_element = etree.fromstring(table_args_row_str)
-                    # table_inputs_row_element = etree.fromstring(table_inputs_row_str)
                     # add the row to the table
                     table_html.append(table_args_row_element)
                 # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
-                if 'CommandOutput' in type_label_values_dict[b_content] or 'CommandInput' in type_label_values_dict[b_content]:
+                if 'CommandOutput' in type_label_values_dict[id_node] or 'CommandInput' in type_label_values_dict[id_node]:
                     # color change
                     table_html.attrib['border'] = '2'
                     table_html.attrib['cellborder'] = '1'
-                    if 'CommandOutput' in type_label_values_dict[b_content]:
+                    if 'CommandOutput' in type_label_values_dict[id_node]:
                         table_html.attrib['color'] = '#FFFF00'
                     else:
                         table_html.attrib['color'] = '#00CC00'
@@ -561,5 +562,8 @@ def display(revision, paths, filename, no_oda_info):
                                     list_td[1].attrib['colspan'] = '2'
                             if 'position' in left_row_element_str:
                                 table_html.remove(tr)
+            # removal of the not-needed id table row
+            table_html.remove(tr_list[1])
+            # serialize back the table html
             node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
     pydot_graph.write_png(filename)
