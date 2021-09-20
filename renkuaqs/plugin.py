@@ -444,6 +444,10 @@ def push(obj):
 @kg.command()
 @click.pass_obj
 def suggest(obj):
+    # this implements https://github.com/oda-hub/smartsky/issues/25
+    # TODO: for better association and scoring see https://github.com/oda-hub/smartsky/issues/25
+    
+
     if obj.upstream.startswith("https://"):
         import odakb.sparql
 
