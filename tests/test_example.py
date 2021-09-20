@@ -51,6 +51,8 @@ def test_example_oda_repo_code_py(pytestconfig):
     renku_cli(["graph", "generate", "--force"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
 
     renku_cli(["aqs", "params"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+
+    renku_cli(["aqs", "kg", "push"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
     
     #TODO:
     #renku aqs params

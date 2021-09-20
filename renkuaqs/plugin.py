@@ -217,6 +217,53 @@ def leaderboard(revision, format, metric, paths):
     #     print(_create_leaderboard(leaderboard, metric))
 
 
+default_query_where = """
+WHERE {
+    ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
+        <http://odahub.io/ontology#isUsing> ?aq_module;
+        ^oa:hasBody/oa:hasTarget ?runId .
+    ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+    ?a_object ?o_p ?o_o .
+    ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+    ?run ?p ?o .
+    ?a_object ?obj_p ?obj_o .
+}
+"""
+
+def extract_aq_subgraph(graph, query_where=None, to_file="subgraph.ttl"):
+    if query_where is None:
+        query_where = default_query_where
+
+    query = f"""
+    CONSTRUCT {{
+        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
+        ?run <http://odahub.io/ontology#isUsing> ?aq_module .
+        ?run ?p ?o .
+        ?a_object ?obj_p ?obj_o .
+    }}
+
+    {query_where}
+    """
+    
+    r = graph.query(query)
+
+    G = rdflib.Graph()
+    G.parse(data=r.serialize(format="n3").decode(), format="n3")
+    G.bind("oda", "http://odahub.io/ontology#")  
+    G.bind("odas", "https://odahub.io/ontology#")   # the same
+    G.bind("local-renku", "file:///home/savchenk/work/oda/renku/renku-aqs/renku-aqs-test-case/.renku/") #??
+
+    serial = G.serialize(format="n3").decode()
+    
+    print(serial)
+
+    if to_file is not None:
+        with open(to_file, "w") as f:
+            f.write(serial)
+
+    return G
+
+
 @aqs.command()
 @click.option(
     "--revision",
@@ -250,15 +297,7 @@ def params(revision, format, paths, diff, full):
     if full:
         query_where = """WHERE {{ ?run ?p ?o . }}""" # some loose selection here
     else:
-        query_where = """WHERE {{
-            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
-                <http://odahub.io/ontology#isUsing> ?aq_module;
-                ^oa:hasBody/oa:hasTarget ?runId .
-            ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
-            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-            ?run ?p ?o .
-
-            }}"""
+        query_where = default_query_where
 
     for r in graph.query(f"""
         SELECT DISTINCT ?run ?runId ?a_object ?a_object_name ?aq_module ?aq_module_name 
@@ -272,27 +311,7 @@ def params(revision, format, paths, diff, full):
     
     print(output)
 
-    r = graph.query(f"""
-    CONSTRUCT {{
-        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
-        ?run <http://odahub.io/ontology#isUsing> ?aq_module .
-        ?run ?p ?o .
-    }}
-    {query_where}
-    """)          
-
-    G = rdflib.Graph()
-    G.parse(data=r.serialize(format="n3").decode(), format="n3")
-    G.bind("oda", "http://odahub.io/ontology#")  
-    G.bind("odas", "https://odahub.io/ontology#")   # the same
-    G.bind("local-renku", "file:///home/savchenk/work/oda/renku/renku-aqs/renku-aqs-test-case/.renku/") #??
-
-    serial = G.serialize(format="n3").decode()
-    
-    print(serial)
-
-    with open("subgraph.ttl", "w") as f:
-        f.write(serial)
+    extract_aq_subgraph(graph, query_where)
 
     #TODO: do construct and ingest into ODA KG
     #TODO: plot construct
@@ -362,3 +381,129 @@ def params(revision, format, paths, diff, full):
     #     for runid, v in model_params.items():
     #         output.add_row([runid, v["algorithm"], json.dumps(v["hp"])])
     #     print(output)
+
+def push_upstream():
+    pass
+
+@aqs.group()
+@click.option("-u", "--upstream", default=None)
+@click.pass_obj
+def kg(obj, upstream):    
+    if upstream is None:
+        oda_sparql_root = os.getenv('ODA_SPARQL_ROOT', None)
+        if oda_sparql_root is None:
+            upstream = "file://" + os.getenv('HOME') + "/.kg"
+        else:
+            upstream = oda_sparql_root
+
+    obj.upstream = upstream
+
+@kg.command()
+@click.pass_obj
+def push(obj):
+    graph = _graph("HEAD", [])
+
+    g = extract_aq_subgraph(graph)
+
+    if obj.upstream.startswith("file://"):
+        fn = obj.upstream.replace("file://", "")
+        G = rdflib.Graph()
+
+        if os.path.exists(fn):
+            print("found upstream KG:", fn)
+            with open(fn) as f:
+                G.parse(data=f.read(), format="n3")
+        else:
+            print("not yet found upstream KG:", fn)
+
+        G.parse(data=g.serialize(format="n3").decode(), format="n3")
+
+        serial = G.serialize(format="n3").decode()
+        
+        print(serial)
+
+        with open(fn, "w") as f:
+            f.write(serial)
+
+    elif obj.upstream.startswith("https://"):
+        import odakb.sparql
+
+        q = ""
+        for t in g:
+            _q = "{} {} {}\n".format(*[odakb.sparql.nuri(_t) for _t in t])
+            print("inserting:", _q)
+            odakb.sparql.insert(_q)
+
+#        q = g.serialize(format="n3").decode()
+
+        # print("to insert:", q)
+        
+        # odakb.sparql.insert(q)
+
+
+@kg.command()
+@click.pass_obj
+def suggest(obj):
+    if obj.upstream.startswith("https://"):
+        import odakb.sparql
+
+        d = odakb.sparql.select('?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object')
+
+        output = PrettyTable()
+        #output.field_names = ["Run", "Astro Object", "Score"]
+        output.field_names = ["Workflow", "Astro Object", "Score"]
+        output.align["Run"] = "l"
+
+        print("\033[32mtry other workflows requesting Astro Objects:")
+
+        for r in d:            
+            workflow = r['run'].split(".renku")[0]
+            print(r['run'], workflow, r['a_object'])
+            q = f"<{r['a_object']}> ?p ?o"
+            print("about object:", q)
+            print(odakb.sparql.select(q))
+            output.add_row([workflow, r['a_object'], 1.0])
+
+        #print(output)
+        
+        import odakb
+        D = odakb.sparql.query(
+            '''
+            PREFIX paper: <http://odahub.io/ontology/paper#>
+            SELECT * WHERE {
+                ?paper paper:mentions_named_grb ?name; 
+                       paper:grb_isot ?isot .
+            }
+            ORDER BY DESC(?isot)
+            LIMIT 100''', 
+            #'?name ?isot ?paper',
+            #tojdict=True,
+            )
+
+        #print("\033[31m>>>>", D['results']['bindings'][0], "\033[0m")
+
+        D = {
+                    d['name']['value']: {
+                        'isot': d['isot']['value'],
+                    }
+                for d in D['results']['bindings']}
+
+        for k, v in list(D.items())[:10]:
+            output.add_row(['', k, 1.])
+            
+        objects_of_interest = odakb.sparql.select(
+            '''
+            ?object an:name ?object_name; 
+                    an:importantIn ?domain;
+                    ?p ?o .
+            ''',          
+            '?object ?p ?o',  
+            tojdict=True,
+            limit=100)        
+
+        
+        source_list = list([v['an:name'][0] for k, v in objects_of_interest.items()])
+        for source in source_list:
+            output.add_row(['', source, 1.0])
+
+        print(output)
