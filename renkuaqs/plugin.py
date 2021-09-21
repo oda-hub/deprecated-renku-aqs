@@ -80,7 +80,6 @@ def process_run_annotations(run):
         
             elif p.match("*jsonld"):
                 print(f"found jsonLD annotation: {p}\n", json.dumps(json.load(p.open()), sort_keys=True, indent=4))
-                
 
                 # this will make annotations according to https://odahub.io/ontology/
                 aqs_annotation = aqs.load_model(p)
@@ -423,6 +422,7 @@ def display(revision, paths, filename, no_oda_info):
     G.bind("odas", "https://odahub.io/ontology#") # the same
     G.bind("local-renku", f"file://{renku_path}/")
 
+    # write over a ttl file
     serial = G.serialize(format="n3").decode()
 
     with open("subgraph.ttl", "w") as f:
@@ -449,6 +449,8 @@ def display(revision, paths, filename, no_oda_info):
         for input_p, input_o in input_obj_list:
             if input_p.n3() == "<http://schema.org/defaultValue>":
                 in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
+        G.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#inputOf'), s))
+        G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), o))
 
     # analyze arguments
     args_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments')]
@@ -526,44 +528,45 @@ def display(revision, paths, filename, no_oda_info):
                 if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
                     id_node = b_element_title[0].text
                     b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
-                # put the arguments in the action tree node
-                if id_node is not None and id_node in args_default_value_dict.keys():
-                    # order the arguments according to their position
-                    args_pos_list = args_default_value_dict[id_node].copy()
-                    args_pos_list.sort(key=lambda y: y[1])
-                    sorted_args = ' '.join(t[0] for t in args_pos_list)
-                    # format the arguments table row
-                    table_args_row_str = default_value_table_row.format(
-                        attribute_id="arguments",
-                        attribute_default_value=(' '.join(args_prefixes_default_value_dict[id_node])
-                                                 + sorted_args)
-                    )
-                    # parse the arguments and inputs table rows into a lxml object
-                    table_args_row_element = etree.fromstring(table_args_row_str)
-                    # add the row to the table
-                    table_html.append(table_args_row_element)
-                # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
-                if 'CommandOutput' in type_label_values_dict[id_node] or 'CommandInput' in type_label_values_dict[id_node]:
-                    # color change
-                    table_html.attrib['border'] = '2'
-                    table_html.attrib['cellborder'] = '1'
-                    if 'CommandOutput' in type_label_values_dict[id_node]:
-                        table_html.attrib['color'] = '#FFFF00'
-                    else:
-                        table_html.attrib['color'] = '#00CC00'
-                    for tr in tr_list:
-                        list_td = tr.findall('td')
-                        if len(list_td) == 2:
-                            left_row_element_str = etree.tostring(list_td[0], encoding='unicode')
-                            if 'defaultValue' in left_row_element_str:
-                                tr.remove(list_td[0])
-                                if 'align' in list_td[1].keys():
-                                    list_td[1].attrib['align'] = 'center'
-                                    list_td[1].attrib['colspan'] = '2'
-                            if 'position' in left_row_element_str:
-                                table_html.remove(tr)
-            # removal of the not-needed id table row
-            table_html.remove(tr_list[1])
-            # serialize back the table html
-            node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
+                if id_node is not None:
+                    # put the arguments in the action tree node
+                    if id_node in args_default_value_dict.keys():
+                        # order the arguments according to their position
+                        args_pos_list = args_default_value_dict[id_node].copy()
+                        args_pos_list.sort(key=lambda y: y[1])
+                        sorted_args = ' '.join(t[0] for t in args_pos_list)
+                        # format the arguments table row
+                        table_args_row_str = default_value_table_row.format(
+                            attribute_id="arguments",
+                            attribute_default_value=(' '.join(args_prefixes_default_value_dict[id_node])
+                                                     + sorted_args)
+                        )
+                        # parse the arguments and inputs table rows into a lxml object
+                        table_args_row_element = etree.fromstring(table_args_row_str)
+                        # add the row to the table
+                        table_html.append(table_args_row_element)
+                    # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
+                    if 'CommandOutput' in type_label_values_dict[id_node] or 'CommandInput' in type_label_values_dict[id_node]:
+                        # color change
+                        table_html.attrib['border'] = '2'
+                        table_html.attrib['cellborder'] = '1'
+                        if 'CommandOutput' in type_label_values_dict[id_node]:
+                            table_html.attrib['color'] = '#FFFF00'
+                        else:
+                            table_html.attrib['color'] = '#00CC00'
+                        for tr in tr_list:
+                            list_td = tr.findall('td')
+                            if len(list_td) == 2:
+                                left_row_element_str = etree.tostring(list_td[0], encoding='unicode')
+                                if 'defaultValue' in left_row_element_str:
+                                    tr.remove(list_td[0])
+                                    if 'align' in list_td[1].keys():
+                                        list_td[1].attrib['align'] = 'center'
+                                        list_td[1].attrib['colspan'] = '2'
+                                if 'position' in left_row_element_str:
+                                    table_html.remove(tr)
+                # removal of the not-needed id table row
+                table_html.remove(tr_list[1])
+                # serialize back the table html
+                node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
     pydot_graph.write_png(filename)
