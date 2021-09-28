@@ -457,8 +457,6 @@ def display(revision, paths, filename, no_oda_info):
     # analyze arguments
     args_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments')]
     for s, o in args_list:
-        print("s: ", s)
-        print("o: ", o)
         s_label = label(s, G)
         if s_label not in action_node_dict:
             action_node_dict[s_label] = s
@@ -499,6 +497,9 @@ def display(revision, paths, filename, no_oda_info):
         G.add((node_args,
                rdflib.URIRef('http://schema.org/defaultValue'),
                rdflib.Literal(sorted_args.strip())))
+        G.add((node_args,
+               rdflib.RDF.type,
+               action_node_dict[action]))
 
     # analyze outputs
     outputs_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs')]
@@ -581,13 +582,15 @@ def display(revision, paths, filename, no_oda_info):
                         table_html.attrib['color'] = '#dc143c'
                     # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
                     if type_label_values_dict[id_node] == 'CommandOutput' or \
-                            type_label_values_dict[id_node] == 'CommandInput':
+                            type_label_values_dict[id_node] == 'CommandInput' or \
+                            type_label_values_dict[id_node] == 'CommandParameter':
+                        print("type_label_values_dict[id_node]: ", type_label_values_dict[id_node])
                         # color change
                         table_html.attrib['border'] = '2'
                         table_html.attrib['cellborder'] = '1'
                         if type_label_values_dict[id_node] == 'CommandOutput':
                             table_html.attrib['color'] = '#FFFF00'
-                        else:
+                        elif type_label_values_dict[id_node] == 'CommandInput':
                             table_html.attrib['color'] = '#00CC00'
                         for tr in tr_list:
                             list_td = tr.findall('td')
