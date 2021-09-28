@@ -433,7 +433,7 @@ def display(revision, paths, filename, no_oda_info):
     type_label_values_dict = {}
 
     args_default_value_dict = {}
-    args_prefixes_default_value_dict = {}
+    # args_prefixes_default_value_dict = {}
 
     in_default_value_dict = {}
 
@@ -459,24 +459,42 @@ def display(revision, paths, filename, no_oda_info):
         s_label = label(s, G)
         if s_label not in args_default_value_dict:
             args_default_value_dict[s_label] = []
-        if s_label not in args_prefixes_default_value_dict:
-            args_prefixes_default_value_dict[s_label] = []
+        # if s_label not in args_prefixes_default_value_dict:
+        #     args_prefixes_default_value_dict[s_label] = []
         arg_obj_list = list(G[o])
         for arg_p, arg_o in arg_obj_list:
-            if arg_p.n3() == "<https://swissdatasciencecenter.github.io/renku-ontology#prefix>":
-                args_prefixes_default_value_dict[s_label].append(arg_o.n3().strip('\"'))
-                # G.remove((o, arg_p, arg_o))
             if arg_p.n3() == "<http://schema.org/defaultValue>":
+                prefix_value = ""
+                # get, if there, the prefix
+                prefix_o = list(G.objects(
+                    subject=o,
+                    predicate=rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#prefix')))
+                if prefix_o is not None and len(prefix_o) > 0:
+                    prefix_value = prefix_o[0].value
+                    # args_prefixes_default_value_dict[s_label].append(prefix_o[0].value.strip('\"'))
+                    # args_default_value_dict[s_label].append(prefix_o[0].value.strip('\"'))
+                    G.remove((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#prefix'), prefix_o[0]))
                 # get the position
                 position_o = list(G.objects(
                     subject=o,
-                    predicate=rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position')))[0]
-                args_default_value_dict[s_label].append((arg_o.n3().strip('\"'), position_o.value))
-                G.remove((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), position_o))
+                    predicate=rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position')))
+                if position_o is not None and len(position_o) > 0:
+                    args_default_value_dict[s_label].append((prefix_value + arg_o.n3().strip('\"'), position_o[0].value))
+                    G.remove((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), position_o[0]))
                 # G.remove((o, arg_p, arg_o))
-        # infer isArgumentOf property
+        # print("args_default_value_dict: ", args_default_value_dict)
         G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), o))
-        G.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isArgumentOf'), s))
+
+    # infer isArgumentOf property for each action
+    for action in args_default_value_dict.keys():
+        args_pos_list = args_default_value_dict[action].copy()
+        args_pos_list.sort(key=lambda y: y[1])
+        sorted_args = ' '.join(t[0] for t in args_pos_list)
+        # if action in args_prefixes_default_value_dict:
+        #     sorted_args = str(args_prefixes_default_value_dict[action]) + " " + sorted_args
+        # G.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isArgumentOf'), s))
+        print("sorted_args: ", sorted_args)
+
 
     # analyze outputs
     outputs_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs')]
@@ -497,7 +515,9 @@ def display(revision, paths, filename, no_oda_info):
     # analyze types
     types_list = G[:rdflib.RDF.type]
     for s, o in types_list:
-        type_label_values_dict[label(s, G)] = G.compute_qname(o)[2]
+        s_qname = G.compute_qname(o)
+        s_label = label(s, G)
+        type_label_values_dict[s_label] = s_qname[2]
         G.remove((s, rdflib.RDF.type, o))
 
     rdf2dot.rdf2dot(G, stream, opts={display})
@@ -533,32 +553,33 @@ def display(revision, paths, filename, no_oda_info):
                     b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
                 if id_node is not None:
                     # put the arguments in the action tree node
-                    # if id_node in args_default_value_dict.keys():
-                    #     # order the arguments according to their position
-                    #     args_pos_list = args_default_value_dict[id_node].copy()
-                    #     args_pos_list.sort(key=lambda y: y[1])
-                    #     sorted_args = ' '.join(t[0] for t in args_pos_list)
-                    #     # format the arguments table row
-                    #     table_args_row_str = default_value_table_row.format(
-                    #         attribute_id="arguments",
-                    #         attribute_default_value=(' '.join(args_prefixes_default_value_dict[id_node])
-                    #                                  + sorted_args)
-                    #     )
-                    #     # parse the arguments and inputs table rows into a lxml object
-                    #     table_args_row_element = etree.fromstring(table_args_row_str)
-                    #     # add the row to the table
-                    #     table_html.append(table_args_row_element)
-                    if 'Action' in type_label_values_dict[id_node]:
+                    if id_node in args_default_value_dict.keys():
+                        # order the arguments according to their position
+                        args_pos_list = args_default_value_dict[id_node].copy()
+                        args_pos_list.sort(key=lambda y: y[1])
+                        sorted_args = ' '.join(t[0] for t in args_pos_list)
+                        # format the arguments table row
+                        table_args_row_str = default_value_table_row.format(
+                            attribute_id="arguments",
+                            attribute_default_value=(' '.join(args_prefixes_default_value_dict[id_node])
+                                                     + sorted_args)
+                        )
+                        # parse the arguments and inputs table rows into a lxml object
+                        table_args_row_element = etree.fromstring(table_args_row_str)
+                        # add the row to the table
+                        table_html.append(table_args_row_element)
+                    if type_label_values_dict[id_node] == 'Action':
                         # color change
                         table_html.attrib['border'] = '2'
                         table_html.attrib['cellborder'] = '1'
                         table_html.attrib['color'] = '#dc143c'
                     # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
-                    if 'CommandOutput' in type_label_values_dict[id_node] or 'CommandInput' in type_label_values_dict[id_node]:
+                    if type_label_values_dict[id_node] == 'CommandOutput' or \
+                            type_label_values_dict[id_node] == 'CommandInput':
                         # color change
                         table_html.attrib['border'] = '2'
                         table_html.attrib['cellborder'] = '1'
-                        if 'CommandOutput' in type_label_values_dict[id_node]:
+                        if type_label_values_dict[id_node] == 'CommandOutput':
                             table_html.attrib['color'] = '#FFFF00'
                         else:
                             table_html.attrib['color'] = '#00CC00'
