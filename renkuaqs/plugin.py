@@ -449,7 +449,8 @@ def display(revision, paths, filename, no_oda_info):
         for input_p, input_o in input_obj_list:
             if input_p.n3() == "<http://schema.org/defaultValue>":
                 in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
-        G.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#inputOf'), s))
+        # infer isInputOf property
+        G.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
         G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), o))
 
     # analyze arguments
@@ -473,6 +474,7 @@ def display(revision, paths, filename, no_oda_info):
                 args_default_value_dict[s_label].append((arg_o.n3().strip('\"'), position_o.value))
                 G.remove((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), position_o))
                 # G.remove((o, arg_p, arg_o))
+        # infer isArgumentOf property
         G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), o))
         G.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isArgumentOf'), s))
 
