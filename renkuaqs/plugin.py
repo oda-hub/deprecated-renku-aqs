@@ -481,7 +481,6 @@ def display(revision, paths, filename, no_oda_info):
                     args_default_value_dict[s_label].append((prefix_value + arg_o.n3().strip('\"'), position_o[0].value))
                     G.remove((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), position_o[0]))
                 G.remove((o, arg_p, arg_o))
-        # print("args_default_value_dict: ", args_default_value_dict)
         G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), o))
 
     # # infer isArgumentOf property for each action
@@ -527,12 +526,8 @@ def display(revision, paths, filename, no_oda_info):
     for s, o in types_list:
         o_qname = G.compute_qname(o)
         s_label = label(s, G)
-        print(f"s: {s}, s_qname: {o_qname}, type(s_label): {type(s_label)}, s_label: {s_label}")
-        print("o: ", o)
         type_label_values_dict[s_label] = o_qname[2]
         G.remove((s, rdflib.RDF.type, o))
-
-    print("type_label_values_dict: ", type_label_values_dict)
 
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
@@ -546,11 +541,8 @@ def display(revision, paths, filename, no_oda_info):
             edge.obj_dict['attributes']['color'] = 'BLUE'
         if 'oda:isUsing' in edge.obj_dict['attributes']['label']:
             edge.obj_dict['attributes']['color'] = 'GREEN'
+        # TODO remove first part of the label ?
 
-    default_value_table_row = "<tr>" \
-                              "<td align='left'>{attribute_id}</td>" \
-                              "<td align='left'>&quot;{attribute_default_value}&quot;</td>" \
-                              "</tr>"
     for node in pydot_graph.get_nodes():
         if 'label' in node.obj_dict['attributes']:
             # parse the whole node table into a lxml object
@@ -566,23 +558,6 @@ def display(revision, paths, filename, no_oda_info):
                     id_node = b_element_title[0].text
                     b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
                 if id_node is not None:
-                    # # put the arguments in the action tree node
-                    # if id_node in args_default_value_dict.keys():
-                    #     print("id_node: ", id_node)
-                    #     print("args_default_value_dict[id_node]: ", args_default_value_dict[id_node])
-                    #     # order the arguments according to their position
-                    #     args_pos_list = args_default_value_dict[id_node].copy()
-                    #     args_pos_list.sort(key=lambda y: y[1])
-                    #     sorted_args = ' '.join(t[0] for t in args_pos_list)
-                    #     # format the arguments table row
-                    #     table_args_row_str = default_value_table_row.format(
-                    #         attribute_id="arguments",
-                    #         attribute_default_value=sorted_args
-                    #     )
-                    #     # parse the arguments and inputs table rows into a lxml object
-                    #     table_args_row_element = etree.fromstring(table_args_row_str)
-                    #     # add the row to the table
-                    #     table_html.append(table_args_row_element)
                     if type_label_values_dict[id_node] == 'Action':
                         # color change
                         table_html.attrib['border'] = '2'
