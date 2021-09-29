@@ -17,7 +17,6 @@
 # limitations under the License.
 
 import os
-import re
 import pathlib
 import json
 import click
@@ -26,7 +25,6 @@ import rdflib.tools.rdf2dot
 
 from pathlib import Path
 
-from matplotlib.table import table
 from rdflib.tools import rdf2dot
 from renku.core.models.cwl.annotation import Annotation
 from renku.core.incubation.command import Command
@@ -38,7 +36,6 @@ from renku.core.management import LocalClient
 from prettytable import PrettyTable
 
 from aqsconverters.io import AQS_DIR, COMMON_DIR
-from six import b
 
 
 class AQS(object):
@@ -534,14 +531,14 @@ def display(revision, paths, filename, no_oda_info):
 
     # list of edges and simple color change
     for edge in pydot_graph.get_edge_list():
-        # simple color code
-        if 'rdf:type' in edge.obj_dict['attributes']['label']:
-            edge.obj_dict['attributes']['color'] = 'RED'
-        if 'oda:isRequestingAstroObject' in edge.obj_dict['attributes']['label']:
-            edge.obj_dict['attributes']['color'] = 'BLUE'
-        if 'oda:isUsing' in edge.obj_dict['attributes']['label']:
-            edge.obj_dict['attributes']['color'] = 'GREEN'
-        # TODO remove first part of the label ?
+        if 'label' in edge.obj_dict['attributes']:
+            font_html = etree.fromstring(edge.obj_dict['attributes']['label'][1:-1])
+            # simple color code
+            if font_html.text == 'oda:isRequestingAstroObject':
+                edge.obj_dict['attributes']['color'] = '#2986CC'
+            if font_html.text == 'oda:isUsing':
+                edge.obj_dict['attributes']['color'] = '#53D06A'
+            # TODO remove first part of the label ?
 
     for node in pydot_graph.get_nodes():
         if 'label' in node.obj_dict['attributes']:
