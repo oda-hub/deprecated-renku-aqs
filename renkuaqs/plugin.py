@@ -489,7 +489,10 @@ def display(revision, paths, filename, no_oda_info):
         args_pos_list = args_default_value_dict[action].copy()
         args_pos_list.sort(key=lambda y: y[1])
         sorted_args = ' '.join(t[0] for t in args_pos_list)
-        node_args = rdflib.URIRef("https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter")
+        # create the node
+        # TODO id needs to be properly assigned!
+        node_args = rdflib.URIRef("https://github.com/plans/84d9b437-4a55-4573-9aa3-4669ff641f1b/parameters/actionArguments")
+        # link it to the action node
         G.add((node_args,
                rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isArgumentOf'),
                action_node_dict[action]))
@@ -497,9 +500,10 @@ def display(revision, paths, filename, no_oda_info):
         G.add((node_args,
                rdflib.URIRef('http://schema.org/defaultValue'),
                rdflib.Literal(sorted_args.strip())))
+        # type for the node args
         G.add((node_args,
                rdflib.RDF.type,
-               action_node_dict[action]))
+               rdflib.URIRef("https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter")))
 
     # analyze outputs
     outputs_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs')]
@@ -521,10 +525,14 @@ def display(revision, paths, filename, no_oda_info):
     # analyze types
     types_list = G[:rdflib.RDF.type]
     for s, o in types_list:
-        s_qname = G.compute_qname(o)
+        o_qname = G.compute_qname(o)
         s_label = label(s, G)
-        type_label_values_dict[s_label] = s_qname[2]
+        print(f"s: {s}, s_qname: {o_qname}, type(s_label): {type(s_label)}, s_label: {s_label}")
+        print("o: ", o)
+        type_label_values_dict[s_label] = o_qname[2]
         G.remove((s, rdflib.RDF.type, o))
+
+    print("type_label_values_dict: ", type_label_values_dict)
 
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
@@ -584,7 +592,6 @@ def display(revision, paths, filename, no_oda_info):
                     if type_label_values_dict[id_node] == 'CommandOutput' or \
                             type_label_values_dict[id_node] == 'CommandInput' or \
                             type_label_values_dict[id_node] == 'CommandParameter':
-                        print("type_label_values_dict[id_node]: ", type_label_values_dict[id_node])
                         # color change
                         table_html.attrib['border'] = '2'
                         table_html.attrib['cellborder'] = '1'
