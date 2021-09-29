@@ -480,7 +480,7 @@ def display(revision, paths, filename, no_oda_info):
                 G.remove((o, arg_p, arg_o))
         G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), o))
 
-    # # infer isArgumentOf property for each action
+    # infer isArgumentOf property for each action
     for action in args_default_value_dict.keys():
         args_pos_list = args_default_value_dict[action].copy()
         args_pos_list.sort(key=lambda y: y[1])
@@ -512,12 +512,6 @@ def display(revision, paths, filename, no_oda_info):
             if output_s.n3() == "<http://schema.org/defaultValue>":
                 out_default_value_dict[s_label].append(output_o.n3().strip('\"'))
 
-    # remove value reference in case we plot no_oda_info
-    if no_oda_info:
-        outputs_list = G[:rdflib.URIRef('http://schema.org/valueReference')]
-        for s, o in outputs_list:
-            G.remove((s, rdflib.URIRef('http://schema.org/valueReference'), o))
-
     # analyze types
     types_list = G[:rdflib.RDF.type]
     for s, o in types_list:
@@ -525,6 +519,12 @@ def display(revision, paths, filename, no_oda_info):
         s_label = label(s, G)
         type_label_values_dict[s_label] = o_qname[2]
         G.remove((s, rdflib.RDF.type, o))
+
+    # remove value reference in case we plot no_oda_info
+    if no_oda_info:
+        outputs_list = G[:rdflib.URIRef('http://schema.org/valueReference')]
+        for s, o in outputs_list:
+            G.remove((s, rdflib.URIRef('http://schema.org/valueReference'), o))
 
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
@@ -586,4 +586,6 @@ def display(revision, paths, filename, no_oda_info):
                 table_html.remove(tr_list[1])
                 # serialize back the table html
                 node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
+
+    # final output write over the png image
     pydot_graph.write_png(filename)
