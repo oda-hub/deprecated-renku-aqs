@@ -448,7 +448,22 @@ def display(revision, paths, filename, no_oda_info):
             for plan_node in plan_list:
                 # we can infer that a connection form the run to an action
                 # then infer that an action runs a Run
-                G.add((plan_node, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#runs'), run_node))
+                # G.add((plan_node, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#runs'), run_node))
+                # we can now infer the request of a certain astroObject and the usage of a certain module
+                used_module_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')]
+                for module_node in used_module_list:
+                    G.add((plan_node, rdflib.URIRef('http://odahub.io/ontology#usesModule'),
+                           module_node))
+                    G.remove((run_node,
+                              rdflib.URIRef('http://odahub.io/ontology#isUsing'),
+                              module_node))
+                requested_astroObject_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')]
+                for astroObject_node in requested_astroObject_list:
+                    G.add((plan_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
+                           astroObject_node))
+                    G.remove((run_node,
+                              rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
+                              astroObject_node))
                 G.remove((association_node, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), plan_node))
             G.remove((activity_node, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), association_node))
         G.remove((run_node, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), activity_node))
