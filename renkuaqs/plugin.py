@@ -19,7 +19,10 @@
 import os
 import pathlib
 import json
+import typing
+
 import click
+import pydotplus
 import rdflib
 import rdflib.tools.rdf2dot
 
@@ -34,6 +37,7 @@ from renku.core.errors import RenkuException
 from renku.core.management import LocalClient
 
 from prettytable import PrettyTable
+from lxml import etree
 
 from aqsconverters.io import AQS_DIR, COMMON_DIR
 
@@ -309,7 +313,6 @@ def display(revision, paths, filename, no_oda_info):
     from IPython.display import display
     from rdflib.tools.rdf2dot import LABEL_PROPERTIES
     import pydotplus
-    from lxml import etree
 
     def label(x, g):
 
@@ -337,7 +340,6 @@ def display(revision, paths, filename, no_oda_info):
                 <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs>))
             
             ?actionParam a ?actionParamType ;
-                <http://schema.org/valueReference> ?parameter_value ;
                 <http://schema.org/defaultValue> ?actionParamValue .
                 
             OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#prefix> ?actionPrefix }
@@ -347,10 +349,11 @@ def display(revision, paths, filename, no_oda_info):
                 <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput>, 
                 <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>))
             
-            ?parameter_value a ?parameter_valueType .
-            
             ?activity a ?activityType ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value .
+                <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
+                <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
+                
+            ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
             
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
@@ -376,17 +379,17 @@ def display(revision, paths, filename, no_oda_info):
             ?actionParam a ?actionParamType ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#prefix> ?actionPrefix ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
-                <http://schema.org/valueReference> ?parameter_value ;
                 <http://schema.org/defaultValue> ?actionParamValue .
     """
 
     query_construct_oda_info = ""
     if not no_oda_info:
         query_construct_oda_info += """
-            ?parameter_value a ?parameter_valueType .
 
             ?activity a ?activityType ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value .
+                <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
+                
+            ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
 
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
@@ -424,6 +427,31 @@ def display(revision, paths, filename, no_oda_info):
 
     with open("subgraph.ttl", "w") as f:
         f.write(serial)
+
+    activity_params_dict = {}
+    # extract list parameters activity
+    parameter_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#parameter')]
+    for s, o in parameter_list:
+        # label for the activity
+        s_label = label(s, G)
+        if s_label not in activity_params_dict:
+            activity_params_dict[s_label] = []
+        activity_params_dict[s_label].append(o)
+
+    # find a way to the action form the Run by extracting activity qualified association
+    run_target_list = G[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
+    for run_node, activity_node in run_target_list:
+        # run_node is the run, act_node is the activity
+        qualified_association_list = G[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation')]
+        for association_node in qualified_association_list:
+            plan_list = G[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
+            for plan_node in plan_list:
+                # we can infer that a connection form the run to an action
+                # then infer that an action runs a Run
+                G.add((plan_node, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#runs'), run_node))
+                G.remove((association_node, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), plan_node))
+            G.remove((activity_node, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), association_node))
+        G.remove((run_node, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), activity_node))
 
     stream = io.StringIO()
 
@@ -520,72 +548,76 @@ def display(revision, paths, filename, no_oda_info):
         type_label_values_dict[s_label] = o_qname[2]
         G.remove((s, rdflib.RDF.type, o))
 
-    # remove value reference in case we plot no_oda_info
-    if no_oda_info:
-        outputs_list = G[:rdflib.URIRef('http://schema.org/valueReference')]
-        for s, o in outputs_list:
-            G.remove((s, rdflib.URIRef('http://schema.org/valueReference'), o))
-
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
 
     # list of edges and simple color change
     for edge in pydot_graph.get_edge_list():
-        if 'label' in edge.obj_dict['attributes']:
-            font_html = etree.fromstring(edge.obj_dict['attributes']['label'][1:-1])
-            # simple color code
-            if font_html.text == 'oda:isRequestingAstroObject':
-                edge.obj_dict['attributes']['color'] = '#2986CC'
-            if font_html.text == 'oda:isUsing':
-                edge.obj_dict['attributes']['color'] = '#53D06A'
-            # TODO remove first part of the label ?
+        customize_edge(edge)
 
     for node in pydot_graph.get_nodes():
-        if 'label' in node.obj_dict['attributes']:
-            # parse the whole node table into a lxml object
-            table_html = etree.fromstring(node.obj_dict['attributes']['label'][1:-1])
-            tr_list = table_html.findall('tr')
-
-            # modify the first row, hence the title of the node, and then all the rest
-            id_node = None
-            td_list_first_row = tr_list[0].findall('td')
-            if td_list_first_row is not None:
-                b_element_title = td_list_first_row[0].findall('B')
-                if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
-                    id_node = b_element_title[0].text
-                    b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
-                if id_node is not None:
-                    if type_label_values_dict[id_node] == 'Action':
-                        # color change
-                        table_html.attrib['border'] = '2'
-                        table_html.attrib['cellborder'] = '1'
-                        table_html.attrib['color'] = '#dc143c'
-                    # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
-                    if type_label_values_dict[id_node] == 'CommandOutput' or \
-                            type_label_values_dict[id_node] == 'CommandInput' or \
-                            type_label_values_dict[id_node] == 'CommandParameter':
-                        # color change
-                        table_html.attrib['border'] = '2'
-                        table_html.attrib['cellborder'] = '1'
-                        if type_label_values_dict[id_node] == 'CommandOutput':
-                            table_html.attrib['color'] = '#FFFF00'
-                        elif type_label_values_dict[id_node] == 'CommandInput':
-                            table_html.attrib['color'] = '#00CC00'
-                        for tr in tr_list:
-                            list_td = tr.findall('td')
-                            if len(list_td) == 2:
-                                left_row_element_str = etree.tostring(list_td[0], encoding='unicode')
-                                if 'defaultValue' in left_row_element_str:
-                                    tr.remove(list_td[0])
-                                    if 'align' in list_td[1].keys():
-                                        list_td[1].attrib['align'] = 'center'
-                                        list_td[1].attrib['colspan'] = '2'
-                                if 'position' in left_row_element_str:
-                                    table_html.remove(tr)
-                # removal of the not-needed id table row
-                table_html.remove(tr_list[1])
-                # serialize back the table html
-                node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
+        customize_node(node, type_label_values_dict=type_label_values_dict)
 
     # final output write over the png image
     pydot_graph.write_png(filename)
+
+
+def customize_edge(edge: typing.Union[pydotplus.Edge]):
+    if 'label' in edge.obj_dict['attributes']:
+        font_html = etree.fromstring(edge.obj_dict['attributes']['label'][1:-1])
+        # simple color code
+        if font_html.text == 'oda:isRequestingAstroObject':
+            edge.obj_dict['attributes']['color'] = '#2986CC'
+        if font_html.text == 'oda:isUsing':
+            edge.obj_dict['attributes']['color'] = '#53D06A'
+        # TODO remove first part of the label ?
+
+
+def customize_node(node: typing.Union[pydotplus.Node],
+                   type_label_values_dict=None,
+                   ):
+    if 'label' in node.obj_dict['attributes']:
+        # parse the whole node table into a lxml object
+        table_html = etree.fromstring(node.obj_dict['attributes']['label'][1:-1])
+        tr_list = table_html.findall('tr')
+
+        # modify the first row, hence the title of the node, and then all the rest
+        id_node = None
+        td_list_first_row = tr_list[0].findall('td')
+        if td_list_first_row is not None:
+            b_element_title = td_list_first_row[0].findall('B')
+            if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
+                id_node = b_element_title[0].text
+                b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
+            if id_node is not None:
+                if type_label_values_dict[id_node] == 'Action':
+                    # color change
+                    table_html.attrib['border'] = '2'
+                    table_html.attrib['cellborder'] = '1'
+                    table_html.attrib['color'] = '#dc143c'
+                # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
+                if type_label_values_dict[id_node] == 'CommandOutput' or \
+                        type_label_values_dict[id_node] == 'CommandInput' or \
+                        type_label_values_dict[id_node] == 'CommandParameter':
+                    # color change
+                    table_html.attrib['border'] = '2'
+                    table_html.attrib['cellborder'] = '1'
+                    if type_label_values_dict[id_node] == 'CommandOutput':
+                        table_html.attrib['color'] = '#FFFF00'
+                    elif type_label_values_dict[id_node] == 'CommandInput':
+                        table_html.attrib['color'] = '#00CC00'
+                    for tr in tr_list:
+                        list_td = tr.findall('td')
+                        if len(list_td) == 2:
+                            left_row_element_str = etree.tostring(list_td[0], encoding='unicode')
+                            if 'defaultValue' in left_row_element_str:
+                                tr.remove(list_td[0])
+                                if 'align' in list_td[1].keys():
+                                    list_td[1].attrib['align'] = 'center'
+                                    list_td[1].attrib['colspan'] = '2'
+                            if 'position' in left_row_element_str:
+                                table_html.remove(tr)
+            # removal of the not-needed id table row
+            table_html.remove(tr_list[1])
+            # serialize back the table html
+            node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
