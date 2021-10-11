@@ -357,7 +357,6 @@ def display(revision, paths, filename, no_oda_info):
             
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
-                <http://purl.org/dc/terms/title> ?run_name ;
                 a ?run_rdf_type ;
                 ^oa:hasBody/oa:hasTarget ?runId ;
                 ^oa:hasBody/oa:hasTarget ?activity .
@@ -393,7 +392,6 @@ def display(revision, paths, filename, no_oda_info):
 
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
-                <http://purl.org/dc/terms/title> ?run_name ;
                 oa:hasTarget ?activity ;
                 a ?run_rdf_type .
 
@@ -441,6 +439,7 @@ def display(revision, paths, filename, no_oda_info):
     # find a way to the action form the Run by extracting activity qualified association
     run_target_list = G[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
     for run_node, activity_node in run_target_list:
+        print("type run_node: ", type(run_node))
         # run_node is the run, act_node is the activity
         qualified_association_list = G[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation')]
         for association_node in qualified_association_list:
@@ -535,7 +534,7 @@ def display(revision, paths, filename, no_oda_info):
         G.add((node_args,
                rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isArgumentOf'),
                action_node_dict[action]))
-        # value for the node args
+        # value for the node args,
         G.add((node_args,
                rdflib.URIRef('http://schema.org/defaultValue'),
                rdflib.Literal(sorted_args.strip())))
@@ -563,6 +562,11 @@ def display(revision, paths, filename, no_oda_info):
         type_label_values_dict[s_label] = o_qname[2]
         G.remove((s, rdflib.RDF.type, o))
 
+    run_list = G[rdflib.term.URIRef('file:///home/gabriele/Workspace/renku-aqs/renku-aqs-test-case/.renku/e22200da-14a5-11ec-9a8d-3b003aadb9d0')]
+    for p, o in run_list:
+        print("P ", p)
+        print("O ", o)
+
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
 
@@ -581,6 +585,7 @@ def customize_edge(edge: typing.Union[pydotplus.Edge]):
     if 'label' in edge.obj_dict['attributes']:
         font_html = etree.fromstring(edge.obj_dict['attributes']['label'][1:-1])
         # simple color code
+        # those two are not relevant at the moment since new predicates have been infered
         if font_html.text == 'oda:isRequestingAstroObject':
             edge.obj_dict['attributes']['color'] = '#2986CC'
         if font_html.text == 'oda:isUsing':
@@ -605,34 +610,39 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 id_node = b_element_title[0].text
                 b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
             if id_node is not None:
+                table_html.attrib['border'] = '2'
+                table_html.attrib['cellborder'] = '1'
                 if type_label_values_dict[id_node] == 'Action':
-                    # color change
-                    table_html.attrib['border'] = '2'
-                    table_html.attrib['cellborder'] = '1'
                     table_html.attrib['color'] = '#dc143c'
                 # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
                 if type_label_values_dict[id_node] == 'CommandOutput' or \
                         type_label_values_dict[id_node] == 'CommandInput' or \
-                        type_label_values_dict[id_node] == 'CommandParameter':
+                        type_label_values_dict[id_node] == 'CommandParameter' or \
+                        type_label_values_dict[id_node] == 'AstroqueryModule' or \
+                        type_label_values_dict[id_node] == 'AstrophysicalObject':
                     # color change
-                    table_html.attrib['border'] = '2'
-                    table_html.attrib['cellborder'] = '1'
                     if type_label_values_dict[id_node] == 'CommandOutput':
                         table_html.attrib['color'] = '#FFFF00'
                     elif type_label_values_dict[id_node] == 'CommandInput':
                         table_html.attrib['color'] = '#00CC00'
+                    elif type_label_values_dict[id_node] == 'AstroqueryModule':
+                        table_html.attrib['color'] = '#8877CC'
+                    elif type_label_values_dict[id_node] == 'AstrophysicalObject':
+                        table_html.attrib['color'] = '#065535'
                     for tr in tr_list:
                         list_td = tr.findall('td')
                         if len(list_td) == 2:
                             left_row_element_str = etree.tostring(list_td[0], encoding='unicode')
-                            if 'defaultValue' in left_row_element_str:
+                            if 'defaultValue' in left_row_element_str or \
+                                'AstroObject' in left_row_element_str or \
+                                'AQModule' in left_row_element_str:
                                 tr.remove(list_td[0])
                                 if 'align' in list_td[1].keys():
                                     list_td[1].attrib['align'] = 'center'
                                     list_td[1].attrib['colspan'] = '2'
                             if 'position' in left_row_element_str:
                                 table_html.remove(tr)
-            # removal of the not-needed id table row
+            # removal of the not-needed id from the node
             table_html.remove(tr_list[1])
             # serialize back the table html
             node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
