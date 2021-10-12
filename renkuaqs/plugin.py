@@ -342,7 +342,6 @@ def display(revision, paths, filename, no_oda_info):
             ?actionParam a ?actionParamType ;
                 <http://schema.org/defaultValue> ?actionParamValue .
                 
-            OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#prefix> ?actionPrefix }
             OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition }
                  
              FILTER (?actionParamType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput>, 
@@ -376,7 +375,6 @@ def display(revision, paths, filename, no_oda_info):
                 ?has ?actionParam .
         
             ?actionParam a ?actionParamType ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#prefix> ?actionPrefix ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
                 <http://schema.org/defaultValue> ?actionParamValue .
     """
@@ -436,22 +434,22 @@ def display(revision, paths, filename, no_oda_info):
             for plan_node in plan_list:
                 # print("run_node: %s -> activity_node %s -> association_node: %s -> plan_node: %s\n--------------------"
                 #       % (run_node, activity_node,  association_node, plan_node))
-                # we can infer that a connection form the run to an action
+                # we inferred a connection from the run to an action
                 # and we can now infer the request of a certain astroObject and the usage of a certain module
                 used_module_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')]
                 for module_node in used_module_list:
                     G.add((plan_node, rdflib.URIRef('http://odahub.io/ontology#usesModule'),
                            module_node))
-                    G.remove((run_node,
-                              rdflib.URIRef('http://odahub.io/ontology#isUsing'),
-                              module_node))
-                requested_astroObject_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')]
-                for astroObject_node in requested_astroObject_list:
-                    G.add((plan_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
-                           astroObject_node))
-                    G.remove((run_node,
-                              rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
-                              astroObject_node))
+                    requested_astroObject_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')]
+                    for astroObject_node in requested_astroObject_list:
+                        G.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
+                               astroObject_node))
+                G.remove((run_node,
+                          rdflib.URIRef('http://odahub.io/ontology#isUsing'),
+                          None))
+                G.remove((run_node,
+                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
+                          None))
     # remove not-needed triples
     G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
     G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), None))
@@ -494,20 +492,12 @@ def display(revision, paths, filename, no_oda_info):
         arg_obj_list = list(G[o])
         for arg_p, arg_o in arg_obj_list:
             if arg_p.n3() == "<http://schema.org/defaultValue>":
-                prefix_value = ""
-                # get, if there, the prefix
-                prefix_o = list(G.objects(
-                    subject=o,
-                    predicate=rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#prefix')))
-                if prefix_o is not None and len(prefix_o) > 0:
-                    prefix_value = prefix_o[0].value
-                    G.remove((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#prefix'), prefix_o[0]))
                 # get the position
                 position_o = list(G.objects(
                     subject=o,
                     predicate=rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position')))
                 if position_o is not None and len(position_o) > 0:
-                    args_default_value_dict[s_label].append((prefix_value + arg_o.n3().strip('\"'), position_o[0].value))
+                    args_default_value_dict[s_label].append((arg_o.n3().strip('\"'), position_o[0].value))
                     G.remove((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), position_o[0]))
                 G.remove((o, arg_p, arg_o))
     G.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), None))
@@ -610,11 +600,13 @@ def customize_node(node: typing.Union[pydotplus.Node],
                     if type_label_values_dict[id_node] == 'CommandOutput':
                         table_html.attrib['color'] = '#FFFF00'
                     elif type_label_values_dict[id_node] == 'CommandInput':
-                        table_html.attrib['color'] = '#00CC00'
+                        table_html.attrib['color'] = '#0000FF'
+                    elif type_label_values_dict[id_node] == 'CommandParameter':
+                        table_html.attrib['color'] = '#0000FF'
                     elif type_label_values_dict[id_node] == 'AstroqueryModule':
-                        table_html.attrib['color'] = '#8877CC'
+                        table_html.attrib['color'] = '#00CC00'
                     elif type_label_values_dict[id_node] == 'AstrophysicalObject':
-                        table_html.attrib['color'] = '#065535'
+                        table_html.attrib['color'] = '#0000FF'
                     for tr in tr_list:
                         list_td = tr.findall('td')
                         if len(list_td) == 2:
