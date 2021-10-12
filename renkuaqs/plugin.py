@@ -426,29 +426,18 @@ def display(revision, paths, filename, no_oda_info):
     with open("subgraph.ttl", "w") as f:
         f.write(serial)
 
-    activity_params_dict = {}
-    # extract list parameters activity
-    parameter_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#parameter')]
-    for s, o in parameter_list:
-        # label for the activity
-        s_label = label(s, G)
-        if s_label not in activity_params_dict:
-            activity_params_dict[s_label] = []
-        activity_params_dict[s_label].append(o)
-
     # find a way to the action form the Run by extracting activity qualified association
     run_target_list = G[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
     for run_node, activity_node in run_target_list:
-        print("type run_node: ", type(run_node))
         # run_node is the run, act_node is the activity
         qualified_association_list = G[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation')]
         for association_node in qualified_association_list:
             plan_list = G[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
             for plan_node in plan_list:
+                # print("run_node: %s -> activity_node %s -> association_node: %s -> plan_node: %s\n--------------------"
+                #       % (run_node, activity_node,  association_node, plan_node))
                 # we can infer that a connection form the run to an action
-                # then infer that an action runs a Run
-                # G.add((plan_node, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#runs'), run_node))
-                # we can now infer the request of a certain astroObject and the usage of a certain module
+                # and we can now infer the request of a certain astroObject and the usage of a certain module
                 used_module_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')]
                 for module_node in used_module_list:
                     G.add((plan_node, rdflib.URIRef('http://odahub.io/ontology#usesModule'),
@@ -463,9 +452,10 @@ def display(revision, paths, filename, no_oda_info):
                     G.remove((run_node,
                               rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
                               astroObject_node))
-                G.remove((association_node, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), plan_node))
-            G.remove((activity_node, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), association_node))
-        G.remove((run_node, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), activity_node))
+    # remove not-needed triples
+    G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
+    G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), None))
+    G.remove((None, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), None))
 
     stream = io.StringIO()
 
@@ -491,7 +481,7 @@ def display(revision, paths, filename, no_oda_info):
                 in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
         # infer isInputOf property
         G.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
-        G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), o))
+    G.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), None))
 
     # analyze arguments
     args_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments')]
@@ -520,7 +510,7 @@ def display(revision, paths, filename, no_oda_info):
                     args_default_value_dict[s_label].append((prefix_value + arg_o.n3().strip('\"'), position_o[0].value))
                     G.remove((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), position_o[0]))
                 G.remove((o, arg_p, arg_o))
-        G.remove((s, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), o))
+    G.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), None))
 
     # infer isArgumentOf property for each action
     for action in args_default_value_dict.keys():
@@ -560,12 +550,8 @@ def display(revision, paths, filename, no_oda_info):
         o_qname = G.compute_qname(o)
         s_label = label(s, G)
         type_label_values_dict[s_label] = o_qname[2]
-        G.remove((s, rdflib.RDF.type, o))
-
-    run_list = G[rdflib.term.URIRef('file:///home/gabriele/Workspace/renku-aqs/renku-aqs-test-case/.renku/e22200da-14a5-11ec-9a8d-3b003aadb9d0')]
-    for p, o in run_list:
-        print("P ", p)
-        print("O ", o)
+    # remove all the type triples
+    G.remove((None, rdflib.RDF.type, None))
 
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
