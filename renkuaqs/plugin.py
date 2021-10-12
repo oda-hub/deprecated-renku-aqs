@@ -507,8 +507,9 @@ def display(revision, paths, filename, no_oda_info):
         iter_arg_pos_list = iter(arg_pos_list)
         for x, y in zip(iter_arg_pos_list, iter_arg_pos_list):
             # create the node
-            # TODO id needs to be properly assigned!
-            node_args = rdflib.URIRef("https://github.com/plans/84d9b437-4a55-4573-9aa3-4669ff641f1b/parameters/actionArguments")
+            # TODO id needs to be properly assigned! now the name of the parameter is used
+            node_args = rdflib.URIRef("https://github.com/plans/84d9b437-4a55-4573-9aa3-4669ff641f1b/parameters/"
+                                      + x[0].replace(" ", "_") + "_" + y[0].replace(" ", "_"))
             # link it to the action node
             G.add((node_args,
                    rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isArgumentOf'),
@@ -518,7 +519,7 @@ def display(revision, paths, filename, no_oda_info):
                    rdflib.URIRef('http://schema.org/defaultValue'),
                    rdflib.Literal((x[0] + " " + y[0]).strip())))
             # type for the node args
-            # TODO to discuss what the best approach in this case would be:
+            # TODO to discuss what the best approach to assign the type case is:
             # to create a node with a dedicated type inferred from the arguments
             # G.add((node_args,
             #        rdflib.RDF.type,
@@ -575,7 +576,7 @@ def customize_edge(edge: typing.Union[pydotplus.Edge]):
 
 
 def customize_node(node: typing.Union[pydotplus.Node],
-                   type_label_values_dict=None,
+                   type_label_values_dict=None
                    ):
     if 'label' in node.obj_dict['attributes']:
         # parse the whole node table into a lxml object
@@ -589,7 +590,8 @@ def customize_node(node: typing.Union[pydotplus.Node],
             b_element_title = td_list_first_row[0].findall('B')
             if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
                 id_node = b_element_title[0].text
-                b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
+                if type_label_values_dict[b_element_title[0].text] != 'CommandParameter':
+                    b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
             if id_node is not None:
                 table_html.attrib['border'] = '2'
                 table_html.attrib['cellborder'] = '1'
@@ -600,28 +602,32 @@ def customize_node(node: typing.Union[pydotplus.Node],
                     table_html.attrib['color'] = '#FFFF00'
                 elif type_label_values_dict[id_node] == 'CommandInput':
                     table_html.attrib['color'] = '#0000FF'
-                # elif type_label_values_dict[id_node] == 'CommandParameter':
+                elif type_label_values_dict[id_node] == 'CommandParameter':
+                    table_html.attrib['color'] = '#0000FF'
                 elif type_label_values_dict[id_node] == 'AstroqueryModule':
                     table_html.attrib['color'] = '#00CC00'
                 elif type_label_values_dict[id_node] == 'AstrophysicalObject':
-                    table_html.attrib['color'] = '#0000FF'
-                else:
-                    # any other type on un-recognized node is considered inferred from an argument
                     table_html.attrib['color'] = '#0000FF'
                 # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
                 for tr in tr_list:
                     list_td = tr.findall('td')
                     if len(list_td) == 2:
-                        left_row_element_str = etree.tostring(list_td[0], encoding='unicode')
-                        if 'defaultValue' in left_row_element_str or \
-                            'AstroObject' in left_row_element_str or \
-                            'AQModule' in left_row_element_str:
+                        list_left_column_element = list_td[0].text.split(':')
+                        if 'defaultValue' in list_left_column_element or \
+                                'AstroObject' in list_left_column_element or \
+                                'AQModule' in list_left_column_element:
                             tr.remove(list_td[0])
                             if 'align' in list_td[1].keys():
                                 list_td[1].attrib['align'] = 'center'
                                 list_td[1].attrib['colspan'] = '2'
-                        if 'position' in left_row_element_str:
-                            table_html.remove(tr)
+                        # special case default_value table_row
+                        if 'defaultValue' in list_left_column_element and \
+                                type_label_values_dict[id_node] == 'CommandParameter':
+                            list_args_commandParameter = list_td[1].text[1:-1].split(' ')
+                            if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
+                                print("list_args_commandParameter ", list_args_commandParameter)
+                                b_element_title[0].text = list_args_commandParameter[0]
+                                list_td[1].text = '"' + ' '.join(list_args_commandParameter[1:]) + '"'
             # removal of the not-needed id from the node
             table_html.remove(tr_list[1])
             # serialize back the table html
