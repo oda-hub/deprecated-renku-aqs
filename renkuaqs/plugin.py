@@ -639,7 +639,6 @@ def customize_node(node: typing.Union[pydotplus.Node],
                                 type_label_values_dict[id_node] == 'CommandParameter':
                             list_args_commandParameter = list_td[1].text[1:-1].split(' ')
                             if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
-                                print("list_args_commandParameter ", list_args_commandParameter)
                                 b_element_title[0].text = list_args_commandParameter[0]
                                 list_td[1].text = '"' + ' '.join(list_args_commandParameter[1:]) + '"'
             # removal of the not-needed id from the node
