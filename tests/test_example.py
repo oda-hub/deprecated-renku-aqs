@@ -1,6 +1,8 @@
 import subprocess
 import shutil
 import os
+from renkuaqs import plugin
+from click.testing import CliRunner
 
 # make fixture
 def fetch_example_oda_repo(fresh=False, reset=True) -> str:
@@ -42,6 +44,14 @@ def run_renku_cli(cmd: list, repo_dir: str, root_dir: str):
              "PYTHONPATH": str(root_dir) + ":" + str(root_dir) + "/tests:" + os.environ.get('PYTHONPATH', "")}
         ))
 
+# on purpose from shell
+def run_renku_aqs(cmd: list, repo_dir: str, root_dir: str):
+
+    subprocess.check_call(["renku", "aqs"] + cmd, cwd=repo_dir, env=dict(
+            {**os.environ,
+             "PYTHONPATH": str(root_dir) + ":" + str(root_dir) + "/tests:" + os.environ.get('PYTHONPATH', "")}
+        ))
+
 
 def test_example_oda_repo_code_py(pytestconfig):
     repo_dir = fetch_example_oda_repo()
@@ -53,7 +63,24 @@ def test_example_oda_repo_code_py(pytestconfig):
     #rdf2dot renku-aqs-test-case/subgraph.ttl  | dot -Tpng -o subgraph.png
     # add references to the workflow identity and location
 
+
 def test_example_oda_repo_papermill(pytestconfig):
     repo_dir = fetch_example_oda_repo(fresh=True)
 
-    run_renku_cli(["papermill", "final-an.ipynb", "out.ipynb", "--output", "test-output.txt"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    run_renku_cli(["papermill", "final-an.ipynb", "out.ipynb"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+
+
+def test_example_cli_display(pytestconfig):
+    repo_dir = fetch_example_oda_repo(fresh=True)
+
+    run_renku_cli(["papermill", "final-an.ipynb", "out.ipynb"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+
+    run_renku_aqs(["display"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+
+
+def test_example_cli_display_no_oda_info(pytestconfig):
+    repo_dir = fetch_example_oda_repo(fresh=True)
+
+    run_renku_cli(["papermill", "final-an.ipynb", "out.ipynb"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+
+    run_renku_aqs(["display", "--no-oda-info"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
