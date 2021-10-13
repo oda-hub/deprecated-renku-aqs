@@ -436,7 +436,6 @@ def display(revision, paths, filename, no_oda_info):
         run_title_list = list(G[run_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
         if len(run_title_list) == 1:
             run_title = run_title_list[0]
-            print("run_title %s" % run_title)
         for association_node in qualified_association_list:
             plan_list = G[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
             for plan_node in plan_list:
@@ -458,12 +457,12 @@ def display(revision, paths, filename, no_oda_info):
                     astroObject_node = requested_astroObject_list[0]
                     G.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
                            astroObject_node))
-                # G.remove((run_node,
-                #           rdflib.URIRef('http://odahub.io/ontology#isUsing'),
-                #           None))
-                # G.remove((run_node,
-                #           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
-                #           None))
+                G.remove((run_node,
+                          rdflib.URIRef('http://odahub.io/ontology#isUsing'),
+                          None))
+                G.remove((run_node,
+                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
+                          None))
     # remove not-needed triples
     G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
     G.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
