@@ -355,11 +355,12 @@ def display(revision, paths, filename, no_oda_info):
             ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
             
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
-                <http://purl.org/dc/terms/title> ?run_title ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 a ?run_rdf_type ;
                 ^oa:hasBody/oa:hasTarget ?runId ;
                 ^oa:hasBody/oa:hasTarget ?activity .
+                
+            OPTIONAL { ?run <http://purl.org/dc/terms/title> ?run_title }
 
             ?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
                 a ?a_obj_rdf_type .
@@ -394,7 +395,7 @@ def display(revision, paths, filename, no_oda_info):
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 oa:hasTarget ?activity ;
                 a ?run_rdf_type .
-
+            
             ?a_object <https://odahub.io/ontology#AstroObject> ?a_object_name ;
                 a ?a_obj_rdf_type .
 
@@ -443,25 +444,26 @@ def display(revision, paths, filename, no_oda_info):
                 #       % (run_node, activity_node,  association_node, plan_node))
                 # we inferred a connection from the run to an action
                 # and we can now infer the request of a certain astroObject and the usage of a certain module
-                if run_title is not None and run_title.startswith('query_object'):
-                    used_module_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')]
-                    requested_astroObject_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')]
+                used_module_list = list(G[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')])
+                requested_astroObject_list = list(G[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')])
+                if (run_title is not None and run_title.startswith('query_object')) or \
+                        (len(used_module_list) == 1 and len(requested_astroObject_list) == 1):
                     # if run_node is of the type query_object
                     # one module in use per annotation and one requested AstroObject
-                    module_node = used_module_list.__next__()
+                    module_node = used_module_list[0]
                     # for module_node in used_module_list:
                     G.add((plan_node, rdflib.URIRef('http://odahub.io/ontology#usesModule'),
                            module_node))
                     # for astroObject_node in requested_astroObject_list:
-                    astroObject_node = requested_astroObject_list.__next__()
+                    astroObject_node = requested_astroObject_list[0]
                     G.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
                            astroObject_node))
-                G.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isUsing'),
-                          None))
-                G.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
-                          None))
+                # G.remove((run_node,
+                #           rdflib.URIRef('http://odahub.io/ontology#isUsing'),
+                #           None))
+                # G.remove((run_node,
+                #           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
+                #           None))
     # remove not-needed triples
     G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
     G.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
