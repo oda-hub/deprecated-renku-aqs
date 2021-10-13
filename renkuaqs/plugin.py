@@ -305,7 +305,7 @@ def params(revision, format, paths, diff):
     help="The git revision to generate the log for, default: HEAD",
 )
 @click.option("--filename", default="graph.png", help="The filename of the output file image")
-@click.option("--no-oda-info", is_flag=True, help="Exclude oda related out in the output graph")
+@click.option("--no-oda-info", is_flag=True, help="Exclude oda related information in the output graph")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def display(revision, paths, filename, no_oda_info):
     """Simple graph visualization """
@@ -427,47 +427,48 @@ def display(revision, paths, filename, no_oda_info):
     with open("subgraph.ttl", "w") as f:
         f.write(serial)
 
-    # find a way to the action form the Run by extracting activity qualified association
-    run_target_list = G[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
-    for run_node, activity_node in run_target_list:
-        # run_node is the run, act_node is the activity
-        qualified_association_list = G[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation')]
-        run_title = None
-        run_title_list = list(G[run_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
-        if len(run_title_list) == 1:
-            run_title = run_title_list[0]
-        for association_node in qualified_association_list:
-            plan_list = G[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
-            for plan_node in plan_list:
-                # print("run_node: %s -> activity_node %s -> association_node: %s -> plan_node: %s\n--------------------"
-                #       % (run_node, activity_node,  association_node, plan_node))
-                # we inferred a connection from the run to an action
-                # and we can now infer the request of a certain astroObject and the usage of a certain module
-                used_module_list = list(G[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')])
-                requested_astroObject_list = list(G[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')])
-                if (run_title is not None and run_title.startswith('query_object')) or \
-                        (len(used_module_list) == 1 and len(requested_astroObject_list) == 1):
-                    # if run_node is of the type query_object
-                    # one module in use per annotation and one requested AstroObject
-                    module_node = used_module_list[0]
-                    # for module_node in used_module_list:
-                    G.add((plan_node, rdflib.URIRef('http://odahub.io/ontology#usesModule'),
-                           module_node))
-                    # for astroObject_node in requested_astroObject_list:
-                    astroObject_node = requested_astroObject_list[0]
-                    G.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
-                           astroObject_node))
-                G.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isUsing'),
-                          None))
-                G.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
-                          None))
-    # remove not-needed triples
-    G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
-    G.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
-    G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), None))
-    G.remove((None, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), None))
+    if not no_oda_info:
+        # find a way to the action form the Run by extracting activity qualified association
+        run_target_list = G[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
+        for run_node, activity_node in run_target_list:
+            # run_node is the run, act_node is the activity
+            qualified_association_list = G[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation')]
+            run_title = None
+            run_title_list = list(G[run_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+            if len(run_title_list) == 1:
+                run_title = run_title_list[0]
+            for association_node in qualified_association_list:
+                plan_list = G[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
+                for plan_node in plan_list:
+                    # print("run_node: %s -> activity_node %s -> association_node: %s -> plan_node: %s\n--------------------"
+                    #       % (run_node, activity_node,  association_node, plan_node))
+                    # we inferred a connection from the run to an action
+                    # and we can now infer the request of a certain astroObject and the usage of a certain module
+                    used_module_list = list(G[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')])
+                    requested_astroObject_list = list(G[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')])
+                    if (run_title is not None and run_title.startswith('query_object')) or \
+                            (len(used_module_list) == 1 and len(requested_astroObject_list) == 1):
+                        # if run_node is of the type query_object
+                        # one module in use per annotation and one requested AstroObject
+                        module_node = used_module_list[0]
+                        # for module_node in used_module_list:
+                        G.add((plan_node, rdflib.URIRef('http://odahub.io/ontology#usesModule'),
+                               module_node))
+                        # for astroObject_node in requested_astroObject_list:
+                        astroObject_node = requested_astroObject_list[0]
+                        G.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
+                               astroObject_node))
+                    G.remove((run_node,
+                              rdflib.URIRef('http://odahub.io/ontology#isUsing'),
+                              None))
+                    G.remove((run_node,
+                              rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
+                              None))
+        # remove not-needed triples
+        G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
+        G.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
+        G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), None))
+        G.remove((None, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), None))
 
     stream = io.StringIO()
 
