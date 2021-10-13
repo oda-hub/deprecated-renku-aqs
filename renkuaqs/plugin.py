@@ -355,6 +355,7 @@ def display(revision, paths, filename, no_oda_info):
             ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
             
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
+                <http://purl.org/dc/terms/title> ?run_title ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 a ?run_rdf_type ;
                 ^oa:hasBody/oa:hasTarget ?runId ;
@@ -389,6 +390,7 @@ def display(revision, paths, filename, no_oda_info):
             ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
 
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
+                <http://purl.org/dc/terms/title> ?run_title ;
                 <http://odahub.io/ontology#isUsing> ?aq_module ;
                 oa:hasTarget ?activity ;
                 a ?run_rdf_type .
@@ -429,6 +431,11 @@ def display(revision, paths, filename, no_oda_info):
     for run_node, activity_node in run_target_list:
         # run_node is the run, act_node is the activity
         qualified_association_list = G[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation')]
+        run_title = None
+        run_title_list = list(G[run_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+        if len(run_title_list) == 1:
+            run_title = run_title_list[0]
+            print("run_title %s" % run_title)
         for association_node in qualified_association_list:
             plan_list = G[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
             for plan_node in plan_list:
@@ -436,14 +443,19 @@ def display(revision, paths, filename, no_oda_info):
                 #       % (run_node, activity_node,  association_node, plan_node))
                 # we inferred a connection from the run to an action
                 # and we can now infer the request of a certain astroObject and the usage of a certain module
-                used_module_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')]
-                for module_node in used_module_list:
+                if run_title is not None and run_title.startswith('query_object'):
+                    used_module_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')]
+                    requested_astroObject_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')]
+                    # if run_node is of the type query_object
+                    # one module in use per annotation and one requested AstroObject
+                    module_node = used_module_list.__next__()
+                    # for module_node in used_module_list:
                     G.add((plan_node, rdflib.URIRef('http://odahub.io/ontology#usesModule'),
                            module_node))
-                    requested_astroObject_list = G[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')]
-                    for astroObject_node in requested_astroObject_list:
-                        G.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
-                               astroObject_node))
+                    # for astroObject_node in requested_astroObject_list:
+                    astroObject_node = requested_astroObject_list.__next__()
+                    G.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
+                           astroObject_node))
                 G.remove((run_node,
                           rdflib.URIRef('http://odahub.io/ontology#isUsing'),
                           None))
@@ -452,6 +464,7 @@ def display(revision, paths, filename, no_oda_info):
                           None))
     # remove not-needed triples
     G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
+    G.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
     G.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), None))
     G.remove((None, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), None))
 
