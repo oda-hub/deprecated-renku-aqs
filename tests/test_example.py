@@ -4,6 +4,9 @@ import os
 from renkuaqs import plugin
 from click.testing import CliRunner
 
+__this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
+
+
 # make fixture
 def fetch_example_oda_repo(fresh=False, reset=True) -> str:
     repo_name = "renku-aqs-test-case"
@@ -36,27 +39,25 @@ def fetch_example_oda_repo(fresh=False, reset=True) -> str:
     return repo_dir
 
 
+def env_fixture(root_dir: str):
+    return dict(
+        {
+            **os.environ,
+            "PYTHONPATH": str(root_dir) + ":" + str(root_dir) + "/tests:" + os.environ.get('PYTHONPATH', "")
+        }
+    )
+
+
 # on purpose from shell
 def run_renku_cli(cmd: list, repo_dir: str, root_dir: str):
 
-    subprocess.check_call(["renku", "run"] + cmd, cwd=repo_dir, env=dict(
-            {**os.environ,
-             "PYTHONPATH": str(root_dir) + ":" + str(root_dir) + "/tests:" + os.environ.get('PYTHONPATH', "")}
-        ))
-
-# on purpose from shell
-def run_renku_aqs(cmd: list, repo_dir: str, root_dir: str):
-
-    subprocess.check_call(["renku", "aqs"] + cmd, cwd=repo_dir, env=dict(
-            {**os.environ,
-             "PYTHONPATH": str(root_dir) + ":" + str(root_dir) + "/tests:" + os.environ.get('PYTHONPATH', "")}
-        ))
+    return subprocess.check_call(["renku"] + cmd, cwd=repo_dir, env=env_fixture(root_dir))
 
 
 def test_example_oda_repo_code_py(pytestconfig):
     repo_dir = fetch_example_oda_repo()
 
-    run_renku_cli(["python", "example_code.py", "--output", "test-output.txt"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    run_renku_cli(["run", "python", "example_code.py", "--output", "test-output.txt"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
 
     #TODO:
     #renku aqs params
@@ -67,20 +68,28 @@ def test_example_oda_repo_code_py(pytestconfig):
 def test_example_oda_repo_papermill(pytestconfig):
     repo_dir = fetch_example_oda_repo(fresh=True)
 
-    run_renku_cli(["papermill", "final-an.ipynb", "out.ipynb"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    ret_code = run_renku_cli(["run", "papermill", "final-an.ipynb", "out.ipynb"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+
+    assert ret_code == 0
 
 
 def test_example_cli_display(pytestconfig):
     repo_dir = fetch_example_oda_repo(fresh=True)
 
-    run_renku_cli(["papermill", "final-an.ipynb", "out.ipynb"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    ret_code = run_renku_cli(["run", "papermill", "final-an.ipynb", "out.ipynb"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    assert ret_code == 0
 
-    run_renku_aqs(["display"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    ret_code = run_renku_cli(["aqs", "display"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    assert ret_code == 0
 
 
-def test_example_cli_display_no_oda_info(pytestconfig):
+def test_example_cli_display_no_oda_info(pytestconfig, monkeypatch):
     repo_dir = fetch_example_oda_repo(fresh=True)
 
-    run_renku_cli(["papermill", "final-an.ipynb", "out.ipynb"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    ret_code = run_renku_cli(["run", "papermill", "final-an.ipynb", "out.ipynb"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    assert ret_code == 0
 
-    run_renku_aqs(["display", "--no-oda-info"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    monkeypatch.chdir(repo_dir)
+
+    ret_code = run_renku_cli(["aqs", "display", "--no-oda-info"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    assert ret_code == 0
