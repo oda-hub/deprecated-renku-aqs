@@ -331,63 +331,11 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 
     renku_path = renku_context().renku_path
 
-    # if input_notebook is not None:
-    #     query_construct_action = f"""
-    #             ?action a <http://schema.org/Action> ;
-    #                 <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-    #                 <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?actionParamInput ;
-    #                 ?has ?actionParam .
-    #
-    #             ?actionParamInput a ?actionParamInputType ;
-    #                 <http://schema.org/defaultValue> '{input_notebook}' .
-    #
-    #             ?actionParam a ?actionParamType ;
-    #                 <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
-    #                 <http://schema.org/defaultValue> ?actionParamValue .
-    #     """
-    # else:
-    #     query_construct_action = f"""
-    #                     ?action a <http://schema.org/Action> ;
-    #                         <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-    #                         ?has ?actionParam .
-    #
-    #                     ?actionParam a ?actionParamType ;
-    #                         <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
-    #                         <http://schema.org/defaultValue> ?actionParamValue .
-    #             """
-    #
-    # query_construct_oda_info = ""
-    # if not no_oda_info:
-    #     query_construct_oda_info += """
-    #
-    #         ?activity a ?activityType ;
-    #             <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
-    #
-    #         ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
-    #
-    #         ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
-    #             <http://purl.org/dc/terms/title> ?run_title ;
-    #             <http://odahub.io/ontology#isUsing> ?aq_module ;
-    #             oa:hasTarget ?activity ;
-    #             a ?run_rdf_type .
-    #
-    #         ?a_object <https://odahub.io/ontology#AstroObject> ?a_object_name ;
-    #             a ?a_obj_rdf_type .
-    #
-    #         ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
-    #             a ?aq_mod_rdf_type .
-    #     """
-    # query_construct = f"""CONSTRUCT {{
-    #         {query_construct_action}
-    #
-    #         {query_construct_oda_info}
-    #
-    #     }}"""
-
     query_where = build_query_where(input_notebook=input_notebook)
     print("query_where %s " % query_where)
 
     query_construct = build_query_construct(input_notebook=input_notebook, no_oda_info=no_oda_info)
+    print("query_construct %s " % query_construct)
 
     query = f"""{query_construct}
         {query_where}
@@ -649,28 +597,37 @@ def build_query_where(input_notebook: str = None):
                 <http://schema.org/defaultValue> '{input_notebook}' .
 
             FILTER ( ?actionParamInputType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandInput>)) .
+            
+            ?actionParam a ?actionParamType ;
+                <http://schema.org/defaultValue> ?actionParamValue .
+
+            FILTER ( ?actionParamType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput>,
+                                        <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>)
+                                        ) .
         """
     else:
-        query_where = """WHERE {{
+        query_where = """WHERE {
             ?action a <http://schema.org/Action> ; 
                 <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                 ?has ?actionParam .
 
             FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>, 
-                <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>
+                <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>, 
+                <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs>
                 ))
-        """
-
-    query_where = query_where + f"""
+                
             ?actionParam a ?actionParamType ;
                 <http://schema.org/defaultValue> ?actionParamValue .
 
-            OPTIONAL {{ ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition }} .
-
             FILTER ( ?actionParamType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput>,
-                                        <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>)
+                                        <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>,
+                                        <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput>)
                                         ) .
+        """
 
+    query_where = query_where + f"""
+            OPTIONAL {{ ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition }} .
+    
             ?activity a ?activityType ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
                 <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
@@ -726,7 +683,6 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
     query_construct_oda_info = ""
     if not no_oda_info:
         query_construct_oda_info += """
-
                 ?activity a ?activityType ;
                     <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
 
@@ -747,9 +703,7 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
 
     query_construct = f"""CONSTRUCT {{
                 {query_construct_action}
-
                 {query_construct_oda_info}
-
             }}"""
 
     return query_construct
