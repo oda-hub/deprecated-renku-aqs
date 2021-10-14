@@ -332,10 +332,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     renku_path = renku_context().renku_path
 
     query_where = build_query_where(input_notebook=input_notebook)
-    print("query_where %s " % query_where)
-
     query_construct = build_query_construct(input_notebook=input_notebook, no_oda_info=no_oda_info)
-    print("query_construct %s " % query_construct)
 
     query = f"""{query_construct}
         {query_where}

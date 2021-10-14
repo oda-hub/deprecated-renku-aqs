@@ -1,8 +1,7 @@
 import subprocess
 import shutil
 import os
-from renkuaqs import plugin
-from click.testing import CliRunner
+import pytest
 
 __this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
 
@@ -83,13 +82,16 @@ def test_example_cli_display(pytestconfig):
     assert ret_code == 0
 
 
-def test_example_cli_display_no_oda_info(pytestconfig, monkeypatch):
+@pytest.mark.parametrize('input_notebook', ['final-an.ipynb', None])
+def test_example_cli_display_no_oda_info(pytestconfig, monkeypatch, input_notebook):
     repo_dir = fetch_example_oda_repo(fresh=True)
 
     ret_code = run_renku_cli(["run", "papermill", "final-an.ipynb", "out.ipynb"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
     assert ret_code == 0
 
-    monkeypatch.chdir(repo_dir)
+    args = ["aqs", "display", "--no-oda-info"]
+    if input_notebook is not None:
+        args.extend(('--input-notebook', input_notebook))
 
-    ret_code = run_renku_cli(["aqs", "display", "--no-oda-info"], repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
+    ret_code = run_renku_cli(args, repo_dir=repo_dir, root_dir=pytestconfig.rootdir)
     assert ret_code == 0
