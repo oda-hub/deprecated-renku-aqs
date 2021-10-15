@@ -583,6 +583,12 @@ def customize_node(node: typing.Union[pydotplus.Node],
                     node.set_shape("ellipse")
                     node.set_color("#6262be")
 
+                # remove top row for the cells Action and CommandInput
+                if type_label_values_dict[id_node] == 'CommandInput' or \
+                        type_label_values_dict[id_node] == 'Action':
+                    table_html.remove(tr_list[0])
+                # remove not needed long id information
+                table_html.remove(tr_list[1])
                 # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
                 for tr in tr_list:
                     list_td = tr.findall('td')
@@ -602,8 +608,6 @@ def customize_node(node: typing.Union[pydotplus.Node],
                             if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
                                 b_element_title[0].text = list_args_commandParameter[0]
                                 list_td[1].text = '"' + ' '.join(list_args_commandParameter[1:]) + '"'
-            # removal of the not-needed id from the node
-            table_html.remove(tr_list[1])
             # serialize back the table html
             node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
 
