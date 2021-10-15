@@ -430,8 +430,26 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
         if s_label not in out_default_value_dict:
             out_default_value_dict[s_label] = []
         output_obj_list = list(G[o:rdflib.URIRef('http://schema.org/defaultValue')])
-        for output_o in output_obj_list:
-            out_default_value_dict[s_label].append(output_o.n3().strip('\"'))
+        if len(output_obj_list) == 1:
+            # get file extension
+            file_extension = os.path.splitext(output_obj_list[0])[1][1:]
+
+            if file_extension is not None:
+                if file_extension in ['jpeg', 'jpg', 'png', 'gif', 'bmp']:
+                    # removing old type, and assigning a new specific one
+                    G.remove((o, rdflib.RDF.type, None))
+                    G.add((o,
+                           rdflib.RDF.type,
+                           rdflib.URIRef("https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputImage")))
+                else:
+                    if file_extension == 'ipynb':
+                        G.remove((o, rdflib.RDF.type, None))
+                        G.add((o,
+                               rdflib.RDF.type,
+                               rdflib.URIRef(
+                                   "https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputNotebook")))
+
+            out_default_value_dict[s_label].append(output_obj_list[0])
 
     # analyze types
     types_list = G[:rdflib.RDF.type]
@@ -531,9 +549,14 @@ def customize_node(node: typing.Union[pydotplus.Node],
             b_element_title = td_list_first_row[0].findall('B')
             if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
                 id_node = b_element_title[0].text
+            if id_node is not None:
+                # change title of the node
                 if type_label_values_dict[b_element_title[0].text] != 'CommandParameter':
                     b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
-            if id_node is not None:
+                if b_element_title[0].text.startswith('CommandOutput') and \
+                        b_element_title[0].text != 'CommandOutput':
+                    b_element_title[0].text = b_element_title[0].text[13:]
+                # apply styles (shapes, colors etc etc)
                 table_html.attrib['border'] = '0'
                 table_html.attrib['cellborder'] = '0'
                 node.set_style("filled")
@@ -544,16 +567,22 @@ def customize_node(node: typing.Union[pydotplus.Node],
                     node.set_color("#dc143c")
                 elif type_label_values_dict[id_node] == 'CommandOutput':
                     node.set_color("#FFFF00")
+                elif type_label_values_dict[id_node] == 'CommandOutputImage':
+                    table_html.attrib['border'] = '1'
+                    node.set_color("#FFFFFF")
+                elif type_label_values_dict[id_node] == 'CommandOutputNotebook':
+                    node.set_color("#DBA3BC")
                 elif type_label_values_dict[id_node] == 'CommandInput':
-                    node.set_color("#0000FF")
+                    node.set_color("#6262be")
                 elif type_label_values_dict[id_node] == 'CommandParameter':
-                    node.set_color("#0000FF")
+                    node.set_color("#6262be")
                 elif type_label_values_dict[id_node] == 'AstroqueryModule':
                     node.set_shape("ellipse")
                     node.set_color("#00CC00")
                 elif type_label_values_dict[id_node] == 'AstrophysicalObject':
                     node.set_shape("ellipse")
-                    node.set_color("#0000FF")
+                    node.set_color("#6262be")
+
                 # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
                 for tr in tr_list:
                     list_td = tr.findall('td')
