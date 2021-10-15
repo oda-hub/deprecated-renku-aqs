@@ -345,12 +345,6 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     G.bind("odas", "https://odahub.io/ontology#") # the same
     G.bind("local-renku", f"file://{renku_path}/")
 
-    # write over a ttl file
-    serial = G.serialize(format="n3").decode()
-
-    with open("subgraph.ttl", "w") as f:
-        f.write(serial)
-
     if not no_oda_info:
         # process oda-related information (eg do the inferring)
         process_oda_info(G)
@@ -435,10 +429,9 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
         s_label = label(s, G)
         if s_label not in out_default_value_dict:
             out_default_value_dict[s_label] = []
-        output_obj_list = list(G[o])
-        for output_s, output_o in output_obj_list:
-            if output_s.n3() == "<http://schema.org/defaultValue>":
-                out_default_value_dict[s_label].append(output_o.n3().strip('\"'))
+        output_obj_list = list(G[o:rdflib.URIRef('http://schema.org/defaultValue')])
+        for output_o in output_obj_list:
+            out_default_value_dict[s_label].append(output_o.n3().strip('\"'))
 
     # analyze types
     types_list = G[:rdflib.RDF.type]
@@ -543,6 +536,7 @@ def customize_node(node: typing.Union[pydotplus.Node],
             if id_node is not None:
                 table_html.attrib['border'] = '0'
                 table_html.attrib['cellborder'] = '0'
+                node.set_style("filled")
                 node.set_shape("box")
                 # color and shape change
                 if type_label_values_dict[id_node] == 'Action':
