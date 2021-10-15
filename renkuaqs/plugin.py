@@ -564,7 +564,7 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 # color and shape change
                 if type_label_values_dict[id_node] == 'Action':
                     node.set_shape("diamond")
-                    node.set_color("#dc143c")
+                    node.set_color("#D5C15D")
                 elif type_label_values_dict[id_node] == 'CommandOutput':
                     node.set_color("#FFFF00")
                 elif type_label_values_dict[id_node] == 'CommandOutputImage':
@@ -573,7 +573,7 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 elif type_label_values_dict[id_node] == 'CommandOutputNotebook':
                     node.set_color("#DBA3BC")
                 elif type_label_values_dict[id_node] == 'CommandInput':
-                    node.set_color("#6262be")
+                    node.set_color("#DBA3BC")
                 elif type_label_values_dict[id_node] == 'CommandParameter':
                     node.set_color("#6262be")
                 elif type_label_values_dict[id_node] == 'AstroqueryModule':
@@ -594,9 +594,6 @@ def customize_node(node: typing.Union[pydotplus.Node],
                     list_td = tr.findall('td')
                     if len(list_td) == 2:
                         list_left_column_element = list_td[0].text.split(':')
-                        # if 'defaultValue' in list_left_column_element or \
-                        #         'AstroObject' in list_left_column_element or \
-                        #         'AQModule' in list_left_column_element:
                         tr.remove(list_td[0])
                         if 'align' in list_td[1].keys():
                             list_td[1].attrib['align'] = 'center'
@@ -608,6 +605,8 @@ def customize_node(node: typing.Union[pydotplus.Node],
                             if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
                                 b_element_title[0].text = list_args_commandParameter[0]
                                 list_td[1].text = '"' + ' '.join(list_args_commandParameter[1:]) + '"'
+                        # remove trailing and leading double quotes
+                        list_td[1].text = list_td[1].text[1:-1]
             # serialize back the table html
             node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
 
