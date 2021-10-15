@@ -588,13 +588,13 @@ def customize_node(node: typing.Union[pydotplus.Node],
                     list_td = tr.findall('td')
                     if len(list_td) == 2:
                         list_left_column_element = list_td[0].text.split(':')
-                        if 'defaultValue' in list_left_column_element or \
-                                'AstroObject' in list_left_column_element or \
-                                'AQModule' in list_left_column_element:
-                            tr.remove(list_td[0])
-                            if 'align' in list_td[1].keys():
-                                list_td[1].attrib['align'] = 'center'
-                                list_td[1].attrib['colspan'] = '2'
+                        # if 'defaultValue' in list_left_column_element or \
+                        #         'AstroObject' in list_left_column_element or \
+                        #         'AQModule' in list_left_column_element:
+                        tr.remove(list_td[0])
+                        if 'align' in list_td[1].keys():
+                            list_td[1].attrib['align'] = 'center'
+                            list_td[1].attrib['colspan'] = '2'
                         # special case default_value table_row
                         if 'defaultValue' in list_left_column_element and \
                                 type_label_values_dict[id_node] == 'CommandParameter':
