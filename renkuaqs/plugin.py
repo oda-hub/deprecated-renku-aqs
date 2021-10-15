@@ -510,14 +510,16 @@ def process_oda_info(g):
 
 def customize_edge(edge: typing.Union[pydotplus.Edge]):
     if 'label' in edge.obj_dict['attributes']:
-        font_html = etree.fromstring(edge.obj_dict['attributes']['label'][1:-1])
+        edge_html = etree.fromstring(edge.obj_dict['attributes']['label'][1:-1])
         # simple color code
         # those two are not relevant at the moment since new predicates have been infered
-        if font_html.text == 'oda:isRequestingAstroObject':
-            edge.obj_dict['attributes']['color'] = '#2986CC'
-        if font_html.text == 'oda:isUsing':
-            edge.obj_dict['attributes']['color'] = '#53D06A'
+        # if edge_html.text == 'oda:isRequestingAstroObject':
+        #     edge.obj_dict['attributes']['color'] = '#2986CC'
+        # if edge_html.text == 'oda:isUsing':
+        #     edge.obj_dict['attributes']['color'] = '#53D06A'
         # TODO remove first part of the label ?
+        edge_html.text = edge_html.text.split(":")[1]
+        edge.set_label('< ' + etree.tostring(edge_html, encoding='unicode') + ' >')
 
 
 def customize_node(node: typing.Union[pydotplus.Node],
@@ -525,34 +527,39 @@ def customize_node(node: typing.Union[pydotplus.Node],
                    ):
     if 'label' in node.obj_dict['attributes']:
         # parse the whole node table into a lxml object
-        table_html = etree.fromstring(node.obj_dict['attributes']['label'][1:-1])
+        table_html = etree.fromstring(node.get_label()[1:-1])
         tr_list = table_html.findall('tr')
 
         # modify the first row, hence the title of the node, and then all the rest
         id_node = None
         td_list_first_row = tr_list[0].findall('td')
         if td_list_first_row is not None:
+            td_list_first_row[0].attrib.pop('bgcolor')
             b_element_title = td_list_first_row[0].findall('B')
             if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
                 id_node = b_element_title[0].text
                 if type_label_values_dict[b_element_title[0].text] != 'CommandParameter':
                     b_element_title[0].text = type_label_values_dict[b_element_title[0].text]
             if id_node is not None:
-                table_html.attrib['border'] = '2'
-                table_html.attrib['cellborder'] = '1'
-                # color change
+                table_html.attrib['border'] = '0'
+                table_html.attrib['cellborder'] = '0'
+                node.set_shape("box")
+                # color and shape change
                 if type_label_values_dict[id_node] == 'Action':
-                    table_html.attrib['color'] = '#dc143c'
+                    node.set_shape("diamond")
+                    node.set_color("#dc143c")
                 elif type_label_values_dict[id_node] == 'CommandOutput':
-                    table_html.attrib['color'] = '#FFFF00'
+                    node.set_color("#FFFF00")
                 elif type_label_values_dict[id_node] == 'CommandInput':
-                    table_html.attrib['color'] = '#0000FF'
+                    node.set_color("#0000FF")
                 elif type_label_values_dict[id_node] == 'CommandParameter':
-                    table_html.attrib['color'] = '#0000FF'
+                    node.set_color("#0000FF")
                 elif type_label_values_dict[id_node] == 'AstroqueryModule':
-                    table_html.attrib['color'] = '#00CC00'
+                    node.set_shape("ellipse")
+                    node.set_color("#00CC00")
                 elif type_label_values_dict[id_node] == 'AstrophysicalObject':
-                    table_html.attrib['color'] = '#0000FF'
+                    node.set_shape("ellipse")
+                    node.set_color("#0000FF")
                 # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
                 for tr in tr_list:
                     list_td = tr.findall('td')
