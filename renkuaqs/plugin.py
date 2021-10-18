@@ -25,6 +25,7 @@ import click
 import pydotplus
 import rdflib
 import rdflib.tools.rdf2dot
+from rdflib.tools.rdf2dot import LABEL_PROPERTIES
 
 from pathlib import Path
 
@@ -40,6 +41,7 @@ from prettytable import PrettyTable
 from lxml import etree
 
 from aqsconverters.io import AQS_DIR, COMMON_DIR
+from dateutil import parser
 
 
 class AQS(object):
@@ -312,20 +314,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     """Simple graph visualization """
     import io
     from IPython.display import display
-    from rdflib.tools.rdf2dot import LABEL_PROPERTIES
     import pydotplus
-
-    def label(x, g):
-
-        for labelProp in LABEL_PROPERTIES:
-            l = g.value(x, labelProp)
-            if l:
-                return l
-
-        try:
-            return g.namespace_manager.compute_qname(x)[2]
-        except:
-            return x
 
     graph = _graph(revision, paths)
 
@@ -345,53 +334,112 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     G.bind("odas", "https://odahub.io/ontology#") # the same
     G.bind("local-renku", f"file://{renku_path}/")
 
+    extract_activity_start_time(G)
+
     if not no_oda_info:
         # process oda-related information (eg do the inferring)
         process_oda_info(G)
 
-    stream = io.StringIO()
-
     action_node_dict = {}
-
     type_label_values_dict = {}
-
     args_default_value_dict = {}
-
     in_default_value_dict = {}
-
     out_default_value_dict = {}
 
-    # analyze inputs
-    inputs_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs')]
-    for s, o in inputs_list:
-        s_label = label(s, G)
-        if s_label not in in_default_value_dict:
-            in_default_value_dict[s_label] = []
-        input_obj_list = G[o]
-        for input_p, input_o in input_obj_list:
-            if input_p.n3() == "<http://schema.org/defaultValue>":
-                in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
-        # infer isInputOf property
-        G.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
-    G.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), None))
+    analyze_inputs(G, in_default_value_dict)
+    analyze_arguments(G, action_node_dict, args_default_value_dict)
+    analyze_outputs(G, out_default_value_dict)
+    analyze_types(G, type_label_values_dict)
 
+    clean_graph(G)
+
+    stream = io.StringIO()
+    rdf2dot.rdf2dot(G, stream, opts={display})
+    pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
+
+    # list of edges and simple color change
+    for edge in pydot_graph.get_edge_list():
+        customize_edge(edge)
+
+    for node in pydot_graph.get_nodes():
+        customize_node(node, type_label_values_dict=type_label_values_dict)
+
+    # final output write over the png image
+    pydot_graph.write_png(filename)
+
+
+def clean_graph(g):
+    # remove not-needed triples
+    g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
+    g.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
+    g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), None))
+    g.remove((None, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), None))
+    # remove all the type triples
+    g.remove((None, rdflib.RDF.type, None))
+
+
+def analyze_types(g, type_label_values_dict):
+    # analyze types
+    types_list = g[:rdflib.RDF.type]
+    for s, o in types_list:
+        o_qname = g.compute_qname(o)
+        s_label = label(s, g)
+        type_label_values_dict[s_label] = o_qname[2]
+
+
+def analyze_outputs(g, out_default_value_dict):
+    # analyze outputs
+    outputs_list = g[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs')]
+    for s, o in outputs_list:
+        s_label = label(s, g)
+        if s_label not in out_default_value_dict:
+            out_default_value_dict[s_label] = []
+        output_obj_list = list(g[o:rdflib.URIRef('http://schema.org/defaultValue')])
+        if len(output_obj_list) == 1:
+            # get file extension
+            file_extension = os.path.splitext(output_obj_list[0])[1][1:]
+
+            if file_extension is not None:
+                if file_extension in ['jpeg', 'jpg', 'png', 'gif', 'bmp']:
+                    # removing old type, and assigning a new specific one
+                    g.remove((o, rdflib.RDF.type, None))
+                    g.add((o,
+                           rdflib.RDF.type,
+                           rdflib.URIRef("https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputImage")))
+                if file_extension in ['fits']:
+                    # removing old type, and assigning a new specific one
+                    g.remove((o, rdflib.RDF.type, None))
+                    g.add((o,
+                           rdflib.RDF.type,
+                           rdflib.URIRef("https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputFitsFile")))
+                else:
+                    if file_extension == 'ipynb':
+                        g.remove((o, rdflib.RDF.type, None))
+                        g.add((o,
+                               rdflib.RDF.type,
+                               rdflib.URIRef(
+                                   "https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputNotebook")))
+
+            out_default_value_dict[s_label].append(output_obj_list[0])
+
+
+def analyze_arguments(g, action_node_dict, args_default_value_dict):
     # analyze arguments (and join them all together)
-    args_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments')]
+    args_list = g[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments')]
     for s, o in args_list:
-        s_label = label(s, G)
+        s_label = label(s, g)
         if s_label not in action_node_dict:
             action_node_dict[s_label] = s
         if s_label not in args_default_value_dict:
             args_default_value_dict[s_label] = []
-        arg_obj_list = G[o:rdflib.URIRef('http://schema.org/defaultValue')]
+        arg_obj_list = g[o:rdflib.URIRef('http://schema.org/defaultValue')]
         for arg_o in arg_obj_list:
-            position_o = list(G[o:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position')])
+            position_o = list(g[o:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position')])
             if len(position_o) == 1:
                 args_default_value_dict[s_label].append((arg_o.n3().strip('\"'), position_o[0].value))
-                G.remove((o, rdflib.URIRef('http://schema.org/defaultValue'), arg_o))
-    G.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), None))
-    G.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), None))
-
+                g.remove((o, rdflib.URIRef('http://schema.org/defaultValue'), arg_o))
+    g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), None))
+    g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), None))
     # infer isArgumentOf property for each action, this implies the creation of the new CommandParameter nodes
     # with the related defaultValue
     for action in args_default_value_dict.keys():
@@ -405,11 +453,11 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
             node_args = rdflib.URIRef("https://github.com/plans/84d9b437-4a55-4573-9aa3-4669ff641f1b/parameters/"
                                       + x[0].replace(" ", "_") + "_" + y[0].replace(" ", "_"))
             # link it to the action node
-            G.add((node_args,
+            g.add((node_args,
                    rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isArgumentOf'),
                    action_node_dict[action]))
             # value for the node args
-            G.add((node_args,
+            g.add((node_args,
                    rdflib.URIRef('http://schema.org/defaultValue'),
                    rdflib.Literal((x[0] + " " + y[0]).strip())))
             # type for the node args
@@ -419,59 +467,50 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
             #        rdflib.RDF.type,
             #        rdflib.URIRef("https://swissdatasciencecenter.github.io/renku-ontology#" + x[0])))
             # or still create a new CommandParameter and use the defaultValue information
-            G.add((node_args,
+            g.add((node_args,
                    rdflib.RDF.type,
                    rdflib.URIRef("https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter")))
 
-    # analyze outputs
-    outputs_list = G[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs')]
-    for s, o in outputs_list:
-        s_label = label(s, G)
-        if s_label not in out_default_value_dict:
-            out_default_value_dict[s_label] = []
-        output_obj_list = list(G[o:rdflib.URIRef('http://schema.org/defaultValue')])
-        if len(output_obj_list) == 1:
-            # get file extension
-            file_extension = os.path.splitext(output_obj_list[0])[1][1:]
 
-            if file_extension is not None:
-                if file_extension in ['jpeg', 'jpg', 'png', 'gif', 'bmp']:
-                    # removing old type, and assigning a new specific one
-                    G.remove((o, rdflib.RDF.type, None))
-                    G.add((o,
-                           rdflib.RDF.type,
-                           rdflib.URIRef("https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputImage")))
-                else:
-                    if file_extension == 'ipynb':
-                        G.remove((o, rdflib.RDF.type, None))
-                        G.add((o,
-                               rdflib.RDF.type,
-                               rdflib.URIRef(
-                                   "https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputNotebook")))
+def label(x, g):
+    for labelProp in LABEL_PROPERTIES:
+        l = g.value(x, labelProp)
+        if l:
+            return l
+    try:
+        return g.namespace_manager.compute_qname(x)[2]
+    except:
+        return x
 
-            out_default_value_dict[s_label].append(output_obj_list[0])
 
-    # analyze types
-    types_list = G[:rdflib.RDF.type]
-    for s, o in types_list:
-        o_qname = G.compute_qname(o)
-        s_label = label(s, G)
-        type_label_values_dict[s_label] = o_qname[2]
-    # remove all the type triples
-    G.remove((None, rdflib.RDF.type, None))
+def analyze_inputs(g, in_default_value_dict):
+    # analyze inputs
+    inputs_list = g[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs')]
+    for s, o in inputs_list:
+        s_label = label(s, g)
+        if s_label not in in_default_value_dict:
+            in_default_value_dict[s_label] = []
+        input_obj_list = g[o]
+        for input_p, input_o in input_obj_list:
+            if input_p.n3() == "<http://schema.org/defaultValue>":
+                in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
+        # infer isInputOf property
+        g.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
+    g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), None))
 
-    rdf2dot.rdf2dot(G, stream, opts={display})
-    pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
 
-    # list of edges and simple color change
-    for edge in pydot_graph.get_edge_list():
-        customize_edge(edge)
-
-    for node in pydot_graph.get_nodes():
-        customize_node(node, type_label_values_dict=type_label_values_dict)
-
-    # final output write over the png image
-    pydot_graph.write_png(filename)
+def extract_activity_start_time(g):
+    # extract the info about the activity start time
+    # get the activities and extract for each the startedTime into, and attach it to the related Action
+    start_time_activity_list = g[:rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime')]
+    for activity_node, activity_start_time in start_time_activity_list:
+        # get the association and then the action
+        qualified_association_list = g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation')]
+        for association_node in qualified_association_list:
+            plan_list = g[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
+            for plan_node in plan_list:
+                g.add((plan_node, rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime'), activity_start_time))
+                g.remove((activity_node, rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime'), activity_start_time))
 
 
 def process_oda_info(g):
@@ -512,11 +551,6 @@ def process_oda_info(g):
                 g.remove((run_node,
                           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
                           None))
-    # remove not-needed triples
-    g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
-    g.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
-    g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), None))
-    g.remove((None, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), None))
 
 
 def customize_edge(edge: typing.Union[pydotplus.Edge]):
@@ -549,8 +583,6 @@ def customize_node(node: typing.Union[pydotplus.Node],
             b_element_title = td_list_first_row[0].findall('B')
             if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
                 id_node = b_element_title[0].text
-            if type_label_values_dict[id_node] == 'AstrophysicalObject':
-                print("node.obj_dict['attributes']['label']: ", node.obj_dict['attributes']['label'])
             if id_node is not None:
                 # change title of the node
                 if type_label_values_dict[b_element_title[0].text] != 'CommandParameter':
@@ -561,8 +593,6 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 # apply styles (shapes, colors etc etc)
                 table_html.attrib['border'] = '0'
                 table_html.attrib['cellborder'] = '0'
-                # print("node dir: ", dir(node))
-                # node.set_style("bold")
                 node.set_style("filled")
                 node.set_shape("box")
                 # color and shape change
@@ -597,6 +627,7 @@ def customize_node(node: typing.Union[pydotplus.Node],
                     list_td = tr.findall('td')
                     if len(list_td) == 2:
                         list_left_column_element = list_td[0].text.split(':')
+                        # remove left side text (eg defaultValue)
                         tr.remove(list_td[0])
                         if 'align' in list_td[1].keys():
                             list_td[1].attrib['align'] = 'center'
@@ -608,11 +639,17 @@ def customize_node(node: typing.Union[pydotplus.Node],
                             if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
                                 b_element_title[0].text = list_args_commandParameter[0]
                                 list_td[1].text = '"' + ' '.join(list_args_commandParameter[1:]) + '"'
+                        if 'startedAtTime' in list_left_column_element:
+                            # TODO to improve and understand how to parse xsd:dateTime time
+                            list_td[1].text = list_td[1].text.replace('^^xsd:dateTime', '')
+                            parsed_start_time = parser.parse(list_td[1].text[1:-1])
+                            list_td[1].text = '"' + parsed_start_time.strftime('%Y-%m-%d %H:%M:%S') + '"'
                         # remove trailing and leading double quotes
                         list_td[1].text = list_td[1].text[1:-1]
                         # bold text in case of an input or action
                         if type_label_values_dict[id_node] == 'CommandInput' or \
-                                type_label_values_dict[id_node] == 'Action':
+                                (type_label_values_dict[id_node] == 'Action' and
+                                 'command' in list_left_column_element):
                             bold_text_element = etree.Element('B')
                             if type_label_values_dict[id_node] == 'CommandInput':
                                 italic_text_element = etree.Element('I')
@@ -675,6 +712,7 @@ def build_query_where(input_notebook: str = None):
             OPTIONAL {{ ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition }} .
     
             ?activity a ?activityType ;
+                <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
                 <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
 
@@ -725,15 +763,18 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                             <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
                             <http://schema.org/defaultValue> ?actionParamValue .
                 """
+    # add time activity information
+    query_construct_action += """
+            ?activity a ?activityType ;
+                <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
+                <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
+                
+            ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
+    """
 
     query_construct_oda_info = ""
     if not no_oda_info:
         query_construct_oda_info += """
-                ?activity a ?activityType ;
-                    <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
-
-                ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
-
                 ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                     <http://purl.org/dc/terms/title> ?run_title ;
                     <http://odahub.io/ontology#isUsing> ?aq_module ;
