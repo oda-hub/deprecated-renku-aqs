@@ -549,6 +549,8 @@ def customize_node(node: typing.Union[pydotplus.Node],
             b_element_title = td_list_first_row[0].findall('B')
             if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
                 id_node = b_element_title[0].text
+            if type_label_values_dict[id_node] == 'AstrophysicalObject':
+                print("node.obj_dict['attributes']['label']: ", node.obj_dict['attributes']['label'])
             if id_node is not None:
                 # change title of the node
                 if type_label_values_dict[b_element_title[0].text] != 'CommandParameter':
@@ -588,7 +590,7 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 if type_label_values_dict[id_node] == 'CommandInput' or \
                         type_label_values_dict[id_node] == 'Action':
                     table_html.remove(tr_list[0])
-                # remove not needed long id information
+                    # remove not needed long id information
                 table_html.remove(tr_list[1])
                 # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
                 for tr in tr_list:
@@ -608,6 +610,14 @@ def customize_node(node: typing.Union[pydotplus.Node],
                                 list_td[1].text = '"' + ' '.join(list_args_commandParameter[1:]) + '"'
                         # remove trailing and leading double quotes
                         list_td[1].text = list_td[1].text[1:-1]
+                        # bold text in case of an input or action
+                        if type_label_values_dict[id_node] == 'CommandInput' or \
+                                type_label_values_dict[id_node] == 'Action':
+                            bold_text_element = etree.Element('B')
+                            bold_text_element.text = list_td[1].text
+                            list_td[1].append(bold_text_element)
+                            list_td[1].text = ""
+
             # serialize back the table html
             node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
 
