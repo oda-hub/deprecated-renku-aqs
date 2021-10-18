@@ -559,6 +559,8 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 # apply styles (shapes, colors etc etc)
                 table_html.attrib['border'] = '0'
                 table_html.attrib['cellborder'] = '0'
+                # print("node dir: ", dir(node))
+                # node.set_style("bold")
                 node.set_style("filled")
                 node.set_shape("box")
                 # color and shape change
@@ -582,7 +584,6 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 elif type_label_values_dict[id_node] == 'AstrophysicalObject':
                     node.set_shape("ellipse")
                     node.set_color("#6262be")
-
                 # remove top row for the cells Action and CommandInput
                 if type_label_values_dict[id_node] == 'CommandInput' or \
                         type_label_values_dict[id_node] == 'Action':
