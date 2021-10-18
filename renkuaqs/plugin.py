@@ -614,7 +614,12 @@ def customize_node(node: typing.Union[pydotplus.Node],
                         if type_label_values_dict[id_node] == 'CommandInput' or \
                                 type_label_values_dict[id_node] == 'Action':
                             bold_text_element = etree.Element('B')
-                            bold_text_element.text = list_td[1].text
+                            if type_label_values_dict[id_node] == 'CommandInput':
+                                italic_text_element = etree.Element('I')
+                                italic_text_element.text = list_td[1].text
+                                bold_text_element.append(italic_text_element)
+                            else:
+                                bold_text_element.text = list_td[1].text
                             list_td[1].append(bold_text_element)
                             list_td[1].text = ""
 
