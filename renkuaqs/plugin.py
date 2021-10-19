@@ -374,6 +374,8 @@ def clean_graph(g):
     g.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
     g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), None))
     g.remove((None, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), None))
+    g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), None))
+    g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), None))
     # remove all the type triples
     g.remove((None, rdflib.RDF.type, None))
 
@@ -438,8 +440,6 @@ def analyze_arguments(g, action_node_dict, args_default_value_dict):
             if len(position_o) == 1:
                 args_default_value_dict[s_label].append((arg_o.n3().strip('\"'), position_o[0].value))
                 g.remove((o, rdflib.URIRef('http://schema.org/defaultValue'), arg_o))
-    g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), None))
-    g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), None))
     # infer isArgumentOf property for each action, this implies the creation of the new CommandParameter nodes
     # with the related defaultValue
     for action in args_default_value_dict.keys():
@@ -620,7 +620,7 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 if type_label_values_dict[id_node] == 'CommandInput' or \
                         type_label_values_dict[id_node] == 'Action':
                     table_html.remove(tr_list[0])
-                    # remove not needed long id information
+                # remove not needed long id information
                 table_html.remove(tr_list[1])
                 # remove not-needed information in the output tree nodes (eg defaultValue text, position value)
                 for tr in tr_list:
@@ -641,22 +641,31 @@ def customize_node(node: typing.Union[pydotplus.Node],
                                 list_td[1].text = '"' + ' '.join(list_args_commandParameter[1:]) + '"'
                         if 'startedAtTime' in list_left_column_element:
                             # TODO to improve and understand how to parse xsd:dateTime time
-                            list_td[1].text = list_td[1].text.replace('^^xsd:dateTime', '')
-                            parsed_start_time = parser.parse(list_td[1].text[1:-1])
-                            list_td[1].text = '"' + parsed_start_time.strftime('%Y-%m-%d %H:%M:%S') + '"'
+                            parsed_startedAt_time = parser.parse(list_td[1].text.replace('^^xsd:dateTime', '')[1:-1])
+                            # create an additional row to attach at the bottom, so that time is always at the bottom
+                            bottom_table_row = etree.Element('tr')
+                            time_td = etree.Element('td')
+                            time_td.text = parsed_startedAt_time.strftime('%Y-%m-%d %H:%M:%S')
+                            bottom_table_row.append(time_td)
+                            tr.remove(list_td[1])
+                            table_html.remove(tr)
+                            table_html.append(bottom_table_row)
+
                         # remove trailing and leading double quotes
                         list_td[1].text = list_td[1].text[1:-1]
-                        # bold text in case of an input or action
-                        if type_label_values_dict[id_node] == 'CommandInput' or \
-                                (type_label_values_dict[id_node] == 'Action' and
-                                 'command' in list_left_column_element):
+                        # bold text in case of action
+                        if type_label_values_dict[id_node] == 'Action' and \
+                                 'command' in list_left_column_element:
                             bold_text_element = etree.Element('B')
-                            if type_label_values_dict[id_node] == 'CommandInput':
-                                italic_text_element = etree.Element('I')
-                                italic_text_element.text = list_td[1].text
-                                bold_text_element.append(italic_text_element)
-                            else:
-                                bold_text_element.text = list_td[1].text
+                            bold_text_element.text = list_td[1].text
+                            list_td[1].append(bold_text_element)
+                            list_td[1].text = ""
+                        # italic ad bold in case of input
+                        if type_label_values_dict[id_node] == 'CommandInput':
+                            bold_text_element = etree.Element('B')
+                            italic_text_element = etree.Element('I')
+                            italic_text_element.text = list_td[1].text
+                            bold_text_element.append(italic_text_element)
                             list_td[1].append(bold_text_element)
                             list_td[1].text = ""
 
