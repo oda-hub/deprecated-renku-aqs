@@ -601,7 +601,8 @@ def customize_node(node: typing.Union[pydotplus.Node],
                     node.set_color("#D5C15D")
                 elif type_label_values_dict[id_node] == 'CommandOutput':
                     node.set_color("#FFFF00")
-                elif type_label_values_dict[id_node] == 'CommandOutputImage':
+                elif type_label_values_dict[id_node] == 'CommandOutputImage' or \
+                        type_label_values_dict[id_node] == 'CommandOutputFitsFile':
                     table_html.attrib['border'] = '1'
                     node.set_color("#FFFFFF")
                 elif type_label_values_dict[id_node] == 'CommandOutputNotebook':
