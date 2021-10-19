@@ -645,6 +645,8 @@ def customize_node(node: typing.Union[pydotplus.Node],
                             # create an additional row to attach at the bottom, so that time is always at the bottom
                             bottom_table_row = etree.Element('tr')
                             time_td = etree.Element('td')
+                            time_td.attrib['align'] = 'center'
+                            time_td.attrib['colspan'] = '2'
                             time_td.text = parsed_startedAt_time.strftime('%Y-%m-%d %H:%M:%S')
                             bottom_table_row.append(time_td)
                             tr.remove(list_td[1])
