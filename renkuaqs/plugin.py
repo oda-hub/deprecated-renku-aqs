@@ -692,10 +692,8 @@ def build_query_where(input_notebook: str = None):
                 ?has ?actionParam .
     
             ?actionParamInput a ?actionParamInputType ;
-                <http://schema.org/defaultValue> ?actionParamInputValue .
+                <http://schema.org/defaultValue> '{input_notebook}' .
                 
-            FILTER ( ?actionParamInputValue = '{input_notebook}' ) .
-            
             FILTER ( ?actionParamInputType = <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput>) .
             
             FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>, 
