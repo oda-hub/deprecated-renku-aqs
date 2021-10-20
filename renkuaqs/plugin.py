@@ -682,10 +682,10 @@ def customize_node(node: typing.Union[pydotplus.Node],
 
 
 def build_query_where(input_notebook: str = None):
-    # TODO dtill to fully verify that the results is the expected one
+    # TODO still to fully verify that the results is the expected one
     if input_notebook is not None:
         query_where = f"""WHERE {{
-            {{ #pragma group.joins
+            {{
             ?action a <http://schema.org/Action> ; 
                 <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?actionParamInput ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
@@ -709,7 +709,7 @@ def build_query_where(input_notebook: str = None):
         """
     else:
         query_where = """WHERE {
-            { #pragma group.joins
+            {
             ?action a <http://schema.org/Action> ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                 ?has ?actionParam .
@@ -732,8 +732,7 @@ def build_query_where(input_notebook: str = None):
             OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition } .
             }
             
-            
-            { #pragma group.joins
+            {
                 ?activity a ?activityType ;
                     <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
@@ -759,15 +758,6 @@ def build_query_where(input_notebook: str = None):
             }
         }
         """
-
-    # if input_notebook is not None:
-    #     query_where += f"""
-    #         FILTER ( ?actionParamInputValue = '{input_notebook}' ) .
-    #     """
-
-    # query_where += """}}"""
-
-    print("query_where: ", query_where)
 
     return query_where
 
