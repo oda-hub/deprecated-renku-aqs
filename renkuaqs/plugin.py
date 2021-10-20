@@ -682,40 +682,45 @@ def customize_node(node: typing.Union[pydotplus.Node],
 
 
 def build_query_where(input_notebook: str = None):
+
     if input_notebook is not None:
         query_where = f"""WHERE {{
+            {{ #pragma group.joins
             ?action a <http://schema.org/Action> ; 
                 <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?actionParamInput ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                 ?has ?actionParam .
-
+    
             ?actionParamInput a ?actionParamInputType ;
-                <http://schema.org/defaultValue> '{input_notebook}' .
+                <http://schema.org/defaultValue> ?actionParamInputValue .
                 
-            FILTER ( ?actionParamInputType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandInput>)) .
+            FILTER ( ?actionParamInputValue = '{input_notebook}' ) .
+            
+            FILTER ( ?actionParamInputType = <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput>) .
             
             FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>, 
                 <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>
                 ))
-
+    
             ?actionParam a ?actionParamType ;
                 <http://schema.org/defaultValue> ?actionParamValue .
-
+    
             FILTER ( ?actionParamType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput>,
                                         <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>)
                                         ) .
         """
     else:
         query_where = """WHERE {
-            ?action a <http://schema.org/Action> ; 
+            { #pragma group.joins
+            ?action a <http://schema.org/Action> ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                 ?has ?actionParam .
 
-            FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>, 
-                <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>, 
+            FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>,
+                <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>,
                 <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs>
                 ))
-                
+
             ?actionParam a ?actionParamType ;
                 <http://schema.org/defaultValue> ?actionParamValue .
 
@@ -725,33 +730,46 @@ def build_query_where(input_notebook: str = None):
                                         ) .
         """
 
-    query_where = query_where + f"""
-            OPTIONAL {{ ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition }} .
+    query_where = query_where + """
+            OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition } .
+            }
+            
+            
+            { #pragma group.joins
+                ?activity a ?activityType ;
+                    <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
+                    <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
+                    <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
+                    
+                ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
+            
+                ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
+                    <http://odahub.io/ontology#isUsing> ?aq_module ;
+                    a ?run_rdf_type ;
+                    ^oa:hasBody/oa:hasTarget ?runId ;
+                    ^oa:hasBody/oa:hasTarget ?activity .
     
-            ?activity a ?activityType ;
-                <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
-                <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
-                
-            ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
+                OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title }}
+    
+                ?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
+                    a ?a_obj_rdf_type .
+    
+                ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ;
+                    a ?aq_mod_rdf_type .
+    
+                FILTER (!CONTAINS(str(?a_object), " ")) .
+            }
+        }
+        """
 
-            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
-                <http://odahub.io/ontology#isUsing> ?aq_module ;
-                a ?run_rdf_type ;
-                ^oa:hasBody/oa:hasTarget ?runId ;
-                ^oa:hasBody/oa:hasTarget ?activity .
+    # if input_notebook is not None:
+    #     query_where += f"""
+    #         FILTER ( ?actionParamInputValue = '{input_notebook}' ) .
+    #     """
 
-            OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title }}
+    # query_where += """}}"""
 
-            ?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
-                a ?a_obj_rdf_type .
-
-            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ;
-                a ?aq_mod_rdf_type .
-
-            FILTER (!CONTAINS(str(?a_object), " ")) .
-            }}
-            """
+    print("query_where: ", query_where)
 
     return query_where
 
