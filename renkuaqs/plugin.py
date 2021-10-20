@@ -682,7 +682,7 @@ def customize_node(node: typing.Union[pydotplus.Node],
 
 
 def build_query_where(input_notebook: str = None):
-
+    # TODO dtill to fully verify that the results is the expected one
     if input_notebook is not None:
         query_where = f"""WHERE {{
             {{ #pragma group.joins
