@@ -309,9 +309,8 @@ def params(revision, format, paths, diff):
 @click.option("--filename", default="graph.png", help="The filename of the output file image")
 @click.option("--input-notebook", default=None, help="Input notebook to process")
 @click.option("--no-oda-info", is_flag=True, help="Exclude oda related information in the output graph")
-@click.option("--latest-execution", is_flag=True, default=False, help="Select only the latest execution")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
-def display(revision, paths, filename, no_oda_info, input_notebook, latest_execution):
+def display(revision, paths, filename, no_oda_info, input_notebook):
     """Simple graph visualization """
     import io
     from IPython.display import display
@@ -321,7 +320,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook, latest_execu
 
     renku_path = renku_context().renku_path
 
-    query_where = build_query_where(input_notebook=input_notebook, latest_execution=latest_execution)
+    query_where = build_query_where(input_notebook=input_notebook)
     query_construct = build_query_construct(input_notebook=input_notebook, no_oda_info=no_oda_info)
 
     query = f"""{query_construct}
@@ -682,7 +681,7 @@ def customize_node(node: typing.Union[pydotplus.Node],
             node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
 
 
-def build_query_where(input_notebook: str = None, latest_execution=False):
+def build_query_where(input_notebook: str = None):
     if input_notebook is not None:
         query_where = f"""WHERE {{
             ?action a <http://schema.org/Action> ; 
@@ -753,11 +752,6 @@ def build_query_where(input_notebook: str = None, latest_execution=False):
             FILTER (!CONTAINS(str(?a_object), " ")) .
             }}
             """
-    if latest_execution:
-        query_where += """
-        ORDER BY DESC(?activityTime)
-        LIMIT 1
-        """
 
     return query_where
 
