@@ -41,6 +41,7 @@ from prettytable import PrettyTable
 from lxml import etree
 
 from aqsconverters.io import AQS_DIR, COMMON_DIR
+from astropy.coordinates import SkyCoord, Angle
 from dateutil import parser
 import time
 
@@ -99,6 +100,7 @@ def process_run_annotations(run):
 
     return annotations
 
+
 @hookimpl
 def pre_run(tool):
     # we print
@@ -120,6 +122,7 @@ aqsconverters.aq.autolog()
 """)
 
     from astroquery.query import BaseQuery # ??
+
 
 def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
@@ -639,8 +642,13 @@ def process_oda_info(g):
                         sky_coordinates_node_title = list(
                             g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
                         if len(sky_coordinates_node_title) == 1:
+                            # define an astropy SkyCoord object
+                            coords = sky_coordinates_node_title[0].value.split(" ")
+                            sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
+                            sky_coord_obj_default_value = str(sky_coord_obj.dec.deg) + " " + str(sky_coord_obj.ra.deg) \
+                                                          + " unit=deg"
                             g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                                   sky_coordinates_node_title[0]))
+                                   rdflib.Literal(sky_coord_obj_default_value)))
                     # radius info
                     radius_list = list(
                         g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingRadius')])
@@ -649,8 +657,11 @@ def process_oda_info(g):
                         radius_node_title = list(
                             g[radius_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
                         if len(radius_node_title) == 1:
+                            # define an astropy Angle object
+                            radius_obj = Angle(radius_node_title[0].value)
+                            radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
                             g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                                   radius_node_title[0]))
+                                   rdflib.Literal(radius_obj_default_value)))
                 g.remove((run_node,
                           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion'),
                           None))
