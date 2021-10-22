@@ -230,14 +230,19 @@ def params(revision, format, paths, diff):
     output.field_names = ["Run ID", "AstroQuery Module", "Astro Object"]
     output.align["Run ID"] = "l"
 
+    # for the query_object
     query_where = """WHERE {{
-        ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
-             <http://odahub.io/ontology#isUsing> ?aq_module;
+        ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
+             <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
              ^oa:hasBody/oa:hasTarget ?runId .
+        
+        OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
 
         ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
-
+        
         ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+        
+        OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
 
         ?run ?p ?o .
 
@@ -255,7 +260,41 @@ def params(revision, format, paths, diff):
             output.add_row([
                 _run_id(r.runId),
                 r.aq_module_name,
-                r.a_object_name,
+                r.a_object_name
+            ])
+    print(output, "\n")
+
+    # for the query_region
+    query_where = """WHERE {{
+        ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
+             <http://odahub.io/ontology#isRequestingAstroRegion> ?a_region ;
+             ^oa:hasBody/oa:hasTarget ?runId .
+        
+        OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
+
+        ?a_region <http://purl.org/dc/terms/title> ?a_region_name .
+        
+        ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+        
+        OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
+
+        ?run ?p ?o .
+    }}"""
+
+    output = PrettyTable()
+    output.field_names = ["Run ID", "AstroQuery Module", "Astro Region"]
+    output.align["Run ID"] = "l"
+    for r in graph.query(f"""
+        SELECT DISTINCT ?run ?runId ?a_region ?a_region_name ?aq_module ?aq_module_name 
+        {query_where}
+        """):
+        if " " in r.a_region:
+            invalid_entries += 1
+        else:
+            output.add_row([
+                _run_id(r.runId),
+                r.aq_module_name,
+                r.a_region_name
             ])
 
     print(output, "\n")
@@ -263,25 +302,53 @@ def params(revision, format, paths, diff):
         print("Some entries within the graph are not valid and therefore the store should be recreated", "\n")
 
     query_where = """WHERE {{
-            ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
-                 <http://odahub.io/ontology#isUsing> ?aq_module;
-                 ^oa:hasBody/oa:hasTarget ?runId .
+            {
+                ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
+                     <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
+                     ^oa:hasBody/oa:hasTarget ?runId .
+                 
+                ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+                
+                ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+                
+                OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
+                
+                ?run ?p ?o .
 
-            ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
+                FILTER (!CONTAINS(str(?a_object), " ")) .
+            
+            }
+            UNION
+            {
+                ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
+                     <http://odahub.io/ontology#isRequestingAstroRegion> ?a_region ;
+                     ^oa:hasBody/oa:hasTarget ?runId .
+                
+                ?a_region a ?a_region_type ; 
+                    <http://purl.org/dc/terms/title> ?a_region_name ;
+                    <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_ccordinates ;
+                    <http://odahub.io/ontology#isUsingRadius> ?a_radius .
+                
+                ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
 
-            ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-    
-            ?run ?p ?o .
-
-            FILTER (!CONTAINS(str(?a_object), " ")) .
-
+                OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
+                
+                ?run ?p ?o .
+            }
             }}"""
 
     r = graph.query(f"""
         CONSTRUCT {{
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
+            ?run <http://odahub.io/ontology#isRequestingAstroRegion> ?a_region .
+            ?run <http://purl.org/dc/terms/title> ?run_title .
             ?run <http://odahub.io/ontology#isUsing> ?aq_module .
             ?run ?p ?o .
+            
+            ?a_region a ?a_region_type ; 
+                <http://purl.org/dc/terms/title> ?a_region_name ;
+                <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_ccordinates ;
+                <http://odahub.io/ontology#isUsingRadius> ?a_radius .
         }}
         {query_where}
         """)
@@ -740,21 +807,48 @@ def build_query_where(input_notebook: str = None):
                     
                 ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
             
-                ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
-                    <http://odahub.io/ontology#isUsing> ?aq_module ;
-                    a ?run_rdf_type ;
-                    ^oa:hasBody/oa:hasTarget ?runId ;
-                    ^oa:hasBody/oa:hasTarget ?activity .
+                {
+                    ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
+                         <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
+                         a ?run_rdf_type ;
+                         ^oa:hasBody/oa:hasTarget ?runId ;
+                         ^oa:hasBody/oa:hasTarget ?activity .
+                    
+                    ?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
+                        a ?a_obj_rdf_type .
+        
+                    ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ;
+                        a ?aq_mod_rdf_type .
+                    
+                    OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
+                    
+                    ?run ?p ?o .
     
-                OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title }}
+                    FILTER (!CONTAINS(str(?a_object), " ")) .
+                
+                }
+                UNION
+                {
+                    ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
+                         <http://odahub.io/ontology#isRequestingAstroRegion> ?a_region ;
+                         a ?run_rdf_type ;
+                         ^oa:hasBody/oa:hasTarget ?runId ;
+                         ^oa:hasBody/oa:hasTarget ?activity .
+                    
+                    ?a_region a ?a_region_type ; 
+                        <http://purl.org/dc/terms/title> ?a_region_name ;
+                        <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_ccordinates ;
+                        <http://odahub.io/ontology#isUsingRadius> ?a_radius .
+                    
+                    ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
     
-                ?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
-                    a ?a_obj_rdf_type .
-    
-                ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ;
-                    a ?aq_mod_rdf_type .
-    
-                FILTER (!CONTAINS(str(?a_object), " ")) .
+                    OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
+                    
+                    ?run ?p ?o .
+                }
+                
+                
+                
             }
         }
         """
