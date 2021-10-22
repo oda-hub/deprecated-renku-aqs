@@ -326,7 +326,7 @@ def params(revision, format, paths, diff):
                 
                 ?a_region a ?a_region_type ; 
                     <http://purl.org/dc/terms/title> ?a_region_name ;
-                    <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_ccordinates ;
+                    <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
                     <http://odahub.io/ontology#isUsingRadius> ?a_radius .
                 
                 ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
@@ -347,7 +347,7 @@ def params(revision, format, paths, diff):
             
             ?a_region a ?a_region_type ; 
                 <http://purl.org/dc/terms/title> ?a_region_name ;
-                <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_ccordinates ;
+                <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
                 <http://odahub.io/ontology#isUsingRadius> ?a_radius .
         }}
         {query_where}
@@ -598,18 +598,17 @@ def process_oda_info(g):
         for association_node in qualified_association_list:
             plan_list = g[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
             for plan_node in plan_list:
-                # print("run_node: %s -> activity_node %s -> association_node: %s -> plan_node: %s\n--------------------"
-                #       % (run_node, activity_node,  association_node, plan_node))
                 # we inferred a connection from the run to an action
                 # and we can now infer the request of a certain astroObject and the usage of a certain module
                 used_module_list = list(g[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')])
+                # one module in use per annotation and one requested AstroObject/AstroRegion
+                module_node = used_module_list[0]
+                # query_object
                 requested_astroObject_list = list(
                     g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')])
                 if (run_title is not None and run_title.startswith('query_object')) or \
                         (len(used_module_list) == 1 and len(requested_astroObject_list) == 1):
                     # if run_node is of the type query_object
-                    # one module in use per annotation and one requested AstroObject
-                    module_node = used_module_list[0]
                     # for module_node in used_module_list:
                     g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
                            plan_node))
@@ -618,10 +617,45 @@ def process_oda_info(g):
                     g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
                            astroObject_node))
                 g.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isUsing'),
+                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
+                          None))
+                # query_region
+                requested_astroRegion_list = list(
+                    g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion')])
+                if run_title is not None and run_title.startswith('query_region'):
+                    # if run_node is of the type query_region
+                    # for module_node in used_module_list:
+                    g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
+                           plan_node))
+                    # for astroObject_node in requested_astroObject_list:
+                    astroRegion_node = requested_astroRegion_list[0]
+                    g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroRegion'),
+                           astroRegion_node))
+                    # sky coordinates info
+                    sky_coordinates_list = list(
+                        g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingSkyCoordinates')])
+                    if len(sky_coordinates_list) == 1:
+                        sky_coordinates_node = sky_coordinates_list[0]
+                        sky_coordinates_node_title = list(
+                            g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+                        if len(sky_coordinates_node_title) == 1:
+                            g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                                   sky_coordinates_node_title[0]))
+                    # radius info
+                    radius_list = list(
+                        g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingRadius')])
+                    if len(radius_list) == 1:
+                        radius_node = radius_list[0]
+                        radius_node_title = list(
+                            g[radius_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+                        if len(radius_node_title) == 1:
+                            g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                                   radius_node_title[0]))
+                g.remove((run_node,
+                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion'),
                           None))
                 g.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
+                          rdflib.URIRef('http://odahub.io/ontology#isUsing'),
                           None))
 
 
@@ -668,6 +702,7 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 node.set_style("filled")
                 node.set_shape("box")
                 # color and shape change
+                #1B81FB
                 if type_label_values_dict[id_node] == 'Action':
                     node.set_shape("diamond")
                     node.set_color("#D5C15D")
@@ -689,6 +724,12 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 elif type_label_values_dict[id_node] == 'AstrophysicalObject':
                     node.set_shape("ellipse")
                     node.set_color("#6262be")
+                elif type_label_values_dict[id_node] == 'AstrophysicalRegion':
+                    node.set_shape("ellipse")
+                    node.set_color("#6262bf")
+                elif type_label_values_dict[id_node] == 'Angle' or \
+                        type_label_values_dict[id_node] == 'SkyCoordinates':
+                    node.set_color("#1B81FB")
                 # remove top row for the cells Action and CommandInput
                 if type_label_values_dict[id_node] == 'CommandInput' or \
                         type_label_values_dict[id_node] == 'Action':
@@ -777,26 +818,26 @@ def build_query_where(input_notebook: str = None):
     else:
         query_where = """WHERE {
             {
-            ?action a <http://schema.org/Action> ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-                ?has ?actionParam .
-
-            FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>,
-                <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>,
-                <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs>
-                ))
-
-            ?actionParam a ?actionParamType ;
-                <http://schema.org/defaultValue> ?actionParamValue .
-
-            FILTER ( ?actionParamType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput>,
+                ?action a <http://schema.org/Action> ;
+                    <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
+                    ?has ?actionParam .
+    
+                FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>,
+                    <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>,
+                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs>
+                    ))
+    
+                ?actionParam a ?actionParamType ;
+                    <http://schema.org/defaultValue> ?actionParamValue .
+    
+                FILTER ( ?actionParamType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput>,
                                         <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>,
                                         <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput>)
                                         ) .
         """
 
     query_where = query_where + """
-            OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition } .
+                OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition } .
             }
             
             {
@@ -825,7 +866,6 @@ def build_query_where(input_notebook: str = None):
                     ?run ?p ?o .
     
                     FILTER (!CONTAINS(str(?a_object), " ")) .
-                
                 }
                 UNION
                 {
@@ -837,18 +877,22 @@ def build_query_where(input_notebook: str = None):
                     
                     ?a_region a ?a_region_type ; 
                         <http://purl.org/dc/terms/title> ?a_region_name ;
-                        <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_ccordinates ;
+                        <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
                         <http://odahub.io/ontology#isUsingRadius> ?a_radius .
                     
-                    ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+                    ?aq_module a ?aq_mod_rdf_type ;
+                        <http://purl.org/dc/terms/title> ?aq_module_name .
+                         
+                    ?a_sky_coordinates a ?a_sky_coordinates_type ;
+                        <http://purl.org/dc/terms/title> ?a_sky_coordinates_name .
+                        
+                    ?a_radius a ?a_radius_type ;
+                        <http://purl.org/dc/terms/title> ?a_radius_name .
     
                     OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
                     
                     ?run ?p ?o .
                 }
-                
-                
-                
             }
         }
         """
@@ -873,14 +917,14 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
         """
     else:
         query_construct_action = """
-                        ?action a <http://schema.org/Action> ;
-                            <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-                            ?has ?actionParam .
+                ?action a <http://schema.org/Action> ;
+                    <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
+                    ?has ?actionParam .
 
-                        ?actionParam a ?actionParamType ;
-                            <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
-                            <http://schema.org/defaultValue> ?actionParamValue .
-                """
+                ?actionParam a ?actionParamType ;
+                    <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
+                    <http://schema.org/defaultValue> ?actionParamValue .
+        """
     # add time activity information
     query_construct_action += """
             ?activity a ?activityType ;
@@ -894,6 +938,7 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
     if not no_oda_info:
         query_construct_oda_info += """
                 ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
+                    <http://odahub.io/ontology#isRequestingAstroRegion> ?a_region ;
                     <http://purl.org/dc/terms/title> ?run_title ;
                     <http://odahub.io/ontology#isUsing> ?aq_module ;
                     oa:hasTarget ?activity ;
@@ -901,6 +946,17 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
 
                 ?a_object <https://odahub.io/ontology#AstroObject> ?a_object_name ;
                     a ?a_obj_rdf_type .
+                    
+                ?a_region a ?a_region_type ; 
+                    <http://purl.org/dc/terms/title> ?a_region_name ;
+                    <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
+                    <http://odahub.io/ontology#isUsingRadius> ?a_radius .
+                    
+                ?a_sky_coordinates a ?a_sky_coordinates_type ;
+                    <http://purl.org/dc/terms/title> ?a_sky_coordinates_name .
+                    
+                ?a_radius a ?a_radius_type ;
+                    <http://purl.org/dc/terms/title> ?a_radius_name .
 
                 ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
                     a ?aq_mod_rdf_type .
