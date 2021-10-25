@@ -609,8 +609,7 @@ def process_oda_info(g):
                 # query_object
                 requested_astroObject_list = list(
                     g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')])
-                if (run_title is not None and run_title.startswith('query_object')) or \
-                        (len(used_module_list) == 1 and len(requested_astroObject_list) == 1):
+                if len(requested_astroObject_list) > 0:
                     # if run_node is of the type query_object
                     # for module_node in used_module_list:
                     g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
@@ -625,7 +624,7 @@ def process_oda_info(g):
                 # query_region
                 requested_astroRegion_list = list(
                     g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion')])
-                if run_title is not None and run_title.startswith('query_region'):
+                if len(requested_astroRegion_list) > 0:
                     # if run_node is of the type query_region
                     # for module_node in used_module_list:
                     g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
@@ -634,7 +633,7 @@ def process_oda_info(g):
                     astroRegion_node = requested_astroRegion_list[0]
                     g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroRegion'),
                            astroRegion_node))
-                    # sky coordinates info
+                    # sky coordinates info (if found, perhaps some for old query_region none was stored)
                     sky_coordinates_list = list(
                         g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingSkyCoordinates')])
                     if len(sky_coordinates_list) == 1:
@@ -649,7 +648,7 @@ def process_oda_info(g):
                                                           + " unit=deg"
                             g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
                                    rdflib.Literal(sky_coord_obj_default_value)))
-                    # radius info
+                    # radius info (if found, perhaps some for old query_region none was stored)
                     radius_list = list(
                         g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingRadius')])
                     if len(radius_list) == 1:
