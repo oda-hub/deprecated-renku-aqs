@@ -618,9 +618,6 @@ def process_oda_info(g):
                     astroObject_node = requested_astroObject_list[0]
                     g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
                            astroObject_node))
-                g.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
-                          None))
                 # query_region
                 requested_astroRegion_list = list(
                     g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion')])
@@ -661,11 +658,63 @@ def process_oda_info(g):
                             radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
                             g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
                                    rdflib.Literal(radius_obj_default_value)))
+
+                # get_images
+                requested_astroImage_list = list(
+                    g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage')])
+                if len(requested_astroImage_list) > 0:
+                    # if run_node is of the type get_images
+                    # for module_node in used_module_list:
+                    g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
+                           plan_node))
+                    # for astroObject_node in requested_astroObject_list:
+                    astroImage_node = requested_astroImage_list[0]
+                    g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroImage'),
+                           astroImage_node))
+                    # sky coordinates info (if found, perhaps some for old query_region none was stored)
+                    sky_coordinates_list = list(
+                        g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingSkyCoordinates')])
+                    if len(sky_coordinates_list) == 1:
+                        sky_coordinates_node = sky_coordinates_list[0]
+                        sky_coordinates_node_title = list(
+                            g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+                        if len(sky_coordinates_node_title) == 1:
+                            # define an astropy SkyCoord object
+                            coords = sky_coordinates_node_title[0].value.split(" ")
+                            if len(coords) == 2:
+                                sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
+                                sky_coord_obj_default_value = str(sky_coord_obj.dec.deg) + " " + str(sky_coord_obj.ra.deg) \
+                                                              + " unit=deg"
+                            else:
+                                sky_coord_obj_default_value = ",".join(coords)
+                            g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                                   rdflib.Literal(sky_coord_obj_default_value)))
+                    # sky coordinates info (if found, perhaps some for old query_region none was stored)
+                    pixels_list = list(
+                        g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingPixels')])
+                    if len(pixels_list) == 1:
+                        pixels_node = pixels_list[0]
+                        pixels_node_node_title = list(
+                            g[pixels_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+                        if len(pixels_node_node_title) == 1:
+                            # define an astropy SkyCoord object
+                            pixels = pixels_node_node_title[0].value.split(" ")
+                            pixels_obj_default_value = ",".join(pixels)
+                            g.add((pixels_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                                   rdflib.Literal(pixels_obj_default_value)))
+
+                # some clean-up
+                g.remove((run_node,
+                          rdflib.URIRef('http://odahub.io/ontology#isUsing'),
+                          None))
                 g.remove((run_node,
                           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion'),
                           None))
                 g.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isUsing'),
+                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
+                          None))
+                g.remove((run_node,
+                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage'),
                           None))
 
 
@@ -737,8 +786,12 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 elif type_label_values_dict[id_node] == 'AstrophysicalRegion':
                     node.set_shape("ellipse")
                     node.set_color("#6262bf")
+                elif type_label_values_dict[id_node] == 'AstrophysicalImage':
+                    node.set_shape("ellipse")
+                    node.set_color("#6262bg")
                 elif type_label_values_dict[id_node] == 'Angle' or \
-                        type_label_values_dict[id_node] == 'SkyCoordinates':
+                        type_label_values_dict[id_node] == 'SkyCoordinates' or \
+                        type_label_values_dict[id_node] == 'Pixels':
                     node.set_color("#1B81FB")
                 # remove top row for the cells Action and CommandInput
                 if type_label_values_dict[id_node] == 'CommandInput' or \
@@ -865,11 +918,11 @@ def build_query_where(input_notebook: str = None):
                          ^oa:hasBody/oa:hasTarget ?runId ;
                          ^oa:hasBody/oa:hasTarget ?activity .
                     
-                    ?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
-                        a ?a_obj_rdf_type .
-        
                     ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ;
                         a ?aq_mod_rdf_type .
+                        
+                    ?a_object <http://purl.org/dc/terms/title> ?a_object_name ;
+                        a ?a_obj_rdf_type .
                     
                     OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
                     
@@ -885,13 +938,13 @@ def build_query_where(input_notebook: str = None):
                          ^oa:hasBody/oa:hasTarget ?runId ;
                          ^oa:hasBody/oa:hasTarget ?activity .
                     
+                    ?aq_module a ?aq_mod_rdf_type ;
+                        <http://purl.org/dc/terms/title> ?aq_module_name .
+                        
                     ?a_region a ?a_region_type ; 
                         <http://purl.org/dc/terms/title> ?a_region_name ;
                         <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
                         <http://odahub.io/ontology#isUsingRadius> ?a_radius .
-                    
-                    ?aq_module a ?aq_mod_rdf_type ;
-                        <http://purl.org/dc/terms/title> ?aq_module_name .
                          
                     ?a_sky_coordinates a ?a_sky_coordinates_type ;
                         <http://purl.org/dc/terms/title> ?a_sky_coordinates_name .
@@ -903,10 +956,44 @@ def build_query_where(input_notebook: str = None):
                     
                     ?run ?p ?o .
                 }
+                UNION
+                {
+                    ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
+                         <http://odahub.io/ontology#isRequestingAstroImage> ?a_image ;
+                         a ?run_rdf_type ;
+                         ^oa:hasBody/oa:hasTarget ?runId ;
+                         ^oa:hasBody/oa:hasTarget ?activity .
+                    
+                    ?aq_module a ?aq_mod_rdf_type ;
+                        <http://purl.org/dc/terms/title> ?aq_module_name .
+                        
+                    ?a_image a ?a_image_type ;
+                        <http://purl.org/dc/terms/title> ?a_image_name ;
+                        
+                    OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates .
+                         ?a_sky_coordinates a ?a_sky_coordinates_type ;
+                             <http://purl.org/dc/terms/title> ?a_sky_coordinates_name .
+                    }}
+                    OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingRadius> ?a_radius .
+                        ?a_radius a ?a_radius_type ;
+                            <http://purl.org/dc/terms/title> ?a_radius_name .
+                    }}
+                    OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingPixels> ?a_pixels .
+                        ?a_pixels a ?a_pixels_type ;
+                            <http://purl.org/dc/terms/title> ?a_pixels_name .
+                    }}
+                    OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingImageBand> ?a_image_band .
+                        ?a_image_band a ?a_image_band_type ;
+                            <http://purl.org/dc/terms/title> ?a_image_band_name .
+                    }}
+    
+                    OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
+                    
+                    ?run ?p ?o .
+                }
             }
         }
         """
-
     return query_where
 
 
@@ -949,10 +1036,14 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
         query_construct_oda_info += """
                 ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                     <http://odahub.io/ontology#isRequestingAstroRegion> ?a_region ;
+                    <http://odahub.io/ontology#isRequestingAstroImage> ?a_image ;
                     <http://purl.org/dc/terms/title> ?run_title ;
                     <http://odahub.io/ontology#isUsing> ?aq_module ;
                     oa:hasTarget ?activity ;
                     a ?run_rdf_type .
+
+                ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
+                    a ?aq_mod_rdf_type .
 
                 ?a_object <https://odahub.io/ontology#AstroObject> ?a_object_name ;
                     a ?a_obj_rdf_type .
@@ -962,14 +1053,24 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                     <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
                     <http://odahub.io/ontology#isUsingRadius> ?a_radius .
                     
+                ?a_image a ?a_image_type ;
+                    <http://purl.org/dc/terms/title> ?a_image_name ;
+                    <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
+                    <http://odahub.io/ontology#isUsingRadius> ?a_radius ;
+                    <http://odahub.io/ontology#isUsingPixels> ?a_pixels ;
+                    <http://odahub.io/ontology#isUsingImageBand> ?a_image_band .
+
+                ?a_pixels a ?a_pixels_type ;
+                    <http://purl.org/dc/terms/title> ?a_pixels_name .
+
+                ?a_image_band a ?a_image_band_type ;
+                    <http://purl.org/dc/terms/title> ?a_image_band_name .
+                    
                 ?a_sky_coordinates a ?a_sky_coordinates_type ;
                     <http://purl.org/dc/terms/title> ?a_sky_coordinates_name .
-                    
+
                 ?a_radius a ?a_radius_type ;
                     <http://purl.org/dc/terms/title> ?a_radius_name .
-
-                ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
-                    a ?aq_mod_rdf_type .
             """
 
     query_construct = f"""CONSTRUCT {{
