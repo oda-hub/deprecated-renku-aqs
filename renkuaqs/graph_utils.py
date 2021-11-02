@@ -524,118 +524,22 @@ def process_oda_info(g):
     run_target_list = g[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
     for run_node, activity_node in run_target_list:
         # run_node is the run, act_node is the activity
-        qualified_association_list = g[activity_node:rdflib.URIRef(
-            'http://www.w3.org/ns/prov#qualifiedAssociation')]
-        run_title = None
-        run_title_list = list(g[run_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
-        if len(run_title_list) == 1:
-            run_title = run_title_list[0]
+        qualified_association_list = g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation')]
         for association_node in qualified_association_list:
-            plan_list = g[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
-            for plan_node in plan_list:
+            action_list = g[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
+            # or plan_node list
+            for action_node in action_list:
                 # we inferred a connection from the run to an action
                 # and we can now infer the request of a certain astroObject and the usage of a certain module
                 used_module_list = list(g[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')])
                 # one module in use per annotation and one requested AstroObject/AstroRegion
                 module_node = used_module_list[0]
                 # query_object
-                requested_astroObject_list = list(
-                    g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')])
-                if len(requested_astroObject_list) > 0:
-                    # if run_node is of the type query_object
-                    # for module_node in used_module_list:
-                    g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
-                           plan_node))
-                    # for astroObject_node in requested_astroObject_list:
-                    astroObject_node = requested_astroObject_list[0]
-                    g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
-                           astroObject_node))
+                process_query_object_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
                 # query_region
-                requested_astroRegion_list = list(
-                    g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion')])
-                if len(requested_astroRegion_list) > 0:
-                    # if run_node is of the type query_region
-                    # for module_node in used_module_list:
-                    g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
-                           plan_node))
-                    # for astroObject_node in requested_astroObject_list:
-                    astroRegion_node = requested_astroRegion_list[0]
-                    g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroRegion'),
-                           astroRegion_node))
-                    # sky coordinates info (if found, perhaps some for old query_region none was stored)
-                    sky_coordinates_list = list(
-                        g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingSkyCoordinates')])
-                    if len(sky_coordinates_list) == 1:
-                        sky_coordinates_node = sky_coordinates_list[0]
-                        sky_coordinates_node_title = list(
-                            g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
-                        if len(sky_coordinates_node_title) == 1:
-                            # define an astropy SkyCoord object
-                            coords = sky_coordinates_node_title[0].value.split(" ")
-                            sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
-                            sky_coord_obj_default_value = str(sky_coord_obj.dec.deg) + " " + str(
-                                sky_coord_obj.ra.deg) \
-                                                          + " unit=deg"
-                            g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                                   rdflib.Literal(sky_coord_obj_default_value)))
-                    # radius info (if found, perhaps some for old query_region none was stored)
-                    radius_list = list(
-                        g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingRadius')])
-                    if len(radius_list) == 1:
-                        radius_node = radius_list[0]
-                        radius_node_title = list(
-                            g[radius_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
-                        if len(radius_node_title) == 1:
-                            # define an astropy Angle object
-                            radius_obj = Angle(radius_node_title[0].value)
-                            radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
-                            g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                                   rdflib.Literal(radius_obj_default_value)))
-
+                process_query_region_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
                 # get_images
-                requested_astroImage_list = list(
-                    g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage')])
-                if len(requested_astroImage_list) > 0:
-                    # if run_node is of the type get_images
-                    # for module_node in used_module_list:
-                    g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
-                           plan_node))
-                    # for astroObject_node in requested_astroObject_list:
-                    astroImage_node = requested_astroImage_list[0]
-                    g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroImage'),
-                           astroImage_node))
-                    # sky coordinates info (if found, perhaps some for old query_region none was stored)
-                    sky_coordinates_list = list(
-                        g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingSkyCoordinates')])
-                    if len(sky_coordinates_list) == 1:
-                        sky_coordinates_node = sky_coordinates_list[0]
-                        sky_coordinates_node_title = list(
-                            g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
-                        if len(sky_coordinates_node_title) == 1:
-                            # define an astropy SkyCoord object
-                            coords = sky_coordinates_node_title[0].value.split(" ")
-                            if len(coords) == 2:
-                                sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
-                                sky_coord_obj_default_value = str(sky_coord_obj.dec.deg) + " " + str(
-                                    sky_coord_obj.ra.deg) \
-                                                              + " unit=deg"
-                            else:
-                                sky_coord_obj_default_value = ",".join(coords)
-                            g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                                   rdflib.Literal(sky_coord_obj_default_value)))
-                    # sky coordinates info (if found, perhaps some for old query_region none was stored)
-                    pixels_list = list(
-                        g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingPixels')])
-                    if len(pixels_list) == 1:
-                        pixels_node = pixels_list[0]
-                        pixels_node_node_title = list(
-                            g[pixels_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
-                        if len(pixels_node_node_title) == 1:
-                            # define an astropy SkyCoord object
-                            pixels = pixels_node_node_title[0].value.split(" ")
-                            pixels_obj_default_value = ",".join(pixels)
-                            g.add((pixels_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                                   rdflib.Literal(pixels_obj_default_value)))
+                process_get_images_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
 
                 # some clean-up
                 g.remove((run_node,
@@ -650,3 +554,129 @@ def process_oda_info(g):
                 g.remove((run_node,
                           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage'),
                           None))
+
+
+def process_query_object_info(g, run_node=None, module_node=None, action_node=None):
+    requested_astroObject_list = list(
+        g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')])
+    if len(requested_astroObject_list) > 0:
+        # if run_node is of the type query_object
+        # for module_node in used_module_list:
+        g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
+               action_node))
+        # for astroObject_node in requested_astroObject_list:
+        astroObject_node = requested_astroObject_list[0]
+        g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
+               astroObject_node))
+
+
+def process_query_region_info(g, run_node=None, module_node=None, action_node=None):
+    requested_astroRegion_list = list(
+        g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion')])
+    if len(requested_astroRegion_list) > 0:
+        # if run_node is of the type query_region
+        # for module_node in used_module_list:
+        g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
+               action_node))
+        # for astroObject_node in requested_astroObject_list:
+        astroRegion_node = requested_astroRegion_list[0]
+        g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroRegion'),
+               astroRegion_node))
+        # sky coordinates info (if found, perhaps some for old query_region none was stored)
+        sky_coordinates_list = list(
+            g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingSkyCoordinates')])
+        if len(sky_coordinates_list) == 1:
+            sky_coordinates_node = sky_coordinates_list[0]
+            sky_coordinates_node_title = list(
+                g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+            if len(sky_coordinates_node_title) == 1:
+                # define an astropy SkyCoord object
+                coords = sky_coordinates_node_title[0].value.split(" ")
+                sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
+                sky_coord_obj_default_value = str(sky_coord_obj.dec.deg) + " " + str(
+                    sky_coord_obj.ra.deg) + " unit=deg"
+                g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                       rdflib.Literal(sky_coord_obj_default_value)))
+        # radius info (if found, perhaps some for old query_region none was stored)
+        radius_list = list(
+            g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingRadius')])
+        if len(radius_list) == 1:
+            radius_node = radius_list[0]
+            radius_node_title = list(
+                g[radius_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+            if len(radius_node_title) == 1:
+                # define an astropy Angle object
+                radius_obj = Angle(radius_node_title[0].value)
+                radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
+                g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                       rdflib.Literal(radius_obj_default_value)))
+
+
+def process_get_images_info(g, run_node=None, module_node=None, action_node=None):
+    requested_astroImage_list = list(
+        g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage')])
+    if len(requested_astroImage_list) > 0:
+        # if run_node is of the type get_images
+        # for module_node in used_module_list:
+        g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
+               action_node))
+        # for astroObject_node in requested_astroObject_list:
+        astroImage_node = requested_astroImage_list[0]
+        g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroImage'),
+               astroImage_node))
+        # sky coordinates info (if found, perhaps some for old query_region none was stored)
+        sky_coordinates_list = list(
+            g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingSkyCoordinates')])
+        if len(sky_coordinates_list) == 1:
+            sky_coordinates_node = sky_coordinates_list[0]
+            sky_coordinates_node_title = list(
+                g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+            if len(sky_coordinates_node_title) == 1:
+                # define an astropy SkyCoord object
+                coords = sky_coordinates_node_title[0].value.split(" ")
+                if len(coords) == 2:
+                    sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
+                    sky_coord_obj_default_value = str(sky_coord_obj.dec.deg) + " " + str(
+                        sky_coord_obj.ra.deg) + " unit=deg"
+                else:
+                    sky_coord_obj_default_value = ",".join(coords)
+                g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                       rdflib.Literal(sky_coord_obj_default_value)))
+        # radius info (if found, perhaps some for old query_region none was stored)
+        radius_list = list(
+            g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingRadius')])
+        if len(radius_list) == 1:
+            radius_node = radius_list[0]
+            radius_node_title = list(
+                g[radius_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+            if len(radius_node_title) == 1:
+                # define an astropy Angle object
+                radius_obj = Angle(radius_node_title[0].value)
+                radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
+                g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                       rdflib.Literal(radius_obj_default_value)))
+        # pixels info (if found, perhaps some for old query_region none was stored)
+        pixels_list = list(
+            g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingPixels')])
+        if len(pixels_list) == 1:
+            pixels_node = pixels_list[0]
+            pixels_node_node_title = list(
+                g[pixels_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+            if len(pixels_node_node_title) == 1:
+                # define an astropy SkyCoord object
+                pixels = pixels_node_node_title[0].value.split(" ")
+                pixels_obj_default_value = ",".join(pixels)
+                g.add((pixels_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                       rdflib.Literal(pixels_obj_default_value)))
+        # image band info (if found, perhaps some for old query_region none was stored)
+        image_band_list = list(
+            g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingImageBand')])
+        if len(image_band_list) == 1:
+            image_band_node = image_band_list[0]
+            image_band_node_title = list(
+                g[image_band_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+            if len(image_band_node_title) == 1:
+                # define an astropy SkyCoord object
+                image_band_value = image_band_node_title[0].value
+                g.add((image_band_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                       rdflib.Literal(image_band_value)))
