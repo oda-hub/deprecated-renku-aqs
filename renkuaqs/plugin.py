@@ -292,6 +292,7 @@ def params(revision, format, paths, diff):
                 r.aq_module_name,
                 r.a_region_name
             ])
+    print(output, "\n")
 
     # for the get_images
     query_where = """WHERE {{
