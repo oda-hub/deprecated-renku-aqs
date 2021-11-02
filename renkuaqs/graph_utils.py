@@ -384,6 +384,7 @@ def clean_graph(g):
     # remove all the type triples
     g.remove((None, rdflib.RDF.type, None))
 
+
 def analyze_types(g, type_label_values_dict):
     # analyze types
     types_list = g[:rdflib.RDF.type]
