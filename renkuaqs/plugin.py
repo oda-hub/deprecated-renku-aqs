@@ -244,8 +244,6 @@ def params(revision, format, paths, diff):
         ?a_object <http://purl.org/dc/terms/title> ?a_object_name .
         
         ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-        
-        OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
 
         ?run ?p ?o .
 
@@ -278,8 +276,6 @@ def params(revision, format, paths, diff):
         ?a_region <http://purl.org/dc/terms/title> ?a_region_name .
         
         ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-        
-        OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
 
         ?run ?p ?o .
     }}"""
@@ -298,6 +294,37 @@ def params(revision, format, paths, diff):
                 _run_id(r.runId),
                 r.aq_module_name,
                 r.a_region_name
+            ])
+
+    # for the get_images
+    query_where = """WHERE {{
+        ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
+             <http://odahub.io/ontology#isRequestingAstroImage> ?a_image ;
+             ^oa:hasBody/oa:hasTarget ?runId .
+
+        OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
+
+        ?a_image <http://purl.org/dc/terms/title> ?a_image_name .
+
+        ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+
+        ?run ?p ?o .
+    }}"""
+
+    output = PrettyTable()
+    output.field_names = ["Run ID", "AstroQuery Module", "Astro Image"]
+    output.align["Run ID"] = "l"
+    for r in graph.query(f"""
+        SELECT DISTINCT ?run ?runId ?a_image ?a_image_name ?aq_module ?aq_module_name 
+        {query_where}
+        """):
+        if " " in r.a_image:
+            invalid_entries += 1
+        else:
+            output.add_row([
+                _run_id(r.runId),
+                r.aq_module_name,
+                r.a_image_name
             ])
 
     print(output, "\n")
@@ -338,12 +365,45 @@ def params(revision, format, paths, diff):
                 
                 ?run ?p ?o .
             }
+            UNION
+            {
+                ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
+                     <http://odahub.io/ontology#isRequestingAstroImage> ?a_image ;
+                     ^oa:hasBody/oa:hasTarget ?runId .
+                
+                ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
+                
+                ?a_image a ?a_image_type ;
+                        <http://purl.org/dc/terms/title> ?a_image_name .
+                        
+                OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates .
+                     ?a_sky_coordinates a ?a_sky_coordinates_type ;
+                         <http://purl.org/dc/terms/title> ?a_sky_coordinates_name .
+                }}
+                OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingRadius> ?a_radius .
+                    ?a_radius a ?a_radius_type ;
+                        <http://purl.org/dc/terms/title> ?a_radius_name .
+                }}
+                OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingPixels> ?a_pixels .
+                    ?a_pixels a ?a_pixels_type ;
+                        <http://purl.org/dc/terms/title> ?a_pixels_name .
+                }}
+                OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingImageBand> ?a_image_band .
+                    ?a_image_band a ?a_image_band_type ;
+                        <http://purl.org/dc/terms/title> ?a_image_band_name .
+                }}
+
+                OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
+                
+                ?run ?p ?o .
+            }
             }}"""
 
     r = graph.query(f"""
         CONSTRUCT {{
             ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object .
             ?run <http://odahub.io/ontology#isRequestingAstroRegion> ?a_region .
+            ?run <http://odahub.io/ontology#isRequestingAstroImage> ?a_image .
             ?run <http://purl.org/dc/terms/title> ?run_title .
             ?run <http://odahub.io/ontology#isUsing> ?aq_module .
             ?run ?p ?o .
@@ -352,6 +412,13 @@ def params(revision, format, paths, diff):
                 <http://purl.org/dc/terms/title> ?a_region_name ;
                 <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
                 <http://odahub.io/ontology#isUsingRadius> ?a_radius .
+                
+            ?a_image a ?a_image_type ;
+                <http://purl.org/dc/terms/title> ?a_image_name ;
+                <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
+                <http://odahub.io/ontology#isUsingRadius> ?a_radius ;
+                <http://odahub.io/ontology#isUsingPixels> ?a_pixels ;
+                <http://odahub.io/ontology#isUsingImageBand> ?a_image_band .
         }}
         {query_where}
         """)
