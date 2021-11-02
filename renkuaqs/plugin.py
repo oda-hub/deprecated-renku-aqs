@@ -431,8 +431,6 @@ def params(revision, format, paths, diff):
 
     serial = G.serialize(format="n3").decode()
 
-    print(serial)
-
     with open("subgraph.ttl", "w") as f:
         f.write(serial)
 
