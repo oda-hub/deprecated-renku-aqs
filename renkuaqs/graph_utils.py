@@ -82,6 +82,8 @@ def customize_node(node: typing.Union[pydotplus.Node],
                     node.set_color("#6262bg")
                 elif type_label_values_dict[id_node] == 'Angle' or \
                         type_label_values_dict[id_node] == 'SkyCoordinates' or \
+                        type_label_values_dict[id_node] == 'Coordinates' or \
+                        type_label_values_dict[id_node] == 'Position' or \
                         type_label_values_dict[id_node] == 'Pixels':
                     node.set_color("#1B81FB")
                 # remove top row for the cells Action and CommandInput
@@ -261,9 +263,13 @@ def build_query_where(input_notebook: str = None):
                     ?a_image a ?a_image_type ;
                         <http://purl.org/dc/terms/title> ?a_image_name ;
 
-                    OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates .
-                         ?a_sky_coordinates a ?a_sky_coordinates_type ;
-                             <http://purl.org/dc/terms/title> ?a_sky_coordinates_name .
+                    OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingCoordinates> ?a_coordinates .
+                         ?a_coordinates a ?a_coordinates_type ;
+                             <http://purl.org/dc/terms/title> ?a_coordinates_name .
+                    }}
+                    OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingPosition> ?a_position .
+                         ?a_position a ?a_position_type ;
+                             <http://purl.org/dc/terms/title> ?a_position_name .
                     }}
                     OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingRadius> ?a_radius .
                         ?a_radius a ?a_radius_type ;
@@ -346,7 +352,8 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
 
                 ?a_image a ?a_image_type ;
                     <http://purl.org/dc/terms/title> ?a_image_name ;
-                    <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
+                    <http://odahub.io/ontology#isUsingCoordinates> ?a_coordinates ;
+                    <http://odahub.io/ontology#isUsingPosition> ?a_position ;
                     <http://odahub.io/ontology#isUsingRadius> ?a_radius ;
                     <http://odahub.io/ontology#isUsingPixels> ?a_pixels ;
                     <http://odahub.io/ontology#isUsingImageBand> ?a_image_band .
@@ -357,8 +364,14 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                 ?a_image_band a ?a_image_band_type ;
                     <http://purl.org/dc/terms/title> ?a_image_band_name .
 
+                ?a_coordinates a ?a_coordinates_type ;
+                    <http://purl.org/dc/terms/title> ?a_coordinates_name .
+                    
                 ?a_sky_coordinates a ?a_sky_coordinates_type ;
                     <http://purl.org/dc/terms/title> ?a_sky_coordinates_name .
+                    
+                ?a_position a ?a_position_type ;
+                    <http://purl.org/dc/terms/title> ?a_position_name .
 
                 ?a_radius a ?a_radius_type ;
                     <http://purl.org/dc/terms/title> ?a_radius_name .
@@ -392,7 +405,7 @@ def analyze_types(g, type_label_values_dict):
         o_qname = g.compute_qname(o)
         s_label = label(s, g)
         type_label_values_dict[s_label] = o_qname[2]
-
+    print("type_label_values_dict: ", type_label_values_dict)
 
 def analyze_outputs(g, out_default_value_dict):
     # analyze outputs
@@ -594,8 +607,8 @@ def process_query_region_info(g, run_node=None, module_node=None, action_node=No
                 # define an astropy SkyCoord object
                 coords = sky_coordinates_node_title[0].value.split(" ")
                 sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
-                sky_coord_obj_default_value = str(sky_coord_obj.dec.deg) + " " + str(
-                    sky_coord_obj.ra.deg) + " unit=deg"
+                sky_coord_obj_default_value = 'RA=' + str(sky_coord_obj.ra.deg) + ' deg ' +\
+                                              ' Dec=' + str(sky_coord_obj.dec.deg) + ' deg'
                 g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
                        rdflib.Literal(sky_coord_obj_default_value)))
         # radius info (if found, perhaps some for old query_region none was stored)
@@ -608,7 +621,7 @@ def process_query_region_info(g, run_node=None, module_node=None, action_node=No
             if len(radius_node_title) == 1:
                 # define an astropy Angle object
                 radius_obj = Angle(radius_node_title[0].value)
-                radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
+                radius_obj_default_value = str(radius_obj.arcmin) + " arcmin"
                 g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
                        rdflib.Literal(radius_obj_default_value)))
 
@@ -625,11 +638,24 @@ def process_get_images_info(g, run_node=None, module_node=None, action_node=None
         astroImage_node = requested_astroImage_list[0]
         g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroImage'),
                astroImage_node))
-        # sky coordinates info (if found, perhaps some for old query_region none was stored)
-        sky_coordinates_list = list(
-            g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingSkyCoordinates')])
-        if len(sky_coordinates_list) == 1:
-            sky_coordinates_node = sky_coordinates_list[0]
+        # position info (if found, they could be parsed top SkyCoordinates like in query_region)
+        coordinates_list = list(
+            g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingCoordinates')])
+        if len(coordinates_list) == 1:
+            coordinates_node = coordinates_list[0]
+            coordinates_node_title = list(
+                g[coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+            if len(coordinates_node_title) == 1:
+                coordinates = coordinates_node_title[0].value.split(" ")
+                if len(coordinates) == 1:
+                    coordinates_obj_default_value = ",".join(coordinates)
+                    g.add((coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                           rdflib.Literal(coordinates_obj_default_value)))
+        # position info (if found, they could be parsed top SkyCoordinates like in query_region)
+        position_list = list(
+            g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingPosition')])
+        if len(position_list) == 1:
+            sky_coordinates_node = position_list[0]
             sky_coordinates_node_title = list(
                 g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
             if len(sky_coordinates_node_title) == 1:
