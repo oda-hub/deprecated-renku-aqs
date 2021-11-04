@@ -1,4 +1,4 @@
-# renku-aqs
+# Collecting metadata with the plugin, inspecting it
 
 
 ```bash
@@ -29,3 +29,33 @@ local-renku:dd481450-d5e4-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
 
 
 ![](subgraph.png)
+
+
+## Sharing the metadata with the larger world
+
+Pushing metadata to upstream, e.g. file:
+
+```bash
+$ renku aqs kg -u file:///tmp/rdf.ttl push
+```
+
+Or default SPARQL endpoint:
+
+```bash
+$ renku aqs kg push
+```
+
+Find suggestions for your workflow here:
+
+```bash
+$ renku aqs kg  suggest
+
++-------------------------------------------------------+----------------------------------------------+--------------------+
+|                        Workflow                       |                 Astro Object                 |       Score        |
++-------------------------------------------------------+----------------------------------------------+--------------------+
+| http://github.com/volodymyrss/renku-aqs-test-case.git | http://odahub.io/ontology#AstroObjectMrk_421 |        1.0         |
+|                                                       |                  GRB211102B                  | 0.9192031027269952 |
+|                                                       |                  GRB211102A                  | 0.9192031025575635 |
+|                                                       |                    RS Oph                    |        1.0         |
+|                                                       |                  FRB180916                   |        1.0         |
+```

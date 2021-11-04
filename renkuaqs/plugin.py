@@ -20,9 +20,12 @@ import os
 import pathlib
 import re
 import sys
+import time
 import json
 import click
 import rdflib
+import subprocess
+
 from copy import deepcopy
 from pathlib import Path
 
@@ -253,7 +256,10 @@ def extract_aq_subgraph(graph, query_where=None, to_file="subgraph.ttl"):
     G.bind("odas", "https://odahub.io/ontology#")   # the same
     G.bind("local-renku", "file:///home/savchenk/work/oda/renku/renku-aqs/renku-aqs-test-case/.renku/") #??
 
-    serial = G.serialize(format="n3").decode()
+    serial = G.serialize(format="n3")
+
+    if isinstance(serial, bytes):
+        serial = serial.decode()
     
     print(serial)
 
@@ -416,9 +422,12 @@ def push(obj):
         else:
             print("not yet found upstream KG:", fn)
 
-        G.parse(data=g.serialize(format="n3").decode(), format="n3")
+        G.parse(data=g.serialize(format="n3"), format="n3")
 
-        serial = G.serialize(format="n3").decode()
+        serial = G.serialize(format="n3")
+        
+        if isinstance(serial, bytes):
+            serial = serial.decode()
         
         print(serial)
 
@@ -428,9 +437,26 @@ def push(obj):
     elif obj.upstream.startswith("https://"):
         import odakb.sparql
 
+        def nuri(t):
+            if t.startswith('file://'):
+                # how to reliably establish project "identity", URI?
+                local_project_path = t.split("/.renku/")[0].replace("file://", "")
+                print("local_project_path", local_project_path)
+                project_url = subprocess.check_output(["git", "remote", "get-url", "origin"], cwd=local_project_path).decode().strip()
+                print("project url:", project_url)
+                if project_url.startswith("git@"):
+                    # could be other : in the URL, ignoring
+                    project_url = project_url.replace(":", "/").replace("git@", "http://")
+                
+                t = project_url
+
+                
+            return odakb.sparql.nuri(t) 
+
         q = ""
         for t in g:
-            _q = "{} {} {}\n".format(*[odakb.sparql.nuri(_t) for _t in t])
+
+            _q = "{} {} {}\n".format(*[nuri(_t) for _t in t])            
             print("inserting:", _q)
             odakb.sparql.insert(_q)
 
@@ -447,6 +473,17 @@ def suggest(obj):
     # this implements https://github.com/oda-hub/smartsky/issues/25
     # TODO: for better association and scoring see https://github.com/oda-hub/smartsky/issues/25
     
+    graph = _graph("HEAD", [])
+    local_graph = extract_aq_subgraph(graph)
+
+    def compute_local_score(workflow, input):
+        # TODO: here compute score from overlap between workflow/input, including whatever can be queried about them,
+        # and local graph, including whatever can be found about it
+
+        if input.startswith('GRB'):            
+            return 1 - (time.time() - time.mktime(time.strptime(input[3:9], "%y%m%d")))/(24*3600*30)
+
+        return 1.0
 
     if obj.upstream.startswith("https://"):
         import odakb.sparql
@@ -454,23 +491,16 @@ def suggest(obj):
         d = odakb.sparql.select('?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object')
 
         output = PrettyTable()
-        #output.field_names = ["Run", "Astro Object", "Score"]
         output.field_names = ["Workflow", "Astro Object", "Score"]
         output.align["Run"] = "l"
-
-        print("\033[32mtry other workflows requesting Astro Objects:")
 
         for r in d:            
             workflow = r['run'].split(".renku")[0]
             print(r['run'], workflow, r['a_object'])
             q = f"<{r['a_object']}> ?p ?o"
             print("about object:", q)
-            print(odakb.sparql.select(q))
             output.add_row([workflow, r['a_object'], 1.0])
-
-        #print(output)
         
-        import odakb
         D = odakb.sparql.query(
             '''
             PREFIX paper: <http://odahub.io/ontology/paper#>
@@ -480,20 +510,16 @@ def suggest(obj):
             }
             ORDER BY DESC(?isot)
             LIMIT 100''', 
-            #'?name ?isot ?paper',
-            #tojdict=True,
-            )
-
-        #print("\033[31m>>>>", D['results']['bindings'][0], "\033[0m")
-
+        )
+        
         D = {
                     d['name']['value']: {
                         'isot': d['isot']['value'],
                     }
                 for d in D['results']['bindings']}
 
-        for k, v in list(D.items())[:10]:
-            output.add_row(['', k, 1.])
+        for k, v in list(D.items())[:10]:                        
+            output.add_row(['', k, compute_local_score('', k)])
             
         objects_of_interest = odakb.sparql.select(
             '''
@@ -508,6 +534,7 @@ def suggest(obj):
         
         source_list = list([v['an:name'][0] for k, v in objects_of_interest.items()])
         for source in source_list:
-            output.add_row(['', source, 1.0])
+            output.add_row(['', source, compute_local_score('', source)])
 
+        print("\033[31mtry other objects for this workflow\033[0m")
         print(output)
