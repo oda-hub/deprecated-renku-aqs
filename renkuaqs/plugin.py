@@ -22,12 +22,17 @@ import re
 import sys
 import time
 import json
+from typing import DefaultDict, Optional
 import click
 import rdflib
 import subprocess
+from collections import defaultdict
+
+import odakb.sparql
 
 from copy import deepcopy
 from pathlib import Path
+from rdflib.graph import Graph
 
 from renku.core.models.cwl.annotation import Annotation
 from renku.core.incubation.command import Command
@@ -404,6 +409,55 @@ def kg(obj, upstream):
 
     obj.upstream = upstream
 
+
+def get_project_uri(project_path: Optional[str]=None) -> str:
+    if project_path is None:
+        project_path = os.getcwd()
+
+    project_url = subprocess.check_output(["git", "remote", "get-url", "origin"], cwd=project_path).decode().strip()
+
+    if project_url.startswith("git@"):
+        # could be other : in the URL, ignoring
+        project_url = project_url.replace(":", "/").replace("git@", "http://")
+
+    if project_url.startswith("https://"):                    
+        project_url = project_url.replace("https://", "http://")
+
+    return project_url
+
+
+def nuri(t):
+    if t.startswith('file://'):
+        local_project_path, run_id = t.split("/.renku/")
+        local_project_path = local_project_path.replace("file://", "")
+
+        project_url = get_project_uri(local_project_path)
+        
+        t = project_url + "#" + run_id
+
+        
+    return odakb.sparql.nuri(t) 
+
+
+def normalize_local_graph(g):
+    # replace references to local files with their URI
+    nG = rdflib.Graph()
+
+    # align with other place where is this
+    nG.bind("oda", "http://odahub.io/ontology#")  
+    nG.bind("odas", "https://odahub.io/ontology#")   # the same
+
+
+    for t in g:
+        _q = "{} {} {}\n".format(*[nuri(_t) for _t in t])            
+        nG.update(f"INSERT DATA {{ {_q} }}")
+
+    for rule in rules:
+        rule(nG)
+    
+    return nG
+
+
 @kg.command()
 @click.pass_obj
 def push(obj):
@@ -435,37 +489,46 @@ def push(obj):
             f.write(serial)
 
     elif obj.upstream.startswith("https://"):
-        import odakb.sparql
-
-        def nuri(t):
-            if t.startswith('file://'):
-                # how to reliably establish project "identity", URI?
-                local_project_path = t.split("/.renku/")[0].replace("file://", "")
-                print("local_project_path", local_project_path)
-                project_url = subprocess.check_output(["git", "remote", "get-url", "origin"], cwd=local_project_path).decode().strip()
-                print("project url:", project_url)
-                if project_url.startswith("git@"):
-                    # could be other : in the URL, ignoring
-                    project_url = project_url.replace(":", "/").replace("git@", "http://")
-                
-                t = project_url
-
-                
-            return odakb.sparql.nuri(t) 
-
-        q = ""
+        tuples = ""
         for t in g:
-
-            _q = "{} {} {}\n".format(*[nuri(_t) for _t in t])            
-            print("inserting:", _q)
-            odakb.sparql.insert(_q)
-
-#        q = g.serialize(format="n3").decode()
-
-        # print("to insert:", q)
+            tuples += "\n{} {} {} .".format(*map(nuri, t))
         
-        # odakb.sparql.insert(q)
+        odakb.sparql.insert(tuples)
 
+
+def workflow_distance_score(W1, W2, context):
+#    return 1 - (time.time() - time.mktime(time.strptime(input[3:9], "%y%m%d")))/(24*3600*30)
+
+#   d = odakb.sparql.select('?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object')
+
+# use source name distance
+# use source class. find in simbad
+
+    return 1
+
+def rule_infer_inputs(G):    
+    print(">>rule_infer_inputs")
+    for l in G.query('SELECT * WHERE {?run oda:isRequestingAstroObject ?obj}'): 
+        # this is not necessarily true, but will be applicable until we understand plan situation and make ontology of inputs
+
+        run = l['run']
+        wfl, run_id = run.split("#")
+
+        # astro_object is binding 
+        r = f'''
+                <{run}> a oda:Run .
+                <{wfl}> a oda:Workflow;
+                        oda:has_input_binding oda:has_input_astro_object;
+                        oda:has_input_astro_object oda:AstroObject;
+                        oda:has_input_type oda:AstroObject .
+            '''
+
+        print(f"\033[32m {r}\033[0m")
+
+        G.update(f'INSERT DATA {{ {r} }}')
+
+# should be in shacl but this is faster. pyshacl
+rules = [rule_infer_inputs]
 
 @kg.command()
 @click.pass_obj
@@ -476,65 +539,93 @@ def suggest(obj):
     graph = _graph("HEAD", [])
     local_graph = extract_aq_subgraph(graph)
 
-    def compute_local_score(workflow, input):
-        # TODO: here compute score from overlap between workflow/input, including whatever can be queried about them,
-        # and local graph, including whatever can be found about it
-
-        if input.startswith('GRB'):            
-            return 1 - (time.time() - time.mktime(time.strptime(input[3:9], "%y%m%d")))/(24*3600*30)
-
-        return 1.0
-
+    
     if obj.upstream.startswith("https://"):
-        import odakb.sparql
+        import odakb.sparql        
 
-        d = odakb.sparql.select('?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object')
+        normal_local_graph = normalize_local_graph(local_graph)
+        print("\033[31mlocal_graph:\033[0m", "\n" + normal_local_graph.serialize(format='ttl'))
 
-        output = PrettyTable()
-        output.field_names = ["Workflow", "Astro Object", "Score"]
-        output.align["Run"] = "l"
+        W1 = get_project_uri()
 
-        for r in d:            
-            workflow = r['run'].split(".renku")[0]
-            print(r['run'], workflow, r['a_object'])
-            q = f"<{r['a_object']}> ?p ?o"
-            print("about object:", q)
-            output.add_row([workflow, r['a_object'], 1.0])
+        # 1. find all inputs for this workflow (W1). combine with them. rank distance from combinations (W2) to W1
+        # 2. find all workflow run with their current inputs. rank distances from current
+        # 3. find all workflows with all inputs.
+
+        print("project W1", W1)
+        # need to distinguish more explicitly input_value, input_type, input_binding 
+        for x, input_type in normal_local_graph.query(f'SELECT * WHERE {{ ?x oda:has_input_type ?input}}'):
+            print("found input", x, input_type)
+            #input_options = defaultdict(list)
+            r = odakb.sparql.construct(f'?x a <{input_type}>; ?y ?z', jsonld=False)
+
+            print(r)
+
+            iG = rdflib.Graph()
+            iG.parse(data=r)
+
+            for input_value, in iG.query(f'SELECT * WHERE {{?x a <{input_type}>}}'):
+                print("input option row", input_value)
+
+                tiG = rdflib.Graph()
+                for t in iG.query(f'CONSTRUCT WHERE {{<{input_value}> ?p ?o}}'):
+                    tiG.add(t)
+
+                #print(tiG.serialize(format='turtle'))
+
+
+            # for k, v in input_options.items():
+            #     print(k, v)
+
+        # for run in local_graph.query('SELECT * WHERE {?r a oda:Run}'):
+        #     print("run", run)
+
         
-        D = odakb.sparql.query(
-            '''
-            PREFIX paper: <http://odahub.io/ontology/paper#>
-            SELECT * WHERE {
-                ?paper paper:mentions_named_grb ?name; 
-                       paper:grb_isot ?isot .
-            }
-            ORDER BY DESC(?isot)
-            LIMIT 100''', 
-        )
-        
-        D = {
-                    d['name']['value']: {
-                        'isot': d['isot']['value'],
-                    }
-                for d in D['results']['bindings']}
+        # output = PrettyTable()
+        # output.field_names = ["Workflow", "Astro Object", "Score"]
+        # output.align["Run"] = "l"
 
-        for k, v in list(D.items())[:10]:                        
-            output.add_row(['', k, compute_local_score('', k)])
+        # for r in d:            
+        #     workflow = r['run'].split(".renku")[0]
+        #     print(r['run'], workflow, r['a_object'])
+        #     q = f"<{r['a_object']}> ?p ?o"
+        #     print("about object:", q)
+        #     output.add_row([workflow, r['a_object'], 1.0])
+        
+        # D = odakb.sparql.query(
+        #     '''
+        #     PREFIX paper: <http://odahub.io/ontology/paper#>
+        #     SELECT * WHERE {
+        #         ?paper paper:mentions_named_grb ?name; 
+        #                paper:grb_isot ?isot .
+        #     }
+        #     ORDER BY DESC(?isot)
+        #     LIMIT 100''', 
+        # )
+        
+        # D = {
+        #             d['name']['value']: {
+        #                 'isot': d['isot']['value'],
+        #             }
+        #         for d in D['results']['bindings']}
+
+        # for k, v in list(D.items())[:10]:                        
+        #     output.add_row(['', k, compute_local_score('', k)])
             
-        objects_of_interest = odakb.sparql.select(
-            '''
-            ?object an:name ?object_name; 
-                    an:importantIn ?domain;
-                    ?p ?o .
-            ''',          
-            '?object ?p ?o',  
-            tojdict=True,
-            limit=100)        
+        # objects_of_interest = odakb.sparql.select(
+        #     '''
+        #     ?object an:name ?object_name; 
+        #             an:importantIn ?domain;
+        #             ?p ?o .
+        #     ''',          
+        #     '?object ?p ?o',  
+        #     tojdict=True,
+        #     limit=100)        
 
         
-        source_list = list([v['an:name'][0] for k, v in objects_of_interest.items()])
-        for source in source_list:
-            output.add_row(['', source, compute_local_score('', source)])
+        # source_list = list([v['an:name'][0] for k, v in objects_of_interest.items()])
+        # for source in source_list:
+        #     output.add_row(['', source, compute_local_score('', source)])
 
-        print("\033[31mtry other objects for this workflow\033[0m")
-        print(output)
+        # print("\033[31mtry other objects for this workflow\033[0m")
+        # print(output)
