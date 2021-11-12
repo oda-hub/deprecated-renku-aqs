@@ -48,14 +48,43 @@ $ renku aqs kg push
 Find suggestions for your workflow here:
 
 ```bash
-$ renku aqs kg  suggest
 
-+-------------------------------------------------------+----------------------------------------------+--------------------+
-|                        Workflow                       |                 Astro Object                 |       Score        |
-+-------------------------------------------------------+----------------------------------------------+--------------------+
-| http://github.com/volodymyrss/renku-aqs-test-case.git | http://odahub.io/ontology#AstroObjectMrk_421 |        1.0         |
-|                                                       |                  GRB211102B                  | 0.9192031027269952 |
-|                                                       |                  GRB211102A                  | 0.9192031025575635 |
-|                                                       |                    RS Oph                    |        1.0         |
-|                                                       |                  FRB180916                   |        1.0         |
+$ renku aqs kg suggest  --max-entries 100 --filter-input-value 421 --explain --ignore-now --plot```
+
+traced:
+    oda:Focus                                             1.00000  http://odahub.io/ontology#Focus
+    oda:relatedTo                                         0.00000  http://odahub.io/ontology#relatedTo
+    <http://github.com/oda-hub/oda-sdss/>                 1.00000  http://github.com/oda-hub/oda-sdss/
+    oda:has_runs_with_astro_object                        1.00000  http://odahub.io/ontology#has_runs_with_astro_object
+    oda:AstroObjectMrk_421                                1.00000  http://odahub.io/ontology#AstroObjectMrk_421
+    oda:has_input_source_name_inverse                     1.00000  http://odahub.io/ontology#has_input_source_name_inverse
+    <http://github.com/oda-hub/oda-sdss//Plan>            1.00000  http://github.com/oda-hub/oda-sdss//Plan
+trace distance: 6
+
+total distance: 3.428571428571429
+total distance: 3.428571428571429 http://odahub.io/ontology#AstroObjectMrk_421
++-------------------------------------+----------------------------------------------+--------------------+
+|               Workflow              |                    Inputs                    |      Distance      |
++-------------------------------------+----------------------------------------------+--------------------+
+| http://github.com/oda-hub/oda-sdss/ |     http://odahub.io/ontology#GRB210421C     | 3.7333333333333334 |
+| http://github.com/oda-hub/oda-sdss/ |     http://odahub.io/ontology#GRB210421A     | 3.7333333333333334 |
+| http://github.com/oda-hub/oda-sdss/ | http://odahub.io/ontology#AstroObjectMrk_421 | 3.428571428571429  |
++-------------------------------------+----------------------------------------------+--------------------+
 ```
+
+Not ignoring now (i.e. associating it to the focus node and hence using it in computing distances):
+
+```bash
+
+$ renku aqs kg suggest  --max-entries 100 --filter-input-value 421 --explain --ignore-now --plot```
+
++-------------------------------------+----------------------------------------------+--------------------+
+|               Workflow              |                    Inputs                    |      Distance      |
++-------------------------------------+----------------------------------------------+--------------------+
+| http://github.com/oda-hub/oda-sdss/ | http://odahub.io/ontology#AstroObjectMrk_421 | 3.428571428571429  |
+| http://github.com/oda-hub/oda-sdss/ |     http://odahub.io/ontology#GRB210421A     | 2.4317929154938036 |
+| http://github.com/oda-hub/oda-sdss/ |     http://odahub.io/ontology#GRB210421C     | 2.431026469780614  |
+
+```
+
+Now how `Mrk 421` now less favorable. It is because GRBs are recent, and relate to current moment.

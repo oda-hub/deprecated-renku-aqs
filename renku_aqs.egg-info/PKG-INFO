@@ -1,0 +1,25 @@
+Metadata-Version: 1.1
+Name: renku-aqs
+Version: 0.0.1
+Summary: Renku AQS plugin
+Home-page: UNKNOWN
+Author: Gabriele Barni, Volodymyr Savchenko
+Author-email: UNKNOWN
+License: Apache License 2.0
+Description: UNKNOWN
+Keywords: Renku AQS
+Platform: any
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Internet :: WWW/HTTP :: Dynamic Content
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Development Status :: 4 - Beta

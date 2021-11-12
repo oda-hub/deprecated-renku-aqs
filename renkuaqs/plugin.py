@@ -16,15 +16,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import glob
+import itertools
 import os
 import pathlib
 import re
 import sys
 import time
 import json
-from typing import DefaultDict, Optional
+from typing import DefaultDict, Optional, Tuple
 import click
 import rdflib
+from nb2workflow.nbadapter import NotebookAdapter
 import subprocess
 from collections import defaultdict
 
@@ -49,25 +52,11 @@ from aqsconverters.io import AQS_DIR, COMMON_DIR
 import io
 from rdflib.tools import rdf2dot
 import pydotplus
+import requests
+import yaml
 
 def plot_graph(G, filename="graph.svg"):
-    stream = io.StringIO()
-
-    # def color(p, placement='predicate'):
-    #     if placement == 'predicate':
-    #         print("coloring:", p)
-    #         return "RED"
-
-    #     elif placement == 'bgcolor':
-    #         print("coloring:", p)
-    #         return "blue"
-
-    #     elif placement == 'node_label':
-    #         if 'focus' in p:
-    #             return 'lightgreen'
-    #         else:
-    #             return 'grey'
-        
+    stream = io.StringIO()       
 
     rdf2dot.rdf2dot(G, stream, opts={})    
 
@@ -76,7 +65,12 @@ def plot_graph(G, filename="graph.svg"):
     with open(filename.replace('.svg', '.dot'), "w") as f:
         f.write(dot_data)
 
-    pydotplus.graph_from_dot_data(dot_data).write_svg(filename)
+    g = pydotplus.graph_from_dot_data(dot_data)
+    g.prog = 'fdp' # or dot
+    g.write_svg(filename)
+
+    with open(filename.replace(".svg", ".ttl"), "w") as f:
+        f.write(G.serialize(format='turtle'))
 
 class AQS(object):
     def __init__(self, run):
@@ -306,7 +300,7 @@ def extract_aq_subgraph(graph, query_where=None, to_file="subgraph.ttl"):
     if isinstance(serial, bytes):
         serial = serial.decode()
     
-    print(serial)
+    #print(serial)
 
     if to_file is not None:
         with open(to_file, "w") as f:
@@ -498,57 +492,153 @@ def normalize_local_graph(g):
     return nG
 
 
-def build_time_references(G):
+def build_time_references(G, now_isot):
+    # alternatively, can grade shapes with measurable predicates
+
+    now_term = rdflib.URIRef("http://odahub.io/ontology#Now")
+
     time_triples = G.query('SELECT * WHERE {?time a oda:TimeInstant; oda:isot ?isot}')
 
-    for t in time_triples:
-        pass
-        # print(t)
+    for t in G.triples((None, None, rdflib.URIRef("http://odahub.io/ontology#TimeInstant"))):
+        #print(t)
+        if t == now_term:
+            continue
 
-def develop_rank_relations(W1, W2, G):
+        try:
+            t_isot = str(list(G.triples((t[0], rdflib.URIRef('http://odahub.io/ontology#isot'), None)))[0][2])
+        except:
+            raise
+            continue
+
+        isot_format = '%Y-%m-%dT%H:%M:%S'
+
+        month_sep = ((time.mktime(time.strptime(now_isot, isot_format)) - time.mktime(time.strptime(t_isot, isot_format)))/24/3600/30)
+
+        distance = month_sep**2
+
+        distance_term = rdflib.URIRef(f"http://odahub.io/ontology#distance{distance:7.5f}")
+
+        # property graph lacking
+        G.add((
+                now_term,
+                distance_term,
+                t[0]
+            ))
+
+        G.add((
+                distance_term,
+                rdflib.URIRef(f"http://odahub.io/ontology#distance_term"),
+                rdflib.term.Literal(distance)
+            ))            
+
+
+def trace_graph(W1, W2, G, trace):
+    if ' ' in W1 or ' ' in W2:
+        return []
+
+    W1 = rdflib.URIRef(W1)
+    W2 = rdflib.URIRef(W2)
+
+    if W1 in trace:
+        return []
+    
+    if W1 == W2:
+        return [trace + [W2]]
+
+    traces = [] 
+    
+    for s, p, o in G.triples((rdflib.URIRef(W1), None, None)):
+        traces += trace_graph(o, W2, G, trace + [s, p]) 
+        
+    return traces
+
+term_distances = yaml.load(open("term-distance.yaml"))
+
+def term_distance(term: rdflib.URIRef, G: rdflib.Graph) -> float:
+    # since even triangle relation is not guaranteed, may need more complex than sum
+    # maybe better by introducing additional links
+
+    if term.startswith('http://odahub.io/ontology#distance'):
+        return sum([float(d[2]) for d in G.triples((term, rdflib.URIRef('http://odahub.io/ontology#distance_term'), None))])
+
+    return term_distances.get(str(term), 1)
+
+
+def develop_rank_relations(W1, W2, G, 
+                           mode='resistor', 
+                           add_distance_predicates=False, 
+                           explain=False,
+                           leave_only_distance=False
+                           ) -> Tuple[float, rdflib.Graph]:
     # make reverse relations
+    # like resistance. or lightning
+
     iG = rdflib.Graph()
     iG.parse(data=G.serialize(format='n3'), format="n3")
+    assign_default_bindings(iG)
 
     for s, p, o in iG.query(f'''SELECT ?s ?p ?o WHERE {{
                   ?s ?p ?o . 
                 }}'''):
-        iG.add((o, rdflib.URIRef(str(p) + "_anti"), s))
-        
+        iG.add((o, rdflib.URIRef(str(p) + "_inverse"), s))
 
-    #for r in iG.query(f'''SELECT ?p1 ?o1 ?p2 ?o2 WHERE {{
+    traces = trace_graph(W1, W2, iG, [])
+
+    # remove inverse
+
+    for s, p, o in iG:
+        if str(p).endswith('_inverse'):
+            iG.remove((s, p, o ))
+
+    #TODO: draw links
+
+    distance_predicate_uri = rdflib.URIRef('http://odahub.io/ontology#distance')
+
+    total_distance = 1e100 # large resistor
+    for trace in traces:
+        if explain:
+            click.echo("\033[31mtraced:\033[0m")
+        trace_distance = 0
+        for i, term in enumerate(trace):
+            distance = term_distance(term, iG)
+            trace_distance += distance
+
+            if explain:
+                click.echo(f"    {term.n3(G.namespace_manager):50s} {distance:10.5f}  {str(term):.100s}")        
+
+            if add_distance_predicates:
+                if i>0 and i<len(trace)-1:
+                    if len(list(iG.triples((None, rdflib.URIRef(str(term).replace('_inverse', '')), None)))) > 0:
+                        iG.add((trace[i-1], distance_predicate_uri, trace[i+1]))                                    
+
+        if explain:
+            print(f"\033[33mtrace distance: {trace_distance}\033[0m\n")
+
+        if mode == 'resistor':
+            total_distance = 1 / (1/total_distance + 1/trace_distance) # resistor
+        else:
+            total_distance = min(total_distance, trace_distance)
+
+    if explain:
+        print(f"\033[31mtotal distance: {total_distance}\033[0m")
 
 
-    triples = [f'?s{i} ?p{i} ?o{i}' for i in range(5)]
+    nG = rdflib.Graph()
+    assign_default_bindings(nG)
+
+    if leave_only_distance:
+        for s, p, o in iG:
+            if len(list(iG.triples((s, distance_predicate_uri, o)))) > 0 or len(list(iG.triples((o, distance_predicate_uri, s)))):
+                if p != distance_predicate_uri:
+                    nG.add((s, p, o))
+
+        iG = nG
+
+
+    return total_distance, iG
+
     
-    x = ' '.join(triples)
-    y = "\n".join([t + " ." for t in triples])
-
-    y = y.replace('?s0', f'<{W1}>')
-    y = y.replace('?s4', f'<{W2}>')
-
-    q = f'''SELECT {x} WHERE {{
-                   {y}
-                  
-                    FILTER (
-                        (?o0 = ?s1) && (?o1 = ?s2) && (?o2 = ?s3) && (?o3 = ?s4)
-                  )                   
-                }}'''
-                
-
-    print(q)
-
-    for r in iG.query(q):        
-        eG = rdflib.Graph()
-        eG.add((rdflib.URIRef(W1), r[0], r[1]))
-        eG.add((rdflib.URIRef(W2), r[2], r[3]))
-        eG.add((r[4], r[5], r[6]))
-
-        print("\033[31mrelation", W1, W2, "\033[0m")
-
-        assign_default_bindings(eG)
-        print(eG.serialize(format='turtle'))
-
+    
 @kg.command()
 @click.pass_obj
 def push(obj):
@@ -603,7 +693,6 @@ def node_distance(W1, W2, context):
 
 
 def rule_infer_inputs(G):    
-    print(">>rule_infer_inputs")
     for l in G.query('SELECT * WHERE {?run oda:isRequestingAstroObject ?obj}'): 
         # this is not necessarily true, but will be applicable until we understand plan situation and make ontology of inputs
 
@@ -637,12 +726,53 @@ def rule_infer_inputs(G):
 # should be in shacl but this is faster. pyshacl
 rules = [rule_infer_inputs]
 
+
+def learn_repo_workflow(wfl, G):
+    notebooks = glob.glob("*.ipynb")    
+
+    if len(notebooks) == 1:
+        notebook = notebooks[0]
+    else:
+        try:
+            notebook = yaml.load(open('oda.yaml'))['root_notebook']
+        except FileNotFoundError:
+            raise NotImplementedError
+
+    nbsig = NotebookAdapter(notebook).extract_parameters()
+
+    print(nbsig)
+
+    for k, v in nbsig.items():
+        r = f'''
+                <{wfl}> oda:has_input_binding oda:has_input_{k} .
+                        
+                oda:has_input_{k} a oda:input_{k};
+                                  oda:input_type <{v['owl_type']}> .
+            '''
+
+        print(r)
+         
+        G.update(f'INSERT DATA {{ {r} }}')
+
+
 @kg.command()
+@click.option('--ignore-now', is_flag=True, default=False)
+@click.option('--explain', is_flag=True, default=False)
+@click.option('--plot', is_flag=True, default=False)
+@click.option('--plot-distance', is_flag=True, default=False)
+@click.option('--plot-only-distance', is_flag=True, default=False)
+@click.option('--learn-inputs', is_flag=True, default=False)
+@click.option('--max-entries', default=10, type=float)
+@click.option('--filter-input-value', default=None, type=str)
 @click.pass_obj
-def suggest(obj):
+def suggest(obj, explain, ignore_now, plot, plot_distance, plot_only_distance, learn_inputs, max_entries, filter_input_value):
     # this implements https://github.com/oda-hub/smartsky/issues/25
     # TODO: for better association and scoring see https://github.com/oda-hub/smartsky/issues/25
     
+    if plot_only_distance:
+        plot_distance = True
+        
+
     graph = _graph("HEAD", [])
     local_graph = extract_aq_subgraph(graph)
 
@@ -661,20 +791,34 @@ def suggest(obj):
 
         print("W1 (current renku/gitlab project):", workflow)
 
-        focus = "http://odahub.io/ontology#focus"
+        focus = "http://odahub.io/ontology#Focus"
         W1 = focus
 
-        now_isot = time.strftime("%Y-%m-%dT%H:%M:%S")
-
+        # TODO: collect inputs here
         normal_local_graph.update(f'''
             INSERT DATA {{
-                    <{focus}> oda:event_time oda:Now;
-                              oda:relatedTo <{workflow}> .
-                    oda:Now oda:isot "{now_isot}";
-                            a oda:TimeInstant .
+                    <{focus}> oda:relatedTo <{workflow}> .
             }}''')
-
         
+        # perhaps detect notebook in oda.yaml
+        if learn_inputs:
+            learn_repo_workflow(workflow, normal_local_graph)
+
+        if not ignore_now:
+            now_isot = time.strftime("%Y-%m-%dT%H:%M:%S")
+            normal_local_graph.update(f'''
+                INSERT DATA {{
+                        <{focus}> oda:event_time oda:Now .
+
+                        oda:Now oda:isot "{now_isot}";
+                                a oda:TimeInstant .
+                }}''')
+
+        output = PrettyTable()
+        output.field_names = ["Workflow", "Inputs", "Distance"]        
+
+        n_entries = 0
+
         for input_binding_struct in normal_local_graph.query(f'''
                         SELECT * WHERE {{ 
                             <{workflow}> oda:has_input_binding ?input_binding_predicate .
@@ -689,28 +833,44 @@ def suggest(obj):
 
             input_type = input_binding_struct["input_type"]
 
-            print("found input", input_binding_struct)
-            # r = odakb.sparql.construct(f'?x a <{input_type}>; ?y ?z . ?z a ?b', jsonld=False)
+            #print("found input", input_binding_struct)
+            # this is incomplete somehow            
             r = odakb.sparql.construct(f'?x a <{input_type}>; ?y ?z . ?z ?a ?b', jsonld=False)
+            r1 = odakb.sparql.construct(f'?x a <{input_type}>; ?y ?z .', jsonld=False)
 
-            print("\033[31m", r, "\033[0m")
+
+            # GG = rdflib.Graph()
+            # GG.parse(odakb.sparql.discover_oda_sparql_root(None), format='turtle')
+            # r = GG.query(f'CONSTRUCT WHERE {{ ?x a <{input_type}>; ?y ?z . ?o ?a ?b }}')
+
+            # r = odakb.sparql.construct(f'?x a <{input_type}>; ?y ?z .', jsonld=False)
+
+            #print("\033[31m", r, "\033[0m")
+            with open("context.ttl", "w") as f:
+                f.write(r)
 
             iG = rdflib.Graph()
             iG.parse(data=r, format='turtle')
+            iG.parse(data=r1, format='turtle')
 
             #print(list(iG.query('SELECT * WHERE { ?a ?b oda:TimeInstant }')))
 
             # return
 
+            # try to derive relevance before selecting, to deal with less inputs
             for input_value, in iG.query(f'SELECT * WHERE {{?x a <{input_type}>}}'):
                 # here we construct sufficient graph to compute distances
-                print("input option row", input_value)
+                # print("input option row", input_value)
 
-                input_value = "http://odahub.io/ontology#AstroObjectMrk_421"
+                # input_value = "http://odahub.io/ontology#AstroObjectMrk_421"
 
                 # TODO: select by scope/domain/affinity
                 # if "Mrk" not in str(input_value): continue
-                # if "GRB200623A" not in str(input_value): continue
+                #if "GRB200623A" not in str(input_value): continue
+
+                if filter_input_value is not None:
+                    if not re.search(filter_input_value, input_value):
+                        continue
                 
                 tiG = rdflib.Graph()
                 assign_default_bindings(tiG)
@@ -725,7 +885,7 @@ def suggest(obj):
 
 
                 # construct plan (possible run)
-                W2 = f"{workflow}/plan"
+                W2 = f"{workflow}/Plan"
                 tiG.update(f"""
                     INSERT DATA {{
                         <{W2}> a oda:Plan;
@@ -733,24 +893,30 @@ def suggest(obj):
                     }}
                 """)
 
-                build_time_references(tiG)
+                if not ignore_now:
+                    build_time_references(tiG, now_isot)
 
-                develop_rank_relations(W1, W2, tiG)
+                distance, ciG = develop_rank_relations(W1, W2, tiG, add_distance_predicates=plot_distance, explain=explain, leave_only_distance=plot_only_distance)
                 
 
-                print("\033[35mlocal_graph with plan:","\n" + tiG.serialize(format='ttl'), "\033[0m")
+                #print("\033[35mlocal_graph with plan:","\n" + tiG.serialize(format='ttl'), "\033[0m")
 
-                plot_graph(tiG)
+                if plot:
+                    plot_graph(ciG, "graph.svg")
                 
-                break
+                print(f"\033[31mtotal distance: {distance}\033[0m", input_value)
 
+                output.add_row([workflow, input_value, distance])
+
+                n_entries += 1
+
+                if n_entries >= max_entries:
+                    break
             
-            # for k, v in input_options.items():
-            #     print(k, v)
-
-        # for run in local_graph.query('SELECT * WHERE {?r a oda:Run}'):
-        #     print("run", run)
-
+        output.sortby = 'Distance'
+        output.reversesort = True
+            
+        print(output)
         
         # output = PrettyTable()
         # output.field_names = ["Workflow", "Astro Object", "Score"]
