@@ -109,3 +109,8 @@ TODO:
 * mmoda requests
 
 
+## Using IVOA Astro Object ontology
+
+This example shows how object ontology connects sources which are related. Source names and workflows collected from cross-calibration test collection [ref](...).
+
+![image](https://user-images.githubusercontent.com/3909535/141535619-e48808e6-2154-456e-962b-1f341ca574d9.png)
