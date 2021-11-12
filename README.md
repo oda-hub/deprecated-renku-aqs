@@ -96,3 +96,9 @@ $ renku aqs kg suggest  --max-entries 100 --filter-input-value 421 --plot```
 
 
 Notice how `Mrk 421` now less favorable. It is because GRBs are recent, and relate to current moment.
+
+## Using IVOA Astro Object ontology
+
+This example shows how object ontology connects sources which are related
+
+![image](https://user-images.githubusercontent.com/3909535/141535619-e48808e6-2154-456e-962b-1f341ca574d9.png)
