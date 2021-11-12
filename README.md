@@ -96,3 +96,16 @@ $ renku aqs kg suggest  --max-entries 100 --filter-input-value 421 --plot```
 
 
 Notice how `Mrk 421` now less favorable. It is because GRBs are recent, and relate to current moment.
+
+
+## Sources of ontology
+
+TODO:
+* runs of renku
+* cc workflow
+* MM INTEGRAL wfl
+* mm events, grs
+* qla
+* mmoda requests
+
+

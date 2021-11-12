@@ -55,6 +55,8 @@ import pydotplus
 import requests
 import yaml
 
+
+
 def plot_graph(G, filename="graph.svg"):
     stream = io.StringIO()       
 
@@ -496,12 +498,9 @@ def build_time_references(G, now_isot):
     # alternatively, can grade shapes with measurable predicates
 
     now_term = rdflib.URIRef("http://odahub.io/ontology#Now")
-
-    time_triples = G.query('SELECT * WHERE {?time a oda:TimeInstant; oda:isot ?isot}')
-
+    
     for t in G.triples((None, None, rdflib.URIRef("http://odahub.io/ontology#TimeInstant"))):
-        #print(t)
-        if t == now_term:
+        if t[0] == now_term:
             continue
 
         try:
@@ -552,7 +551,7 @@ def trace_graph(W1, W2, G, trace):
         
     return traces
 
-term_distances = yaml.load(open("term-distance.yaml"))
+term_distances = yaml.load(open(Path(os.getenv("HOME")) / "term-distance.yaml"))
 
 def term_distance(term: rdflib.URIRef, G: rdflib.Graph) -> float:
     # since even triangle relation is not guaranteed, may need more complex than sum
@@ -592,7 +591,7 @@ def develop_rank_relations(W1, W2, G,
 
     #TODO: draw links
 
-    distance_predicate_uri = rdflib.URIRef('http://odahub.io/ontology#distance')
+    flow_predicate_uri = rdflib.URIRef('http://odahub.io/ontology#flow')
 
     total_distance = 1e100 # large resistor
     for trace in traces:
@@ -608,8 +607,10 @@ def develop_rank_relations(W1, W2, G,
 
             if add_distance_predicates:
                 if i>0 and i<len(trace)-1:
-                    if len(list(iG.triples((None, rdflib.URIRef(str(term).replace('_inverse', '')), None)))) > 0:
-                        iG.add((trace[i-1], distance_predicate_uri, trace[i+1]))                                    
+                    deinv_term = rdflib.URIRef(str(term).replace('_inverse', ''))
+                    if len(list(iG.triples((None, deinv_term, None)))) > 0:
+                        iG.add((trace[i-1], flow_predicate_uri, trace[i+1]))
+                        #iG.add((deinv_term, rdflib.URIRef('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), distance_predicate_uri))
 
         if explain:
             print(f"\033[33mtrace distance: {trace_distance}\033[0m\n")
@@ -628,8 +629,8 @@ def develop_rank_relations(W1, W2, G,
 
     if leave_only_distance:
         for s, p, o in iG:
-            if len(list(iG.triples((s, distance_predicate_uri, o)))) > 0 or len(list(iG.triples((o, distance_predicate_uri, s)))):
-                if p != distance_predicate_uri:
+            if len(list(iG.triples((s, flow_predicate_uri, o)))) > 0 or len(list(iG.triples((o, flow_predicate_uri, s)))):
+                if p != flow_predicate_uri:
                     nG.add((s, p, o))
 
         iG = nG
@@ -644,7 +645,13 @@ def develop_rank_relations(W1, W2, G,
 def push(obj):
     graph = _graph("HEAD", [])
 
+    # TODO: learn inputs here!
+    # TODO: push and search  for CC workflows
+
     g = extract_aq_subgraph(graph)
+
+    workflow = get_project_uri()
+    learn_repo_workflow(workflow, g)
 
     if obj.upstream.startswith("file://"):
         fn = obj.upstream.replace("file://", "")
@@ -688,6 +695,10 @@ def node_distance(W1, W2, context):
 
     # use source name distance
     # use source class. find in simbad
+
+    # TODO: give suggestions for calls within workflow
+    # TODO: push CC, integral transient
+    # TODO: not just MM, project domain
 
     return 1
 
@@ -738,6 +749,7 @@ def learn_repo_workflow(wfl, G):
         except FileNotFoundError:
             raise NotImplementedError
 
+
     nbsig = NotebookAdapter(notebook).extract_parameters()
 
     print(nbsig)
@@ -749,6 +761,38 @@ def learn_repo_workflow(wfl, G):
                 oda:has_input_{k} a oda:input_{k};
                                   oda:input_type <{v['owl_type']}> .
             '''
+
+        def normalize_to_term(value):
+            return re.sub("[^a-zA-Z0-8\.]", "", value)
+
+
+
+        # learn about new odahub entity?
+        if 'odahub.io' in v['owl_type']:
+            term = rdflib.URIRef('http://odahub.io/ontology/values#'+normalize_to_term(v['value']))
+
+            print(term)
+
+            r += f'''
+                {term.n3()} a <{v['owl_type']}>;
+                                                                                   rdfs:label "{v['value']}" .
+            '''
+
+            # TODO: expand graph (could be done generally)
+
+            r0 = odakb.sparql.construct(f'{term.n3()} ?y ?z . ?z ?a ?b', jsonld=False)
+            # r1 = odakb.sparql.construct(f'{term.n3()} ?y ?z . ?z ?a ?b . ?b ?w ?e', jsonld=False)
+            iG = rdflib.Graph()
+            iG.parse(data=r0, format='turtle')
+            # iG.parse(data=r1, format='turtle')
+
+            for s, p, o in iG:
+                r += f'''
+                    {s.n3()} {p.n3()} {o.n3()} .
+                '''
+            # r1 = odakb.sparql.construct(f'?x a <{input_type}>; ?y ?z .', jsonld=False)
+
+
 
         print(r)
          
@@ -762,10 +806,10 @@ def learn_repo_workflow(wfl, G):
 @click.option('--plot-distance', is_flag=True, default=False)
 @click.option('--plot-only-distance', is_flag=True, default=False)
 @click.option('--learn-inputs', is_flag=True, default=False)
-@click.option('--max-entries', default=10, type=float)
+@click.option('--max-options', default=10, type=float)
 @click.option('--filter-input-value', default=None, type=str)
 @click.pass_obj
-def suggest(obj, explain, ignore_now, plot, plot_distance, plot_only_distance, learn_inputs, max_entries, filter_input_value):
+def suggest(obj, explain, ignore_now, plot, plot_distance, plot_only_distance, learn_inputs, max_options, filter_input_value):
     # this implements https://github.com/oda-hub/smartsky/issues/25
     # TODO: for better association and scoring see https://github.com/oda-hub/smartsky/issues/25
     
@@ -910,7 +954,7 @@ def suggest(obj, explain, ignore_now, plot, plot_distance, plot_only_distance, l
 
                 n_entries += 1
 
-                if n_entries >= max_entries:
+                if n_entries >= max_options:
                     break
             
         output.sortby = 'Distance'
