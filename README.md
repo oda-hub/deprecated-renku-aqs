@@ -45,11 +45,14 @@ Or default SPARQL endpoint:
 $ renku aqs kg push
 ```
 
-Find suggestions for your workflow here:
+## Find suggestions for your workflow
 
-```bash
 
-$ renku aqs kg suggest  --max-entries 100 --filter-input-value 421 --explain --ignore-now --plot```
+Ignoring "now" (i.e. not associating it to the focus node and hence using it in computing distances):
+
+
+```
+$ renku aqs kg suggest  --max-entries 100 --filter-input-value 421 --explain --ignore-now --plot
 
 traced:
     oda:Focus                                             1.00000  http://odahub.io/ontology#Focus
@@ -72,11 +75,14 @@ total distance: 3.428571428571429 http://odahub.io/ontology#AstroObjectMrk_421
 +-------------------------------------+----------------------------------------------+--------------------+
 ```
 
-Not ignoring now (i.e. associating it to the focus node and hence using it in computing distances):
+![image](https://user-images.githubusercontent.com/3909535/141481430-f487319b-aca1-4ea2-b79a-a41923e5c530.png)
+
+
+
 
 ```bash
 
-$ renku aqs kg suggest  --max-entries 100 --filter-input-value 421 --explain --ignore-now --plot```
+$ renku aqs kg suggest  --max-entries 100 --filter-input-value 421 --plot```
 
 +-------------------------------------+----------------------------------------------+--------------------+
 |               Workflow              |                    Inputs                    |      Distance      |
@@ -86,5 +92,7 @@ $ renku aqs kg suggest  --max-entries 100 --filter-input-value 421 --explain --i
 | http://github.com/oda-hub/oda-sdss/ |     http://odahub.io/ontology#GRB210421C     | 2.431026469780614  |
 
 ```
+![image](https://user-images.githubusercontent.com/3909535/141480299-6d50853a-f1e9-47ee-8134-aa9fb512cb23.png)
 
-Now how `Mrk 421` now less favorable. It is because GRBs are recent, and relate to current moment.
+
+Notice how `Mrk 421` now less favorable. It is because GRBs are recent, and relate to current moment.
