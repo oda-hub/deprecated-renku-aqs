@@ -1,0 +1,26 @@
+.*Focus.*:
+    node_label: darkgreen
+    bgcolor: lightgreen
+
+.*/Plan.*:
+    node_label: blue
+    bgcolor: lightblue
+    pos: false
+
+
+.*_inverse:
+    arrow: lightgrey
+    pos: false
+
+.*distance:
+    arrow: cyan
+    bgcolor: white
+    node_color: lightgrey
+    pos: false
+
+.*:
+    arrow: red
+    bgcolor: white
+    node_color: lightgrey
+    pos: false
+
