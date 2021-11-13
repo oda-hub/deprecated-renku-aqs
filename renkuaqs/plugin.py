@@ -571,6 +571,8 @@ def develop_rank_relations(W1, W2, G,
                            ) -> Tuple[float, rdflib.Graph]:
     # make reverse relations
     # like resistance. or lightning
+    # loopy diagram strcuture?
+    # node neigh as of
 
     iG = rdflib.Graph()
     iG.parse(data=G.serialize(format='n3'), format="n3")
