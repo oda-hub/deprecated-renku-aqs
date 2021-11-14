@@ -106,7 +106,10 @@ TODO:
 * MM INTEGRAL wfl
 * mm events, grs
 * qla
+
 * mmoda requests
+* astroquery in github (or other public locations), plenty of [options](https://github.com/search?q=astroquery+in%3Afile+extension%3Aipynb), let's leverage our committment  to astroquery, [see also](harvesting-public-sources.md)
+* other astroquery in astroquery
 
 
 ## Using IVOA Astro Object ontology
@@ -114,3 +117,23 @@ TODO:
 This example shows how object ontology connects sources which are related. Source names and workflows collected from cross-calibration test collection [ref](...).
 
 ![image](https://user-images.githubusercontent.com/3909535/141535619-e48808e6-2154-456e-962b-1f341ca574d9.png)
+
+in cc-v0332
+
+```bash
+$ renku aqs kg suggest --filter-input-values '^(?!.*GRB20).*$' --max-options 1500 --learn-inputs --explain  --ignore-now
+...
+| http://gitlab.astro.unige.ch/integral/cc-workflows/cc-v0332.git |     http://odahub.io/ontology#GRB210101A     | 12.68031496062992 |
+| http://gitlab.astro.unige.ch/integral/cc-workflows/cc-v0332.git |     http://odahub.io/ontology#GRB080102A     | 12.68031496062992 |
+| http://gitlab.astro.unige.ch/integral/cc-workflows/cc-v0332.git |     http://odahub.io/ontology#GRB080101A     | 12.68031496062992 |
+| http://gitlab.astro.unige.ch/integral/cc-workflows/cc-v0332.git | http://odahub.io/ontology#AstroObjectMrk_421 | 12.68031496062992 |
+| http://gitlab.astro.unige.ch/integral/cc-workflows/cc-v0332.git |    http://odahub.io/ontology/values#HerX1    |  7.38715063802749 |
+| http://gitlab.astro.unige.ch/integral/cc-workflows/cc-v0332.git |    http://odahub.io/ontology/values#CygX1    | 5.013123617596461 |
+| http://gitlab.astro.unige.ch/integral/cc-workflows/cc-v0332.git | http://odahub.io/ontology/values#EXO0331530  | 4.421476510067114 |
++-----------------------------------------------------------------+----------------------------------------------+-------------------+
+
+
+```
+
+Cyg X-1 is suggested up since it's also an HXMB. Still better than Mrk 421 which is an AGN.
+

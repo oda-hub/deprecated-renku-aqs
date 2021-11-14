@@ -1,8 +1,18 @@
-http://odahub.io/ontology#relatedTo: 0
+http://odahub.io/ontology#relatedTo: 0 # trivial distances short.
+http://odahub.io/ontology#input_type: 0
+http://odahub.io/ontology#has_input_binding: 0
 
-http://odahub.io/ontology#event_time: 0.01
-http://odahub.io/ontology#AstrophysicalObject: 0
+http://odahub.io/ontology#event_time: 0
+http://odahub.io/ontology#AstrophysicalObject: 20 # just a relation through having a common object
+http://www.ivoa.net/rdf/object-type#hmxb: 5
+http://www.ivoa.net/rdf/object-type#lmxb: 5
+http://www.ivoa.net/rdf/object-type#xb: 10 # more general
+http://www.w3.org/2000/01/rdf-schema#Class: 10000 # very general
+
+http://odahub.io/ontology#has_input_source_name: 0.2
+http://odahub.io/ontology#has_input_source_name_inverse: 0.2
 
 http://www.w3.org/1999/02/22-rdf-syntax-ns#type: 0
 http://www.w3.org/1999/02/22-rdf-syntax-ns#type_inverse: 0
+
 

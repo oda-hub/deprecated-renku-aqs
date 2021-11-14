@@ -764,20 +764,24 @@ def learn_repo_workflow(wfl, G):
                                   oda:input_type <{v['owl_type']}> .
             '''
 
-        def normalize_to_term(value):
-            return re.sub("[^a-zA-Z0-8\.]", "", value)
-
 
 
         # learn about new odahub entity?
         if 'odahub.io' in v['owl_type']:
+            def normalize_to_term(value):
+                return re.sub("[^a-zA-Z0-8\.]", "", value)
+
             term = rdflib.URIRef('http://odahub.io/ontology/values#'+normalize_to_term(v['value']))
+
 
             print(term)
 
             r += f'''
                 {term.n3()} a <{v['owl_type']}>;
-                                                                                   rdfs:label "{v['value']}" .
+                            rdfs:label "{v['value']}" .
+
+                oda:has_input_{k} oda:input_{k} {term.n3()} .
+
             '''
 
             # TODO: expand graph (could be done generally)
@@ -809,9 +813,9 @@ def learn_repo_workflow(wfl, G):
 @click.option('--plot-only-distance', is_flag=True, default=False)
 @click.option('--learn-inputs', is_flag=True, default=False)
 @click.option('--max-options', default=10, type=float)
-@click.option('--filter-input-value', default=None, type=str)
+@click.option('--filter-input-values', default=None, type=str)
 @click.pass_obj
-def suggest(obj, explain, ignore_now, plot, plot_distance, plot_only_distance, learn_inputs, max_options, filter_input_value):
+def suggest(obj, explain, ignore_now, plot, plot_distance, plot_only_distance, learn_inputs, max_options, filter_input_values):
     # this implements https://github.com/oda-hub/smartsky/issues/25
     # TODO: for better association and scoring see https://github.com/oda-hub/smartsky/issues/25
     
@@ -914,8 +918,8 @@ def suggest(obj, explain, ignore_now, plot, plot_distance, plot_only_distance, l
                 # if "Mrk" not in str(input_value): continue
                 #if "GRB200623A" not in str(input_value): continue
 
-                if filter_input_value is not None:
-                    if not re.search(filter_input_value, input_value):
+                if filter_input_values is not None:
+                    if not re.search(filter_input_values, input_value):
                         continue
                 
                 tiG = rdflib.Graph()

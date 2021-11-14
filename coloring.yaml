@@ -12,7 +12,7 @@
     arrow: lightgrey
     pos: false
 
-.*distance:
+.*flow:
     arrow: cyan
     bgcolor: white
     node_color: lightgrey
