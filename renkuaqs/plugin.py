@@ -721,13 +721,13 @@ def rule_infer_inputs(G):
             '''
 
         # TODO: this should be determined from inspecting notebook for parameters
-        r += f'''
-                <{wfl}> a oda:Workflow;
-                        oda:has_input_binding oda:has_input_source_name .
+        # r += f'''
+        #         <{wfl}> a oda:Workflow;
+        #                 oda:has_input_binding oda:has_input_source_name .
                         
-                oda:has_input_source_name a oda:input_binding_predicate;
-                                          oda:input_type oda:AstrophysicalObject .
-            '''
+        #         oda:has_input_source_name a oda:input_binding_predicate;
+        #                                   oda:input_type oda:AstrophysicalObject .
+        #     '''
 
         # TODO: deduce more generally 
         r += f'''
