@@ -568,7 +568,7 @@ def term_distance(term: rdflib.URIRef, G: rdflib.Graph) -> float:
 
 def develop_rank_relations(W1, W2, G, 
                            mode='resistor', 
-                           add_distance_predicates=False, 
+                           add_distance_predicates=True, 
                            explain=False,
                            leave_only_distance=False
                            ) -> Tuple[float, rdflib.Graph]:
@@ -933,7 +933,7 @@ def plan_to_string(G: rdflib.Graph, plan: rdflib.URIRef) -> str:
 @click.option('--ignore-now', is_flag=True, default=False)
 @click.option('--explain', is_flag=True, default=False)
 @click.option('--plot/--no-plot', is_flag=True, default=False)
-@click.option('--plot-distance', is_flag=True, default=True)
+@click.option('--plot-distance/--no-plot-distance', is_flag=True, default=True)
 @click.option('--plot-only-distance', is_flag=True, default=False)
 @click.option('--learn-inputs/--no-learn-inputs', is_flag=True, default=True)
 @click.option('--max-options', default=500, type=float)

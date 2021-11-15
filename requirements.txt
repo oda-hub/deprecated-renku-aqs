@@ -1,2 +1,4 @@
 -e git+https://github.com/oda-hub/astroquery.git#egg=astroquery
 -e git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters
+
+rdf2dot>=0.1.0
