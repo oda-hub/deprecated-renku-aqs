@@ -109,7 +109,6 @@ TODO:
 
 * mmoda requests
 * astroquery in github (or other public locations), plenty of [options](https://github.com/search?q=astroquery+in%3Afile+extension%3Aipynb), let's leverage our committment  to astroquery, [see also](harvesting-public-sources.md)
-* other astroquery in astroquery
 
 
 ## Using IVOA Astro Object ontology
@@ -131,9 +130,8 @@ $ renku aqs kg suggest --filter-input-values '^(?!.*GRB20).*$' --max-options 150
 | http://gitlab.astro.unige.ch/integral/cc-workflows/cc-v0332.git |    http://odahub.io/ontology/values#CygX1    | 5.013123617596461 |
 | http://gitlab.astro.unige.ch/integral/cc-workflows/cc-v0332.git | http://odahub.io/ontology/values#EXO0331530  | 4.421476510067114 |
 +-----------------------------------------------------------------+----------------------------------------------+-------------------+
-
-
 ```
+
 
 * EXO0331530 which is already used in the workflow - just a cross-check
 * Cyg X-1 is the best new suggestion, since it's also an HXMB. 
