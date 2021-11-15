@@ -25,6 +25,7 @@
 * I download the data. I want to find the best tools to reduce them: extract basic products, perhaps some more or less superficial conclusions
 * I define my context, and get suggested workflows. Run or adapt them
 
+*Note*: this can be used, for example, in INTEGRAL quick-look activities, with workflows built for [cross-calibration](https://indico.ict.inaf.it/event/1001/contributions/10148/)
 
 ## New events published
 
@@ -36,6 +37,8 @@
 * I have produced new scientific software versio
 * I want to check it on data where it was previously relevant
 * I get suggestions, run them (automatically), compare results with the previous ones
+
+*Note*: this **has been** used in INTEGRAL [cross-calibration activities](https://indico.ict.inaf.it/event/1001/contributions/10148/)
 
 
 ## Ensuring reproducibility by workflow mutation
