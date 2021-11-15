@@ -135,5 +135,8 @@ $ renku aqs kg suggest --filter-input-values '^(?!.*GRB20).*$' --max-options 150
 
 ```
 
-Cyg X-1 is suggested up since it's also an HXMB. Still better than Mrk 421 which is an AGN.
+* EXO0331530 which is already used in the workflow - just a cross-check
+* Cyg X-1 is the best new suggestion, since it's also an HXMB. 
+* Her X-1 is an LXMB, so it shares a mid-level class (so, an additional long link) with Cyg X-1. 
+* Still better than Mrk 421 which is an AGN.
 
