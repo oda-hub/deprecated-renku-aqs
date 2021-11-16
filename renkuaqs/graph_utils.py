@@ -60,9 +60,11 @@ def customize_node(node: typing.Union[pydotplus.Node],
                 node.set_style(node_configuration['style'])
                 node.set_shape(node_configuration['shape'])
                 node.set_color(node_configuration['color'])
-                # remove top row for the cells Action and CommandInput
-                if type_label_values_dict[id_node] == 'CommandInput' or \
-                        type_label_values_dict[id_node] == 'Action':
+                # remove top row for some cells were this is not wanted
+                display_top_row = bool(node_configuration.get('display_type_title',
+                                                              graph_configuration['Default']['display_type_title'])
+                                       )
+                if not display_top_row:
                     table_html.remove(tr_list[0])
                 # remove not needed long id information
                 table_html.remove(tr_list[1])

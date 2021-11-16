@@ -4,6 +4,7 @@ Default:
     style: filled
     border: 0
     cellborder: 0
+    display_type_title: True
 
 AstroqueryModule:
     shape: ellipse
@@ -56,11 +57,13 @@ CommandInput:
     shape: box
     color: '#DBA3BC'
     style: filled
+    display_type_title: False
 
 Action:
     shape: diamond
     color: '#D5C15D'
     style: filled
+    display_type_title: False
 
 Angle:
     shape: box
