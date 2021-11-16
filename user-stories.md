@@ -17,6 +17,7 @@
 * I get suggestions for new relevant variations of my workflow runs. For example, by changing input parameters: I worked with Her X-1, but I could also apply it to V 0332+52. Both are HXMB so this is a likely suggestion.
 * Runs are suggested to me. They may be also executed automatically. I inspect results and expand impact of my workflow
 
+*See examples* of this sort of suggestions based on KG, supported by community-provided ontologies: https://github.com/oda-hub/renku-aqs/tree/upgraph
 
 ## Helping learn how to build a workflow
 
