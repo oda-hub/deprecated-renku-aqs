@@ -23,25 +23,8 @@ def customize_edge(edge: typing.Union[pydotplus.Edge]):
         edge.set_label('< ' + etree.tostring(edge_html, encoding='unicode') + ' >')
 
 
-def get_node_type(node: typing.Union[pydotplus.Node],
-                  type_label_values_dict=None):
-    id_node = 'Default'
-    if 'label' in node.obj_dict['attributes']:
-        # parse the whole node table into a lxml object
-        table_html = etree.fromstring(node.get_label()[1:-1])
-        tr_list = table_html.findall('tr')
-        td_list_first_row = tr_list[0].findall('td')
-        if td_list_first_row is not None:
-            b_element_title = td_list_first_row[0].findall('B')
-            if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
-                id_node = type_label_values_dict[b_element_title[0].text]
-    return id_node
-
-
 def customize_node(node: typing.Union[pydotplus.Node],
                    graph_configuration,
-                   node_type,
-                   node_configuration=None,
                    type_label_values_dict=None,
                    ):
     if 'label' in node.obj_dict['attributes']:
@@ -65,8 +48,14 @@ def customize_node(node: typing.Union[pydotplus.Node],
                         b_element_title[0].text != 'CommandOutput':
                     b_element_title[0].text = b_element_title[0].text[13:]
                 # apply styles (shapes, colors etc etc)
-                table_html.attrib['cellborder'] = str(node_configuration.get('cellborder', 0))
-                table_html.attrib['border'] = str(node_configuration.get('border', 0))
+                node_configuration = graph_configuration.get(type_label_values_dict[id_node],
+                                                             graph_configuration['Default'])
+                table_html.attrib['cellborder'] = str(node_configuration.get('cellborder',
+                                                                             graph_configuration['Default']['cellborder'])
+                                                      )
+                table_html.attrib['border'] = str(node_configuration.get('border',
+                                                                         graph_configuration['Default']['cellborder'])
+                                                  )
                 # color and shape change
                 node.set_style(node_configuration['style'])
                 node.set_shape(node_configuration['shape'])

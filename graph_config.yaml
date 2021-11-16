@@ -2,6 +2,8 @@ Default:
     shape: box
     color: '#FFFFFF'
     style: filled
+    border: 0
+    cellborder: 0
 
 AstroqueryModule:
     shape: ellipse
@@ -15,12 +17,12 @@ AstrophysicalObject:
 
 AstrophysicalRegion:
     shape: ellipse
-    color: '#00CC00'
+    color: '#6262bf'
     style: filled
 
 AstrophysicalImage:
     shape: ellipse
-    color: '#6262bf'
+    color: '#6262bg'
     style: filled
 
 CommandParameter:

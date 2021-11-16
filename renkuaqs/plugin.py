@@ -496,15 +496,8 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
         graph_utils.customize_edge(edge)
 
     for node in pydot_graph.get_nodes():
-        node_type = graph_utils.get_node_type(node, type_label_values_dict=type_label_values_dict)
-        # get configuration
-        print("node_type: ", node_type)
-
-        print("node_configuration: ", graph_configuration.get(node_type, None))
         graph_utils.customize_node(node,
                                    graph_configuration,
-                                   node_type,
-                                   node_configuration=graph_configuration.get(node_type, graph_configuration['Default']),
                                    type_label_values_dict=type_label_values_dict
                                    )
 
