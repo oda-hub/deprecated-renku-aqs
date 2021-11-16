@@ -60,4 +60,8 @@
 * I get suggestions for workflows reproducing the result, and determine if the published results are reliable
 
 
+## Suggest astroquery and/or ODA requests
 
+* I am building a workflow in renku. I am using `astroquery` to fetch SDSS data of Cyg X-1
+* I may want to incorporate other data to enhance my analysis. I ask for suggestions of which `astroquery` calls I should use.
+* Renku suggests me what else I might want to do with `astroquery` relevant for current context: I should request INTEGRAL data.
