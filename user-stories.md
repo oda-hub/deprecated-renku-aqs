@@ -1,8 +1,14 @@
 ## Suggesting projects for astro users of Renku
 
+
 * I work in some particular domain, e.g. HMXB. I want to start with some example workflow on renku
 * I type in a search field HXMB, also see a tag cloud supporting input
 * I find a useful workflows analysing NuSTAR data for Cyg X-1 (which is an HMXB - massive star and a black hole orbiting each other) and use it as an example
+
+
+![](https://user-images.githubusercontent.com/3909535/142020701-65523b70-2a9d-42c2-b645-58d23b394cfe.png)
+
+
 
 ## Suggesting new workflow runs
 
