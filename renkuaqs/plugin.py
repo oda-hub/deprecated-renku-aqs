@@ -38,8 +38,11 @@ from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
 
 import time
+import yaml
 
 import renkuaqs.graph_utils as graph_utils
+
+graph_configuration = yaml.load(open("../graph_config.yaml"), Loader=yaml.SafeLoader)
 
 
 class AQS(object):
@@ -126,6 +129,11 @@ def _run_id(activity_id):
 
 
 def _load_provenance_graph(client):
+    # One detail I forgot to mention,
+    # `renku log` is now more like `git log` in that is shows a history of past commands/executions.
+    # To get the JSON-LD, we have a new command `renku graph export`.
+    # That command can export the whole metadata of the repository with `renku graph export --full`
+    # or for a single commit using `renku graph export --revision <commit>`
     if not client.provenance_graph_path.exists():
         raise RenkuException(
             """Provenance graph has not been generated!
@@ -488,7 +496,17 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
         graph_utils.customize_edge(edge)
 
     for node in pydot_graph.get_nodes():
-        graph_utils.customize_node(node, type_label_values_dict=type_label_values_dict)
+        node_type = graph_utils.get_node_type(node, type_label_values_dict=type_label_values_dict)
+        # get configuration
+        print("node_type: ", node_type)
+
+        print("node_configuration: ", graph_configuration.get(node_type, None))
+        graph_utils.customize_node(node,
+                                   graph_configuration,
+                                   node_type,
+                                   node_configuration=graph_configuration.get(node_type, graph_configuration['Default']),
+                                   type_label_values_dict=type_label_values_dict
+                                   )
 
     # final output write over the png image
     pydot_graph.write_png(filename)

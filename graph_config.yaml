@@ -1,0 +1,86 @@
+Default:
+    shape: box
+    color: '#FFFFFF'
+    style: filled
+
+AstroqueryModule:
+    shape: ellipse
+    color: '#00CC00'
+    style: filled
+
+AstrophysicalObject:
+    shape: ellipse
+    color: '#6262be'
+    style: filled
+
+AstrophysicalRegion:
+    shape: ellipse
+    color: '#00CC00'
+    style: filled
+
+AstrophysicalImage:
+    shape: ellipse
+    color: '#6262bf'
+    style: filled
+
+CommandParameter:
+    shape: box
+    color: '#6262be'
+    style: filled
+
+CommandOutput:
+    shape: box
+    color: '#FFFF00'
+    style: filled
+
+CommandOutputNotebook:
+    shape: box
+    color: '#DBA3BC'
+    style: filled
+
+CommandOutputImage:
+    shape: box
+    color: '#FFFFFF'
+    style: filled
+    border: 1
+
+CommandOutputFitsFile:
+    shape: box
+    color: '#FFFFFF'
+    style: filled
+    border: 1
+
+CommandInput:
+    shape: box
+    color: '#DBA3BC'
+    style: filled
+
+Action:
+    shape: diamond
+    color: '#D5C15D'
+    style: filled
+
+Angle:
+    shape: box
+    color: '#1B81FB'
+    style: filled
+
+SkyCoordinates:
+    shape: box
+    color: '#1B81FB'
+    style: filled
+
+Coordinates:
+    shape: box
+    color: '#1B81FB'
+    style: filled
+
+Position:
+    shape: box
+    color: '#1B81FB'
+    style: filled
+
+Pixels:
+    shape: box
+    color: '#1B81FB'
+    style: filled

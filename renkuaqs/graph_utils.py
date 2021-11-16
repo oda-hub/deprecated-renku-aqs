@@ -23,8 +23,26 @@ def customize_edge(edge: typing.Union[pydotplus.Edge]):
         edge.set_label('< ' + etree.tostring(edge_html, encoding='unicode') + ' >')
 
 
+def get_node_type(node: typing.Union[pydotplus.Node],
+                  type_label_values_dict=None):
+    id_node = 'Default'
+    if 'label' in node.obj_dict['attributes']:
+        # parse the whole node table into a lxml object
+        table_html = etree.fromstring(node.get_label()[1:-1])
+        tr_list = table_html.findall('tr')
+        td_list_first_row = tr_list[0].findall('td')
+        if td_list_first_row is not None:
+            b_element_title = td_list_first_row[0].findall('B')
+            if b_element_title is not None and b_element_title[0].text in type_label_values_dict:
+                id_node = type_label_values_dict[b_element_title[0].text]
+    return id_node
+
+
 def customize_node(node: typing.Union[pydotplus.Node],
-                   type_label_values_dict=None
+                   graph_configuration,
+                   node_type,
+                   node_configuration=None,
+                   type_label_values_dict=None,
                    ):
     if 'label' in node.obj_dict['attributes']:
         # parse the whole node table into a lxml object
@@ -47,45 +65,12 @@ def customize_node(node: typing.Union[pydotplus.Node],
                         b_element_title[0].text != 'CommandOutput':
                     b_element_title[0].text = b_element_title[0].text[13:]
                 # apply styles (shapes, colors etc etc)
-                table_html.attrib['border'] = '0'
-                table_html.attrib['cellborder'] = '0'
-                node.set_style("filled")
-                node.set_shape("box")
+                table_html.attrib['cellborder'] = str(node_configuration.get('cellborder', 0))
+                table_html.attrib['border'] = str(node_configuration.get('border', 0))
                 # color and shape change
-                #1B81FB
-                if type_label_values_dict[id_node] == 'Action':
-                    node.set_shape("diamond")
-                    node.set_color("#D5C15D")
-                elif type_label_values_dict[id_node] == 'CommandOutput':
-                    node.set_color("#FFFF00")
-                elif type_label_values_dict[id_node] == 'CommandOutputImage' or \
-                        type_label_values_dict[id_node] == 'CommandOutputFitsFile':
-                    table_html.attrib['border'] = '1'
-                    node.set_color("#FFFFFF")
-                elif type_label_values_dict[id_node] == 'CommandOutputNotebook':
-                    node.set_color("#DBA3BC")
-                elif type_label_values_dict[id_node] == 'CommandInput':
-                    node.set_color("#DBA3BC")
-                elif type_label_values_dict[id_node] == 'CommandParameter':
-                    node.set_color("#6262be")
-                elif type_label_values_dict[id_node] == 'AstroqueryModule':
-                    node.set_shape("ellipse")
-                    node.set_color("#00CC00")
-                elif type_label_values_dict[id_node] == 'AstrophysicalObject':
-                    node.set_shape("ellipse")
-                    node.set_color("#6262be")
-                elif type_label_values_dict[id_node] == 'AstrophysicalRegion':
-                    node.set_shape("ellipse")
-                    node.set_color("#6262bf")
-                elif type_label_values_dict[id_node] == 'AstrophysicalImage':
-                    node.set_shape("ellipse")
-                    node.set_color("#6262bg")
-                elif type_label_values_dict[id_node] == 'Angle' or \
-                        type_label_values_dict[id_node] == 'SkyCoordinates' or \
-                        type_label_values_dict[id_node] == 'Coordinates' or \
-                        type_label_values_dict[id_node] == 'Position' or \
-                        type_label_values_dict[id_node] == 'Pixels':
-                    node.set_color("#1B81FB")
+                node.set_style(node_configuration['style'])
+                node.set_shape(node_configuration['shape'])
+                node.set_color(node_configuration['color'])
                 # remove top row for the cells Action and CommandInput
                 if type_label_values_dict[id_node] == 'CommandInput' or \
                         type_label_values_dict[id_node] == 'Action':
@@ -405,7 +390,7 @@ def analyze_types(g, type_label_values_dict):
         o_qname = g.compute_qname(o)
         s_label = label(s, g)
         type_label_values_dict[s_label] = o_qname[2]
-    print("type_label_values_dict: ", type_label_values_dict)
+
 
 def analyze_outputs(g, out_default_value_dict):
     # analyze outputs
