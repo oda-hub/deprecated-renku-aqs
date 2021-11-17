@@ -50,7 +50,7 @@ from deepdiff import DeepDiff
 from aqsconverters.io import AQS_DIR, COMMON_DIR
 
 import io
-from rdflib.tools import rdf2dot
+from rdf2dot import rdf2dot
 import pydotplus
 import requests
 import yaml
@@ -499,7 +499,11 @@ def build_time_references(G):
 
     now_term = rdflib.URIRef("http://odahub.io/ontology#Now")
 
-    now_isot = list(list(G.query('SELECT ?now_isot WHERE { oda:Now oda:isot ?now_isot }'))[0])[0]
+    try:
+        now_isot = list(list(G.query('SELECT ?now_isot WHERE { oda:Now oda:isot ?now_isot }'))[0])[0]
+    except IndexError:
+        # TODO: warn
+        return
     
     for t in G.triples((None, None, rdflib.URIRef("http://odahub.io/ontology#TimeInstant"))):
         if t[0] == now_term:
@@ -761,7 +765,8 @@ def learn_repo_workflow(wfl, G):
 
     for k, v in nbsig.items():
         r = f'''
-                <{wfl}> oda:has_input_binding oda:has_input_{k} .
+                <{wfl}> a oda:Workflow; 
+                        oda:has_input_binding oda:has_input_{k} .
                         
                 oda:has_input_{k} a oda:input_{k};
                                   oda:input_type <{v['owl_type']}> .
@@ -772,7 +777,7 @@ def learn_repo_workflow(wfl, G):
         # learn about new odahub entity?
         if 'odahub.io' in v['owl_type']:
             def normalize_to_term(value):
-                return re.sub("[^a-zA-Z0-8\.]", "", value)
+                return re.sub("[^a-zA-Z0-9\.]", "", value)
 
             term = rdflib.URIRef('http://odahub.io/ontology/values#'+normalize_to_term(v['value']))
 
@@ -807,14 +812,15 @@ def learn_repo_workflow(wfl, G):
          
         G.update(f'INSERT DATA {{ {r} }}')
 
-
-def annotate_focus(G, focus, workflow, ignore_now, learn_inputs) -> rdflib.URIRef:
-    G.update(f'''
-    INSERT DATA {{
-            <{focus}> oda:relatedTo <{workflow}> .
-    }}''')
+def create_focus(G, focus, workflow, ignore_now, learn_inputs) -> rdflib.URIRef:
+    # default focus from time and current workflow
     
-    # perhaps detect notebook in oda.yaml
+    G.update(f'''
+        INSERT DATA {{
+                <{focus}> oda:relatedTo <{workflow}> .
+        }}''')
+
+    # TODO: perhaps detect notebook in oda.yaml
     if learn_inputs:
         learn_repo_workflow(workflow, G)
 
@@ -827,12 +833,42 @@ def annotate_focus(G, focus, workflow, ignore_now, learn_inputs) -> rdflib.URIRe
                     oda:Now oda:isot "{now_isot}";
                             a oda:TimeInstant .
             }}''')
+    
+    return focus
 
+def load_upstream_subgraph(root: rdflib.URIRef, G: rdflib.Graph, depth=None):
+    # TODO: use depth
 
+    r = odakb.sparql.construct(f'?x ?a <{root}>; ?y ?z .', jsonld=False)
+    r1 = odakb.sparql.construct(f'?x ?a <{root}>; ?y ?z . ?z ?b ?c', jsonld=False)
+    r2 = odakb.sparql.construct(f'<{root}> ?a ?x; ?y ?z . ?z ?b ?c', jsonld=False)
+    
+    G.parse(data=r, format='turtle')
+    G.parse(data=r1, format='turtle')
+    G.parse(data=r2, format='turtle')
+
+    
 def propose_plans(normal_local_graph, workflow, filter_input_values):
-    return propose_input_variation_plans(normal_local_graph, workflow, filter_input_values)
+    
+    if workflow is None:
+        # actually, it's repositories
+        workflows = [            
+            r
+            for r in odakb.sparql.select('?w a oda:Workflow')
+        ]
+    else:
+        workflows = [workflow]
+    
+    for workflow in workflows:
+        load_upstream_subgraph(workflow, normal_local_graph)
+
+    for workflow in workflows:
+        for w in propose_input_variation_plans(normal_local_graph, workflow, filter_input_values):
+            yield w
 
 def propose_input_variation_plans(normal_local_graph, workflow, filter_input_values):
+
+    print(normal_local_graph.serialize(format='turtle'))
 
     for input_binding_struct in normal_local_graph.query(f'''
                     SELECT * WHERE {{ 
@@ -843,10 +879,17 @@ def propose_input_variation_plans(normal_local_graph, workflow, filter_input_val
                         }}
                                 
                         ?input_binding_predicate oda:input_type ?input_type .
-                    }} LIMIT 5
+                    }} LIMIT 1000
                 '''):
+                ## TODO: here above limit??
 
         input_type = input_binding_struct["input_type"]
+
+        if str(input_type).startswith('http://www.w3.org/2001/XMLSchema'):
+            continue
+
+        print(f'\033[33minput binding: {input_binding_struct["input_binding_predicate"]} of type {input_binding_struct["input_type"]} \033[0m')
+
 
         r = odakb.sparql.construct(f'?x a <{input_type}>; ?y ?z .', jsonld=False)
         r1 = odakb.sparql.construct(f'?x a <{input_type}>; ?y ?z . ?z ?a ?b', jsonld=False)
@@ -899,7 +942,8 @@ def propose_input_variation_plans(normal_local_graph, workflow, filter_input_val
             tiG.update(f"""
                 INSERT DATA {{
                     <{W2}> a oda:Plan;
-                            <{input_binding_struct["input_binding_predicate"]}> <{input_value}> .
+                           oda:relatedTo <{workflow}>;
+                           <{input_binding_struct["input_binding_predicate"]}> <{input_value}> .
                 }}
             """)
 
@@ -967,11 +1011,21 @@ def suggest(obj,
     workflow = get_project_uri()
     click.echo(f"(current renku/gitlab project): {workflow}")
     
+    
+    focus_label = "http://odahub.io/ontology#Focus"
     if focus is None:
-        focus = "http://odahub.io/ontology#Focus"
-        annotate_focus(normal_local_graph, focus, workflow, ignore_now, learn_inputs)
+        focus = focus_label
+        create_focus(normal_local_graph, focus, workflow, ignore_now, learn_inputs)
     else:
-        click.echo(f'provided custom focus (overrides current workflow): {focus}')
+        normal_local_graph.update(f'''
+        INSERT DATA {{
+                <{focus}> a <{focus_label}> .
+        }}''')
+        focus = focus_label
+        
+        click.echo(f'provided custom focus (overrides the default one, which is constructed from current workflow and time): {focus}')
+
+    load_upstream_subgraph(focus, normal_local_graph)
 
     W1 = focus
     
@@ -988,8 +1042,10 @@ def suggest(obj,
     output.field_names = ["Workflow", "Inputs", "Distance"]        
 
     n_entries = 0
-
+    t0 = time.time()
+    
     for (W2, tiG) in propose_plans(normal_local_graph, workflow, filter_input_values):
+
         if not ignore_now:
             build_time_references(tiG)
 
@@ -1006,6 +1062,8 @@ def suggest(obj,
         output.add_row([workflow, plan_in_string, distance])
 
         n_entries += 1
+
+        print(f"\033[34mplans explored: {n_entries} in {time.time() - t0} s; {(time.time() - t0)/n_entries} per plan \033[0m")
 
         if n_entries >= max_options:
             break
@@ -1069,3 +1127,10 @@ def suggest(obj,
 # TODO: suggestions for requesting  astroq
 # TODO: search by domain
 # TODO: fuzzy searching
+
+# TODO: suggestions for papers!
+# TODO: suggest chain of following workflow link
+# TODO: distance might not be in one flavor/dimension
+
+# TODO: remove all str node
+# TODO: add astrroobjct to ivoa?

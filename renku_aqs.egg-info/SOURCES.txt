@@ -7,6 +7,7 @@ VERSION
 coloring.yaml
 concepts.md
 example.md
+harvesting-public-sources.md
 requirements.txt
 requirements.txt.gpg
 setup.py
@@ -14,6 +15,7 @@ setup.py.gpg
 subgraph.png
 term-distance.yaml
 test-output.txt
+user-stories.md
 .renku/aq/latest/8737263267256.jsonld
 .renku/aq/latest/8737263446155.jsonld
 data/default-cache/cache.db
