@@ -544,6 +544,10 @@ def trace_graph(W1, W2, G, trace):
     W1 = rdflib.URIRef(W1)
     W2 = rdflib.URIRef(W2)
 
+    if term_distances.get(str(W1), 0) > 1e4:
+        # too high resistance
+        return []
+
     if W1 in trace:
         return []
     
@@ -766,10 +770,9 @@ def learn_repo_workflow(wfl, G):
     for k, v in nbsig.items():
         r = f'''
                 <{wfl}> a oda:Workflow; 
-                        oda:has_input_binding oda:has_input_{k} .
+                        oda:has_input_binding oda:input_{k} .
                         
-                oda:has_input_{k} a oda:input_{k};
-                                  oda:input_type <{v['owl_type']}> .
+                oda:input_{k} oda:input_type <{v['owl_type']}> .
             '''
 
 
@@ -788,9 +791,10 @@ def learn_repo_workflow(wfl, G):
                 {term.n3()} a <{v['owl_type']}>;
                             rdfs:label "{v['value']}" .
 
-                oda:has_input_{k} oda:input_{k} {term.n3()} .
-
+                <{wfl}> oda:input_{k} {term.n3()} .
+            
             '''
+            #oda:has_input_{k} oda:input_{k} {term.n3()} . ?
 
             # TODO: expand graph (could be done generally)
 
@@ -898,6 +902,8 @@ def propose_input_variation_plans(normal_local_graph, workflow, filter_input_val
         iG.parse(data=r, format='turtle')
         iG.parse(data=r1, format='turtle')
 
+        # print("input data: \033[36m", iG.serialize(format='turtle'), "\033[0m")
+
         #print(list(iG.query('SELECT * WHERE { ?a ?b oda:TimeInstant }')))
 
         # return
@@ -930,7 +936,7 @@ def propose_input_variation_plans(normal_local_graph, workflow, filter_input_val
 
             # absorb details about inputs (one level link depth only for now)
             for t in list(iG.query(f'CONSTRUCT WHERE {{<{input_value}> ?p ?o . ?o ?a ?b}}')) + \
-                        list(iG.query(f'CONSTRUCT WHERE {{<{input_value}> ?p ?o .}}')):
+                     list(iG.query(f'CONSTRUCT WHERE {{<{input_value}> ?p ?o .}}')):
                 tiG.add(t)
                 
 
@@ -956,16 +962,19 @@ def plan_to_string(G: rdflib.Graph, plan: rdflib.URIRef) -> str:
 
     print("plan to string:", plan)
 
-    for r in G.query(f'''
-        SELECT ?input_predicate ?p ?input_value_str WHERE {{
+    inputs = {}
+
+    for input_predicate, p, input_value, input_value_str in G.query(f'''
+        SELECT ?input_predicate ?p ?input_value ?input_value_str WHERE {{
             {plan.n3()} ?input_predicate ?input_value .
             ?input_value ?p ?input_value_str .
         }}
     '''):
         # TODO: include floats, this should be done better
-        if str(r[1]) in ["http://www.w3.org/2000/01/rdf-schema#label", 'http://purl.org/dc/terms/title']:
-            stringified += str(r[0]).replace('http://odahub.io/ontology#has_input_', '') + " = "
-            stringified += str(r[2])
+        if str(p) in ["http://www.w3.org/2000/01/rdf-schema#label", 'http://purl.org/dc/terms/title']:
+            inputs[str(input_predicate).replace('http://odahub.io/ontology#input_', '')] = str(input_value_str)
+
+    stringified = ", ".join([f"{k} = {v}" for k, v in inputs.items()])
 
     print("plan to string returns:", stringified)
     
@@ -973,7 +982,7 @@ def plan_to_string(G: rdflib.Graph, plan: rdflib.URIRef) -> str:
 
             
 @kg.command()
-@click.option('--focus', default=None)
+@click.option('--extra-focus', default=None)
 @click.option('--ignore-now', is_flag=True, default=False)
 @click.option('--explain', is_flag=True, default=False)
 @click.option('--plot/--no-plot', is_flag=True, default=False)
@@ -984,7 +993,7 @@ def plan_to_string(G: rdflib.Graph, plan: rdflib.URIRef) -> str:
 @click.option('--filter-input-values', default=None, type=str, multiple=True)
 @click.pass_obj
 def suggest(obj, 
-            focus,
+            extra_focus,
             explain, 
             ignore_now, 
             plot, 
@@ -1012,19 +1021,16 @@ def suggest(obj,
     click.echo(f"(current renku/gitlab project): {workflow}")
     
     
-    focus_label = "http://odahub.io/ontology#Focus"
-    if focus is None:
-        focus = focus_label
-        create_focus(normal_local_graph, focus, workflow, ignore_now, learn_inputs)
-    else:
+    focus = "http://odahub.io/ontology#Focus"
+    create_focus(normal_local_graph, focus, workflow, ignore_now, learn_inputs)
+
+    if extra_focus is not None:
         normal_local_graph.update(f'''
         INSERT DATA {{
-                <{focus}> a <{focus_label}> .
+                <{focus}> oda:relatedTo <{extra_focus}> .
         }}''')
-        focus = focus_label
         
-        click.echo(f'provided custom focus (overrides the default one, which is constructed from current workflow and time): {focus}')
-
+        
     load_upstream_subgraph(focus, normal_local_graph)
 
     W1 = focus

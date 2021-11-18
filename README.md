@@ -138,3 +138,20 @@ $ renku aqs kg suggest --filter-input-values '^(?!.*GRB20).*$' --max-options 150
 * Her X-1 is an LXMB, so it shares a mid-level class (so, an additional long link) with Cyg X-1. 
 * Still better than Mrk 421 which is an AGN.
 
+
+It is possible to add specify interest in particular object class:
+
+```bash
+$ renku aqs kg suggest --filter-input-values -GRB2 --extra-focus http://www.ivoa.net/rdf/object-type#bl-lac
+...
+| http://renkulab.io/andrii.neronov/oda-benchmark.git |   source_name = Her X-1    | 3.2807881773399012 |
+| http://renkulab.io/andrii.neronov/oda-benchmark.git | source_name = EXO 0331+530 | 3.2807881773399012 |
+| http://renkulab.io/andrii.neronov/oda-benchmark.git |   source_name = Cyg X-1    | 3.2807881773399012 |
+| http://renkulab.io/andrii.neronov/oda-benchmark.git |  source_name = GRB080101A  | 3.057648152884949  |
+| http://renkulab.io/andrii.neronov/oda-benchmark.git |  source_name = GRB080102A  | 3.0576478882363274 |
+| http://renkulab.io/andrii.neronov/oda-benchmark.git |    source_name = 3C 279    |        2.25        |
+| http://renkulab.io/andrii.neronov/oda-benchmark.git |   source_name = Mrk 421    | 1.6517763713260378 |
++-----------------------------------------------------+----------------------------+--------------------+
+```
+
+Without extra focus, 3C 279 would be the best - in fact, it matches what was already used in this workflow. But with the focus - which is a BLLac, unlike 3C 279.
