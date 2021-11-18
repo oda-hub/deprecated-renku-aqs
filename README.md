@@ -153,5 +153,7 @@ $ renku aqs kg suggest --filter-input-values -GRB2 --extra-focus http://www.ivoa
 | http://renkulab.io/andrii.neronov/oda-benchmark.git |   source_name = Mrk 421    | 1.6517763713260378 |
 +-----------------------------------------------------+----------------------------+--------------------+
 ```
+![image](https://user-images.githubusercontent.com/3909535/142404255-48c35829-5f46-4a6b-8270-afcc1cf61faf.png)
+
 
 Without extra focus, 3C 279 would be the best - in fact, it matches what was already used in this workflow. But with the focus - which is a BLLac, unlike 3C 279.
