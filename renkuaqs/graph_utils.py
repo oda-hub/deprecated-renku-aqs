@@ -408,14 +408,18 @@ def analyze_outputs(g, out_default_value_dict):
                     g.add((o,
                            rdflib.RDF.type,
                            rdflib.URIRef("https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputFitsFile")))
-                else:
-                    if file_extension == 'ipynb':
-                        g.remove((o, rdflib.RDF.type, None))
-                        g.add((o,
-                               rdflib.RDF.type,
-                               rdflib.URIRef(
-                                   "https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputNotebook")))
-
+                if file_extension == 'ipynb':
+                    g.remove((o, rdflib.RDF.type, None))
+                    g.add((o,
+                           rdflib.RDF.type,
+                           rdflib.URIRef(
+                               "https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputNotebook")))
+                if file_extension == 'ecsv':
+                    g.remove((o, rdflib.RDF.type, None))
+                    g.add((o,
+                           rdflib.RDF.type,
+                           rdflib.URIRef(
+                               "https://swissdatasciencecenter.github.io/renku-ontology#CommandOutputEcsvFile")))
             out_default_value_dict[s_label].append(output_obj_list[0])
 
 
@@ -596,10 +600,7 @@ def process_query_region_info(g, run_node=None, module_node=None, action_node=No
                 g[radius_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
             if len(radius_node_title) == 1:
                 # define an astropy Angle object
-                radius_obj = Angle(radius_node_title[0].value)
-                radius_obj_default_value = str(radius_obj.arcmin) + " arcmin"
-                g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                       rdflib.Literal(radius_obj_default_value)))
+                process_angle_obj(g, radius_node, radius_node_title[0].value)
 
 
 def process_get_images_info(g, run_node=None, module_node=None, action_node=None):
@@ -654,10 +655,11 @@ def process_get_images_info(g, run_node=None, module_node=None, action_node=None
                 g[radius_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
             if len(radius_node_title) == 1:
                 # define an astropy Angle object
-                radius_obj = Angle(radius_node_title[0].value)
-                radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
-                g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                       rdflib.Literal(radius_obj_default_value)))
+                process_angle_obj(g, radius_node, radius_node_title[0].value)
+                # radius_obj = Angle(radius_node_title[0].value)
+                # radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
+                # g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                #        rdflib.Literal(radius_obj_default_value)))
         # pixels info (if found, perhaps some for old query_region none was stored)
         pixels_list = list(
             g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingPixels')])
@@ -683,3 +685,11 @@ def process_get_images_info(g, run_node=None, module_node=None, action_node=None
                 image_band_value = image_band_node_title[0].value
                 g.add((image_band_node, rdflib.URIRef('http://schema.org/defaultValue'),
                        rdflib.Literal(image_band_value)))
+
+
+def process_angle_obj(g, angle_node, angle_value):
+    # define an astropy Angle object
+    radius_obj = Angle(angle_value)
+    radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
+    g.add((angle_node, rdflib.URIRef('http://schema.org/defaultValue'),
+           rdflib.Literal(radius_obj_default_value)))

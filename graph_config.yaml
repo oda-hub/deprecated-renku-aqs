@@ -53,6 +53,12 @@ CommandOutputFitsFile:
     style: filled
     border: 1
 
+CommandOutputEcsvFile:
+    shape: box
+    color: '#FFFFFF'
+    style: filled
+    border: 1
+
 CommandInput:
     shape: box
     color: '#DBA3BC'
