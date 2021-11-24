@@ -1,6 +1,6 @@
 ## Is this a recommendation engine?
 
-In part it, it is. 
+In a way, it is. 
 
 However, we try to recommend potentially long combinations of workflows, parameters. 
 So the entities which are recommended need to be constructed, chained from individual, existing, pieces. In this sense, it is more similar to **generation of human-readable sentences** - except what we get is **machine-executable sequences of steps (worklows)**.
@@ -19,6 +19,7 @@ We also plan to include:
 * MMODA requests
 * "Standard" results from fresh INTEGRAL data (Quick Look Activities).
 * OpenAIRE graph https://graph.openaire.eu/develop/
+* ORKG https://www.orkg.org/orkg/data
 * Workflows discovered in github (or other public locations), plenty of [options](https://github.com/search?q=astroquery+in%3Afile+extension%3Aipynb)
 
 
