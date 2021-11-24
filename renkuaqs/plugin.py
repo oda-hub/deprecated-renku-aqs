@@ -44,7 +44,6 @@ import renkuaqs.graph_utils as graph_utils
 
 graph_configuration = yaml.load(open("../graph_config.yaml"), Loader=yaml.SafeLoader)
 
-
 class AQS(object):
     def __init__(self, run):
         self.run = run
@@ -376,19 +375,20 @@ def params(revision, format, paths, diff):
                 ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
                      <http://odahub.io/ontology#isRequestingAstroImage> ?a_image ;
                      ^oa:hasBody/oa:hasTarget ?runId .
-                
+
                 ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name .
-                
+
                 ?a_image a ?a_image_type ;
                         <http://purl.org/dc/terms/title> ?a_image_name .
-                        
-                OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates . }}
+
+                OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingCoordinates> ?a_coordinates . }}
+                OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingPosition> ?a_position . }}
                 OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingRadius> ?a_radius . }}
                 OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingPixels> ?a_pixels . }}
                 OPTIONAL {{ ?a_image <http://odahub.io/ontology#isUsingImageBand> ?a_image_band . }}
 
                 OPTIONAL {{ ?run <http://purl.org/dc/terms/title> ?run_title . }}
-                
+
                 ?run ?p ?o .
             }
             }}"""
@@ -409,7 +409,8 @@ def params(revision, format, paths, diff):
                 
             ?a_image a ?a_image_type ;
                 <http://purl.org/dc/terms/title> ?a_image_name ;
-                <http://odahub.io/ontology#isUsingSkyCoordinates> ?a_sky_coordinates ;
+                <http://odahub.io/ontology#isUsingCoordinates> ?a_coordinates ;
+                <http://odahub.io/ontology#isUsingPosition> ?a_position ;
                 <http://odahub.io/ontology#isUsingRadius> ?a_radius ;
                 <http://odahub.io/ontology#isUsingPixels> ?a_pixels ;
                 <http://odahub.io/ontology#isUsingImageBand> ?a_image_band .
