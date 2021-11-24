@@ -585,12 +585,24 @@ def process_query_region_info(g, run_node=None, module_node=None, action_node=No
                 g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
             if len(sky_coordinates_node_title) == 1:
                 # define an astropy SkyCoord object
-                coords = sky_coordinates_node_title[0].value.split(" ")
-                sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
-                sky_coord_obj_default_value = 'RA=' + str(sky_coord_obj.ra.deg) + ' deg ' +\
-                                              ' Dec=' + str(sky_coord_obj.dec.deg) + ' deg'
-                g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                       rdflib.Literal(sky_coord_obj_default_value)))
+                # TODO optimize and define a standard way to detect and parse a SkyCoord object
+                coords_comma = sky_coordinates_node_title[0].value.split(",")
+                coords_space = sky_coordinates_node_title[0].value.split(" ")
+                sky_coord_obj_default_value = None
+                coords = None
+                if len(coords_space) == 2:
+                    coords = coords_space
+                elif len(coords_comma) == 2:
+                    coords = coords_comma
+                else:
+                    sky_coord_obj_default_value = ",".join(sky_coordinates_node_title[0].value)
+                if coords is not None and len(coords) == 2:
+                    sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
+                    sky_coord_obj_default_value = 'RA=' + str(sky_coord_obj.ra.deg) + ' deg ' +\
+                                                  ' Dec=' + str(sky_coord_obj.dec.deg) + ' deg'
+                if sky_coord_obj_default_value is not None:
+                    g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
+                           rdflib.Literal(sky_coord_obj_default_value)))
         # radius info (if found, perhaps some for old query_region none was stored)
         radius_list = list(
             g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingRadius')])
