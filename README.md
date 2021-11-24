@@ -1,35 +1,8 @@
-# Collecting metadata with the plugin, inspecting it
+## Is this a recommendation engine?
 
+In part it, it is. However, we try to recommend potentially long combinations of workflows, parameters. So the entities which are recommended need to be constructed, chained from individual, existing, pieces. In this sense, it is more similar to generation of human-readable sentences - except what we get is machine-executable sequences of steps (worklows).
 
-```bash
-$ (cd renku-aqs-test-case/; renku aqs params)
-+--------------------------------------+-------------------+--------------+
-| Run ID                               | AstroQuery Module | Astro Object |
-+--------------------------------------+-------------------+--------------+
-| 228555e4-151a-4440-919d-f1269132a0fb |    SimbadClass    |   Mrk 421    |
-| 76943a72-30bf-4e9e-ad92-3dd068424968 |    SimbadClass    |   Mrk 421    |
-| 0320ea0d-eee2-4b50-aa3e-b64c557b9bf2 |    SimbadClass    |   Mrk 421    |
-+--------------------------------------+-------------------+--------------+
-@prefix local-renku: <file:///home/savchenk/work/oda/renku/renku-aqs/renku-aqs-test-case/.renku/> .
-@prefix oda: <http://odahub.io/ontology#> .
-@prefix odas: <https://odahub.io/ontology#> .
-
-local-renku:4ab60eb4-d5e7-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
-    oda:isRequestingAstroObject odas:AstroObjectMrk_421 ;
-    oda:isUsing odas:AQModuleSimbadClass .
-
-local-renku:53e67e80-d5ea-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
-    oda:isRequestingAstroObject odas:AstroObjectMrk_421 ;
-    oda:isUsing odas:AQModuleSimbadClass .
-
-local-renku:dd481450-d5e4-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
-    oda:isRequestingAstroObject odas:AstroObjectMrk_421 ;
-    oda:isUsing odas:AQModuleSimbadClass .
- ```
-
-
-![](subgraph.png)
-
+Since we are parsing reported data and papers and generating new ones, we aim to produce a synthetic sequence of workflow executions: build the entire story of research community reaction to astrophysical events.
 
 ## Sharing the metadata with the larger world
 
@@ -104,8 +77,9 @@ TODO:
 * runs of renku
 * cc workflow
 * MM INTEGRAL wfl
-* mm events, grs
-* qla
+* Multi-messenger events
+* "Standard" results from fresh INTEGRAL data (Quick Look Activities).
+* https://marketplace.eosc-portal.eu/services/open-research-knowledge-graph-orkg/details
 
 * mmoda requests
 * astroquery in github (or other public locations), plenty of [options](https://github.com/search?q=astroquery+in%3Afile+extension%3Aipynb), let's leverage our committment  to astroquery, [see also](harvesting-public-sources.md)
@@ -157,3 +131,5 @@ $ renku aqs kg suggest --filter-input-values -GRB2 --extra-focus http://www.ivoa
 
 
 Without extra focus, 3C 279 would be the best - in fact, it matches what was already used in this workflow. But with the focus - which is a BLLac, unlike 3C 279.
+
+
