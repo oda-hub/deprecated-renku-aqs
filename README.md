@@ -16,7 +16,7 @@ Since we are parsing reported data and papers and generating new ones, we aim to
   * Cross-Calibration Workflows for INTEGRAL/ISGRI: includes contributed data reduction and elaboration of a [variety of high-energy sources](https://share.streamlit.io/volodymyrss/streamlit-cc/app.py).
 
 We also plan to include:
-* MMODA requests
+* All MMODA requests
 * "Standard" results from fresh INTEGRAL data (Quick Look Activities).
 * OpenAIRE graph https://graph.openaire.eu/develop/
 * ORKG https://www.orkg.org/orkg/data
