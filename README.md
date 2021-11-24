@@ -36,6 +36,10 @@ Starting from the knowledge graph enriched with the annotation created during th
 this is queried to retrieve the needed information, perform some inferring and generate the output graph that will be finally
 exported over an output picture.
 
+In particular, the following information are elaborated to produce the graph:
+* inputs/arguments/outputs of the notebook execution
+* [astroquery](https://github.com/oda-hub/astroquery/tree/DESILegacySurvey) modules used and the main query methods called ([https://github.com/astropy/astroquery/blob/main/docs/api.rst](astroquery api))
+
 ### Parameters
 
 * `--filename` The filename of the output file image, until now, only png images are supported (eg `--filename graph.png`), default is `graph.png`
