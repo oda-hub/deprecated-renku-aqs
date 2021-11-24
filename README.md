@@ -40,5 +40,11 @@ CLI command to generate an output graph in an output png image
 ```bash
 $ (cd renku-aqs-test-case/; renku aqs display)
  ```
-![](example_display_graph.png)
+![](example_display_graph_complete.png)
 
+### specify executed notebook
+```bash
+$ (cd renku-aqs-test-case/; renku aqs display --input-notebook final-an.ipynb)
+ ```
+
+![](example_display_graph_final-an.png)
