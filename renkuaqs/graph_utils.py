@@ -636,7 +636,6 @@ def process_get_images_info(g, run_node=None, module_node=None, action_node=None
             sky_coordinates_node_title = list(
                 g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
             if len(sky_coordinates_node_title) == 1:
-                print("sky_coordinates_node_title[0].value: ", sky_coordinates_node_title[0].value)
                 # define an astropy SkyCoord object
                 # TODO optimize and define a standard way to detect and parse a SkyCoord object
                 coords_comma = sky_coordinates_node_title[0].value.split(",")

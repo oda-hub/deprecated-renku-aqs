@@ -42,7 +42,10 @@ import yaml
 
 import renkuaqs.graph_utils as graph_utils
 
-graph_configuration = yaml.load(open("../graph_config.yaml"), Loader=yaml.SafeLoader)
+# # TODO improve this
+__this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
+graph_configuration = yaml.load(open(os.path.join(__this_dir__, "graph_config.yaml")), Loader=yaml.SafeLoader)
+
 
 class AQS(object):
     def __init__(self, run):
