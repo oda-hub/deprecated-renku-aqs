@@ -28,11 +28,13 @@ local-renku:dd481450-d5e4-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
   ```
 ![](readme_imgs/subgraph.png)
 
-## `display`
+## `display` command
 
-CLI command to generate an output graph in an output png image
+CLI command to generate an output graph and export it over an output png image.
 
-### parameters
+Currently, png is the only supported format
+
+### Parameters
 
 * `--filename` The filename of the output file image, until now, only png images are supported (eg `--filename graph.png`), default is `graph.png`
 * `--input-notebook` Input notebook to process, if not specified, will query for all the executions from all notebooks  
@@ -42,14 +44,14 @@ $ (cd renku-aqs-test-case/; renku aqs display)
  ```
 ![](readme_imgs/example_display_graph_complete.png)
 
-### specify executed notebook
+### Specify executed notebook
 ```bash
 $ (cd renku-aqs-test-case/; renku aqs display --input-notebook final-an.ipynb)
  ```
 
 ![](readme_imgs/example_display_graph_final-an.png)
 
-### do not display oda-related information
+### Do not display oda-related information
 ```bash
 $ (cd renku-aqs-test-case/; renku aqs display --input-notebook final-an.ipynb --no-oda-info)
  ```
