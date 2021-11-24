@@ -30,9 +30,7 @@ local-renku:dd481450-d5e4-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
 
 ## `display` command
 
-CLI command to generate an output graph and export it over an output png image.
-
-Currently, png is the only supported format
+CLI command to generate an output graph and export it over an output image.
 
 ### Parameters
 
