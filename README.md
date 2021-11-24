@@ -32,13 +32,13 @@ local-renku:dd481450-d5e4-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
 
 CLI command to generate an output graph and export it over an output image. 
 
-Starting from the knowledge graph enriched with the annotation created during the execution of a notebook,
+Starting from the knowledge graph generated during the execution of a notebook,
 this is queried to retrieve the needed information, perform some inferring and generate the output graph that will be finally
 exported over an output picture.
 
-In particular, the following information are elaborated to produce the graph:
-* inputs/arguments/outputs of the notebook execution
-* [astroquery](https://github.com/oda-hub/astroquery/tree/DESILegacySurvey) modules used and the main query methods called ([https://github.com/astropy/astroquery/blob/main/docs/api.rst](astroquery api))
+In particular, the following information are elaborated:
+* inputs/arguments/outputs of the notebook execution;
+* [astroquery](https://github.com/oda-hub/astroquery/tree/DESILegacySurvey) modules used and the main query methods called ([astroquery api](https://github.com/astropy/astroquery/blob/main/docs/api.rst)).
 
 ### Parameters
 
