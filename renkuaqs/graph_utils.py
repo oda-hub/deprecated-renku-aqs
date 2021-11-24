@@ -584,25 +584,7 @@ def process_query_region_info(g, run_node=None, module_node=None, action_node=No
             sky_coordinates_node_title = list(
                 g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
             if len(sky_coordinates_node_title) == 1:
-                # define an astropy SkyCoord object
-                # TODO optimize and define a standard way to detect and parse a SkyCoord object
-                coords_comma = sky_coordinates_node_title[0].value.split(",")
-                coords_space = sky_coordinates_node_title[0].value.split(" ")
-                sky_coord_obj_default_value = None
-                coords = None
-                if len(coords_space) == 2:
-                    coords = coords_space
-                elif len(coords_comma) == 2:
-                    coords = coords_comma
-                else:
-                    sky_coord_obj_default_value = ",".join(sky_coordinates_node_title[0].value)
-                if coords is not None and len(coords) == 2:
-                    sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
-                    sky_coord_obj_default_value = 'RA=' + str(sky_coord_obj.ra.deg) + ' deg ' +\
-                                                  ' Dec=' + str(sky_coord_obj.dec.deg) + ' deg'
-                if sky_coord_obj_default_value is not None:
-                    g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                           rdflib.Literal(sky_coord_obj_default_value)))
+                process_skycoord_obj(g, sky_coordinates_node, sky_coordinates_node_title)
         # radius info (if found, perhaps some for old query_region none was stored)
         radius_list = list(
             g[astroRegion_node:rdflib.URIRef('http://odahub.io/ontology#isUsingRadius')])
@@ -644,29 +626,11 @@ def process_get_images_info(g, run_node=None, module_node=None, action_node=None
         position_list = list(
             g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingPosition')])
         if len(position_list) == 1:
-            sky_coordinates_node = position_list[0]
-            sky_coordinates_node_title = list(
-                g[sky_coordinates_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
-            if len(sky_coordinates_node_title) == 1:
-                # define an astropy SkyCoord object
-                # TODO optimize and define a standard way to detect and parse a SkyCoord object
-                coords_comma = sky_coordinates_node_title[0].value.split(",")
-                coords_space = sky_coordinates_node_title[0].value.split(" ")
-                sky_coord_obj_default_value = None
-                coords = None
-                if len(coords_space) == 2:
-                    coords = coords_space
-                elif len(coords_comma) == 2:
-                    coords = coords_comma
-                else:
-                    sky_coord_obj_default_value = ",".join(sky_coordinates_node_title[0].value)
-                if coords is not None and len(coords) == 2:
-                    sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
-                    sky_coord_obj_default_value = 'RA=' + str(sky_coord_obj.ra.deg) + ' deg ' + \
-                                                  ' Dec=' + str(sky_coord_obj.dec.deg) + ' deg'
-                if sky_coord_obj_default_value is not None:
-                    g.add((sky_coordinates_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                           rdflib.Literal(sky_coord_obj_default_value)))
+            position_node = position_list[0]
+            position_node_title = list(
+                g[position_node:rdflib.URIRef('http://purl.org/dc/terms/title')])
+            if len(position_node_title) == 1:
+                process_skycoord_obj(g, position_node, position_node_title)
         # radius info (if found, perhaps some for old query_region none was stored)
         radius_list = list(
             g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingRadius')])
@@ -677,10 +641,6 @@ def process_get_images_info(g, run_node=None, module_node=None, action_node=None
             if len(radius_node_title) == 1:
                 # define an astropy Angle object
                 process_angle_obj(g, radius_node, radius_node_title[0].value)
-                # radius_obj = Angle(radius_node_title[0].value)
-                # radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
-                # g.add((radius_node, rdflib.URIRef('http://schema.org/defaultValue'),
-                #        rdflib.Literal(radius_obj_default_value)))
         # pixels info (if found, perhaps some for old query_region none was stored)
         pixels_list = list(
             g[astroImage_node:rdflib.URIRef('http://odahub.io/ontology#isUsingPixels')])
@@ -714,3 +674,25 @@ def process_angle_obj(g, angle_node, angle_value):
     radius_obj_default_value = str(radius_obj.arcmin) + " unit=arcmin"
     g.add((angle_node, rdflib.URIRef('http://schema.org/defaultValue'),
            rdflib.Literal(radius_obj_default_value)))
+
+
+def process_skycoord_obj(g, coordinate_node, coordinate_value):
+    # define an astropy SkyCoord object
+    # TODO optimize and define a standard way to detect and parse a SkyCoord object
+    coords_comma = coordinate_value[0].value.split(",")
+    coords_space = coordinate_value[0].value.split(" ")
+    sky_coord_obj_default_value = None
+    coords = None
+    if len(coords_space) == 2:
+        coords = coords_space
+    elif len(coords_comma) == 2:
+        coords = coords_comma
+    else:
+        sky_coord_obj_default_value = ",".join(coordinate_value[0].value)
+    if coords is not None and len(coords) == 2:
+        sky_coord_obj = SkyCoord(coords[0], coords[1], unit='degree')
+        sky_coord_obj_default_value = 'RA=' + str(sky_coord_obj.ra.deg) + ' deg ' + \
+                                      ' Dec=' + str(sky_coord_obj.dec.deg) + ' deg'
+    if sky_coord_obj_default_value is not None:
+        g.add((coordinate_node, rdflib.URIRef('http://schema.org/defaultValue'),
+               rdflib.Literal(sky_coord_obj_default_value)))
