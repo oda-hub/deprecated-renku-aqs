@@ -21,6 +21,8 @@ We also plan to include:
 * OpenAIRE graph https://graph.openaire.eu/develop/
 * ORKG https://www.orkg.org/orkg/data
 * Workflows discovered in github (or other public locations), plenty of [options](https://github.com/search?q=astroquery+in%3Afile+extension%3Aipynb)
+* re3data, e.g. http://doi.org/10.17616/R38P6F
+* Other open graphs: dbpedia, wikidata, https://www.microsoft.com/en-us/research/project/academic/
 
 
 ## Sharing the metadata with the larger world
