@@ -1,8 +1,11 @@
 ## Is this a recommendation engine?
 
-In part it, it is. However, we try to recommend potentially long combinations of workflows, parameters. So the entities which are recommended need to be constructed, chained from individual, existing, pieces. In this sense, it is more similar to **generation of human-readable sentences** - except what we get is machine-executable sequences of steps (worklows).
+In part it, it is. 
 
-Since we are parsing reported data and papers and generating new ones, we aim to produce a synthetic sequence of workflow executions: build the entire story of research community reaction to astrophysical events.
+However, we try to recommend potentially long combinations of workflows, parameters. 
+So the entities which are recommended need to be constructed, chained from individual, existing, pieces. In this sense, it is more similar to **generation of human-readable sentences** - except what we get is **machine-executable sequences of steps (worklows)**.
+
+Since we are parsing reported data and papers and generating new ones, we aim to produce a synthetic sequence of workflow executions: build the **story of research community reaction to astrophysical events**.
 
 ## How is the Upstream Graph populated?
 
