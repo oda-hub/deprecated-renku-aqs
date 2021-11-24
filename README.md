@@ -30,7 +30,11 @@ local-renku:dd481450-d5e4-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
 
 ## `display` command
 
-CLI command to generate an output graph and export it over an output image.
+CLI command to generate an output graph and export it over an output image. 
+
+Starting from the knowledge graph enriched with the annotation created during the execution of a notebook,
+this is queried to retrieve the needed information, perform some inferring and generate the output graph that will be finally
+exported over an output picture.
 
 ### Parameters
 
