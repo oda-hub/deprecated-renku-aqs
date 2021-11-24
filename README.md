@@ -1,8 +1,23 @@
 ## Is this a recommendation engine?
 
-In part it, it is. However, we try to recommend potentially long combinations of workflows, parameters. So the entities which are recommended need to be constructed, chained from individual, existing, pieces. In this sense, it is more similar to generation of human-readable sentences - except what we get is machine-executable sequences of steps (worklows).
+In part it, it is. However, we try to recommend potentially long combinations of workflows, parameters. So the entities which are recommended need to be constructed, chained from individual, existing, pieces. In this sense, it is more similar to **generation of human-readable sentences** - except what we get is machine-executable sequences of steps (worklows).
 
 Since we are parsing reported data and papers and generating new ones, we aim to produce a synthetic sequence of workflow executions: build the entire story of research community reaction to astrophysical events.
+
+## How is the Upstream Graph populated?
+
+* Runs of renku, including metadata harvested with plugin 
+* Multi-messenger events, from GCNs, ATels, and other sources. See [high-level preview page](https://integral-observatory.github.io/).
+* Workflows, their input parameter types and default values; when suitable - output parameter types:
+  * Multi-messenger analysis workflows
+  * Cross-Calibration Workflows for INTEGRAL/ISGRI: includes contributed data reduction and elaboration of a [variety of high-energy sources](https://share.streamlit.io/volodymyrss/streamlit-cc/app.py).
+
+We also plan to include:
+* MMODA requests
+* "Standard" results from fresh INTEGRAL data (Quick Look Activities).
+* OpenAIRE graph https://graph.openaire.eu/develop/
+* Workflows discovered in github (or other public locations), plenty of [options](https://github.com/search?q=astroquery+in%3Afile+extension%3Aipynb)
+
 
 ## Sharing the metadata with the larger world
 
@@ -71,18 +86,6 @@ $ renku aqs kg suggest  --max-entries 100 --filter-input-value 421 --plot```
 Notice how `Mrk 421` now less favorable. It is because GRBs are recent, and relate to current moment.
 
 
-## Sources of ontology
-
-TODO:
-* runs of renku
-* cc workflow
-* MM INTEGRAL wfl
-* Multi-messenger events
-* "Standard" results from fresh INTEGRAL data (Quick Look Activities).
-* OpenAIRE graph https://graph.openaire.eu/develop/
-
-* mmoda requests
-* astroquery in github (or other public locations), plenty of [options](https://github.com/search?q=astroquery+in%3Afile+extension%3Aipynb), let's leverage our committment  to astroquery, [see also](harvesting-public-sources.md)
 
 
 ## Using IVOA Astro Object ontology
