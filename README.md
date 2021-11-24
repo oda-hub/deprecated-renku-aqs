@@ -79,7 +79,7 @@ TODO:
 * MM INTEGRAL wfl
 * Multi-messenger events
 * "Standard" results from fresh INTEGRAL data (Quick Look Activities).
-* https://marketplace.eosc-portal.eu/services/open-research-knowledge-graph-orkg/details
+* OpenAIRE graph https://graph.openaire.eu/develop/
 
 * mmoda requests
 * astroquery in github (or other public locations), plenty of [options](https://github.com/search?q=astroquery+in%3Afile+extension%3Aipynb), let's leverage our committment  to astroquery, [see also](harvesting-public-sources.md)
