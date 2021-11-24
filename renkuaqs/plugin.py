@@ -42,7 +42,7 @@ import yaml
 
 import renkuaqs.graph_utils as graph_utils
 
-# # TODO improve this
+# TODO improve this
 __this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
 graph_configuration = yaml.load(open(os.path.join(__this_dir__, "graph_config.yaml")), Loader=yaml.SafeLoader)
 
@@ -426,11 +426,6 @@ def params(revision, format, paths, diff):
     G.bind("oda", "http://odahub.io/ontology#")
     G.bind("odas", "https://odahub.io/ontology#")   # the same
     G.bind("local-renku", f"file://{renku_path}/") #??
-
-    serial = G.serialize(format="n3").decode()
-
-    with open("subgraph.ttl", "w") as f:
-        f.write(serial)
 
 
 @aqs.command()
