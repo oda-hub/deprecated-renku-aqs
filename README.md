@@ -26,7 +26,7 @@ local-renku:dd481450-d5e4-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
     oda:isRequestingAstroObject odas:AstroObjectMrk_421 ;
     oda:isUsing odas:AQModuleSimbadClass .
   ```
-![](subgraph.png)
+![](readme_imgs/subgraph.png)
 
 ## `display`
 
