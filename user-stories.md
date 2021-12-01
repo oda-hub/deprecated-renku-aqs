@@ -19,8 +19,9 @@
 * I can use [collection of workflows](https://gitlab.in2p3.fr/oda/workflows) (primarily INTEGRAL) contributed by the collaboration
 * I get a suggestion for [stardard prompt transient INTEGRAL analysis workflow](https://gitlab.in2p3.fr/oda/workflows/gcn-circular-integral-ul/) and automatically produce a [micro-publication](https://gcn.gsfc.nasa.gov/gcn3/31135.gcn3). This suggestions was trivial to derive. 
 * Further publications about the event are reported, [ingested in ODA KG](https://apps.streamlitusercontent.com/volodymyrss/streamlit-spiacs/master/app.py/+/?source_name=IceCube-211125A), some quote a possibly related source [AT2021afpi](https://www.astronomerstelegram.org/?read=15079).
-* I get suggestions for workflows which fetch and analyse Fermi/LAT, SDSS, and past INTEGRAL data for the source, taking into account what is commonly used for the reported source class ( very large-amplitude WZ Sge-type dwarf nova) and parameters of the source. (**not done yet**)
+* I get suggestions for workflows which fetch and analyse Fermi/LAT, SDSS, and past INTEGRAL data for the source, taking into account what is commonly used for the reported source class ( very large-amplitude WZ Sge-type dwarf nova) and parameters of the source. This is not quite so trivial. (**not done yet**)
 * I use the collected information to verify published results and publish new
+* I publish my results in traditional form as well as in a RDF document, linking the workflows and data I used, simplifying further elaborations.
 
 
 ### New scientific software (benchmarking)
