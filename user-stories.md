@@ -7,8 +7,6 @@
 * I find a useful workflows analysing NuSTAR data for [Cyg X-1](https://en.wikipedia.org/wiki/Cygnus_X-1) (which is an HMXB - massive star and a black hole orbiting each other) and use it as an example
 
 
-![](https://user-images.githubusercontent.com/3909535/142020701-65523b70-2a9d-42c2-b645-58d23b394cfe.png)
-
 ### Helping learn how to build a workflow
 
 * I work on a astronomical workflow: requesting some data from **astroquery**, reducing it, producing results.
