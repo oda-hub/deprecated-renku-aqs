@@ -56,7 +56,10 @@
 ### Ensuring reproducibility of my results by workflow mutation
 
 * I produced some results but they might depend on particular implementation. I want to check if they change when something is changed about the workflow
-* I get suggestions for changing parameters: replacing scientific software version
+* I get suggestions for changing parameters: 
+  * replacing scientific software version
+  * using newer source catalog, used in astroquery module 
+  * changing source-detection workflow step
 
 ### Verifying reproducibility of published results 
 
