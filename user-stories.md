@@ -23,13 +23,6 @@
 * I use the collected information to verify published results and publish new
 * I publish my results in traditional form as well as in a RDF document, linking the workflows and data I used, simplifying further elaborations.
 
-
-### Building domain-aware scientific legacy archive
-
-TODO
-
-* generate workflows for publications where feasible
-
 ### New scientific software (benchmarking)
 
 * I have produced a new scientific software version
@@ -37,6 +30,13 @@ TODO
 * I get suggestions, run them (perhaps automatically), compare results with the previous ones
 
 *Note*: this **has been** used in INTEGRAL [cross-calibration activities](https://indico.ict.inaf.it/event/1001/contributions/10148/), see also [mostly public live summary](https://share.streamlit.io/volodymyrss/streamlit-cc/app.py)
+
+### Building domain-aware scientific legacy archive
+
+* I want to organize legacy archive of results of my favorite mission, INTEGRAL
+* I scan publications, categorize them with public astro ontologies
+* generate workflows for publications where feasible
+
 
 
 ### Suggesting new relevant inputs for the workflow I am currently developing
