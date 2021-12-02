@@ -24,6 +24,12 @@
 * I publish my results in traditional form as well as in a RDF document, linking the workflows and data I used, simplifying further elaborations.
 
 
+### Building domain-aware scientific legacy archive
+
+TODO
+
+* generate workflows for publications where feasible
+
 ### New scientific software (benchmarking)
 
 * I have produced a new scientific software version
