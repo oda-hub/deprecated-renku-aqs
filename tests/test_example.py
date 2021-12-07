@@ -34,6 +34,10 @@ def fetch_example_oda_repo(fresh=False, reset=True) -> str:
         ["git", "lfs", "install", "--local"],
         cwd=repo_dir
     )
+    subprocess.check_call(
+        ["renku", "migrate"],
+        cwd=repo_dir
+    )
 
     return repo_dir
 

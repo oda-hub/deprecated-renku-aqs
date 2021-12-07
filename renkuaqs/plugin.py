@@ -27,12 +27,20 @@ import rdflib.tools.rdf2dot
 from pathlib import Path
 
 from rdflib.tools import rdf2dot
-from renku.core.models.cwl.annotation import Annotation
-from renku.core.incubation.command import Command
+from renku.core.models.provenance.annotation import Annotation
+from renku.core.management.command_builder import Command, inject
+from renku.core.management.interface.client_dispatcher import IClientDispatcher
 from renku.core.plugins import hookimpl
-from renku.core.models.provenance.provenance_graph import ProvenanceGraph
+from renku.core.utils.urls import get_host
+from renku.core.commands.format.graph import _conjunctive_graph
+# from renku.core.models.provenance.provenance_graph import ProvenanceGraph
 from renku.core.errors import RenkuException
-from renku.core.management import LocalClient
+from renku.core.management.client import LocalClient
+
+from renku.core.commands.graph import (
+    _get_graph_for_all_objects,
+    update_nested_node_host,
+)
 
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
@@ -52,9 +60,10 @@ class AQS(object):
         self.run = run
 
     @property
-    def renku_aqs_path(self):
+    @inject.autoparams("client_dispatcher")
+    def renku_aqs_path(self, client_dispatcher: IClientDispatcher):
         """Return a ``Path`` instance of Renku AQS metadata folder."""        
-        return Path(self.run.client.renku_home).joinpath(AQS_DIR).joinpath(COMMON_DIR)
+        return Path(client_dispatcher.current_client.renku_home).joinpath(AQS_DIR).joinpath(COMMON_DIR)
 
     def load_model(self, path):
         """Load AQS reference file."""
@@ -64,9 +73,10 @@ class AQS(object):
 
 
 @hookimpl
-def process_run_annotations(run):
+# def process_run_annotations(run):
+def activity_annotations(activity):
     """``process_run_annotations`` hook implementation."""
-    aqs = AQS(run)
+    aqs = AQS(activity)
 
     #os.remove(os.path.join(aqs.renku_aqs_path, "site.py"))
 
@@ -91,7 +101,7 @@ def process_run_annotations(run):
                 aqs_annotation = aqs.load_model(p)
                 model_id = aqs_annotation["@id"]
                 annotation_id = "{activity}/annotations/aqs/{id}".format(
-                    activity=run._id, id=model_id
+                    activity=activity._id, id=model_id
                 )
                 p.unlink()
                 annotations.append(
@@ -130,33 +140,57 @@ def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
 
 
-def _load_provenance_graph(client):
-    # One detail I forgot to mention,
-    # `renku log` is now more like `git log` in that is shows a history of past commands/executions.
-    # To get the JSON-LD, we have a new command `renku graph export`.
-    # That command can export the whole metadata of the repository with `renku graph export --full`
-    # or for a single commit using `renku graph export --revision <commit>`
-    if not client.provenance_graph_path.exists():
-        raise RenkuException(
-            """Provenance graph has not been generated!
-Please run 'renku graph generate' to create the project's provenance graph
-"""
-        )
-    return ProvenanceGraph.from_json(client.provenance_graph_path)
+@inject.autoparams("client_dispatcher")
+def _export_graph(client_dispatcher: IClientDispatcher):
+    graph = _get_graph_for_all_objects()
+
+    # # NOTE: rewrite ids for current environment
+    # host = get_host(client_dispatcher.current_client)
+    #
+    # for node in graph:
+    #     update_nested_node_host(node, host)
+
+    return graph
+
+
+# def _load_provenance_graph(client):
+#     # One detail I forgot to mention,
+#     # `renku log` is now more like `git log` in that is shows a history of past commands/executions.
+#     # To get the JSON-LD, we have a new command `renku graph export`.
+#     # That command can export the whole metadata of the repository with `renku graph export --full`
+#     # or for a single commit using `renku graph export --revision <commit>`
+#     if not client.provenance_graph_path.exists():
+#         raise RenkuException(
+#             """Provenance graph has not been generated!
+# Please run 'renku graph generate' to create the project's provenance graph
+# """
+#         )
+#     # return ProvenanceGraph.from_json(client.provenance_graph_path)
 
 
 def _graph(revision, paths):
     # FIXME: use (revision, paths) filter
-    cmd_result = Command().command(_load_provenance_graph).build().execute()
+    # cmd_result = Command().command(_load_provenance_graph).build().execute()
 
-    provenance_graph = cmd_result.output
-    provenance_graph.custom_bindings = {
-        "aqs": "http://www.w3.org/ns/aqs#",
-        "oa": "http://www.w3.org/ns/oa#",
-        "xsd": "http://www.w3.org/2001/XAQSchema#",
-    }
+    cmd_result = (
+        Command().command(_export_graph).with_database(write=False).require_migration().build().execute()
+    )
 
-    return provenance_graph
+    if cmd_result.status == cmd_result.FAILURE:
+        raise RenkuException("asdf")
+    graph = _conjunctive_graph(cmd_result.output)
+
+    # graph = cmd_result.output
+    # graph.custom_bindings = {
+    #     "aqs": "http://www.w3.org/ns/aqs#",
+    #     "oa": "http://www.w3.org/ns/oa#",
+    #     "xsd": "http://www.w3.org/2001/XAQSchema#",
+    # }
+    graph.bind("aqs", "http://www.w3.org/ns/aqs#")
+    graph.bind("oa", "http://www.w3.org/ns/oa#")
+    graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
+
+    return graph
 
 
 def renku_context():
