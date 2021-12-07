@@ -101,7 +101,7 @@ def activity_annotations(activity):
                 aqs_annotation = aqs.load_model(p)
                 model_id = aqs_annotation["@id"]
                 annotation_id = "{activity}/annotations/aqs/{id}".format(
-                    activity=activity._id, id=model_id
+                    activity=activity.id, id=model_id
                 )
                 p.unlink()
                 annotations.append(
