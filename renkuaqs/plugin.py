@@ -140,32 +140,10 @@ def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
 
 
-@inject.autoparams("client_dispatcher")
-def _export_graph(client_dispatcher: IClientDispatcher):
+def _export_graph():
     graph = _get_graph_for_all_objects()
 
-    # # NOTE: rewrite ids for current environment
-    # host = get_host(client_dispatcher.current_client)
-    #
-    # for node in graph:
-    #     update_nested_node_host(node, host)
-
     return graph
-
-
-# def _load_provenance_graph(client):
-#     # One detail I forgot to mention,
-#     # `renku log` is now more like `git log` in that is shows a history of past commands/executions.
-#     # To get the JSON-LD, we have a new command `renku graph export`.
-#     # That command can export the whole metadata of the repository with `renku graph export --full`
-#     # or for a single commit using `renku graph export --revision <commit>`
-#     if not client.provenance_graph_path.exists():
-#         raise RenkuException(
-#             """Provenance graph has not been generated!
-# Please run 'renku graph generate' to create the project's provenance graph
-# """
-#         )
-#     # return ProvenanceGraph.from_json(client.provenance_graph_path)
 
 
 def _graph(revision, paths):
@@ -180,12 +158,6 @@ def _graph(revision, paths):
         raise RenkuException("asdf")
     graph = _conjunctive_graph(cmd_result.output)
 
-    # graph = cmd_result.output
-    # graph.custom_bindings = {
-    #     "aqs": "http://www.w3.org/ns/aqs#",
-    #     "oa": "http://www.w3.org/ns/oa#",
-    #     "xsd": "http://www.w3.org/2001/XAQSchema#",
-    # }
     graph.bind("aqs", "http://www.w3.org/ns/aqs#")
     graph.bind("oa", "http://www.w3.org/ns/oa#")
     graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
