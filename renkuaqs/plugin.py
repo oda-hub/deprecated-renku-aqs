@@ -31,15 +31,12 @@ from renku.core.models.provenance.annotation import Annotation
 from renku.core.management.command_builder import Command, inject
 from renku.core.management.interface.client_dispatcher import IClientDispatcher
 from renku.core.plugins import hookimpl
-from renku.core.utils.urls import get_host
 from renku.core.commands.format.graph import _conjunctive_graph
-# from renku.core.models.provenance.provenance_graph import ProvenanceGraph
 from renku.core.errors import RenkuException
 from renku.core.management.client import LocalClient
 
 from renku.core.commands.graph import (
-    _get_graph_for_all_objects,
-    update_nested_node_host,
+    _get_graph_for_all_objects
 )
 
 from prettytable import PrettyTable
@@ -147,14 +144,13 @@ def _export_graph():
 
 def _graph(revision, paths):
     # FIXME: use (revision, paths) filter
-    # cmd_result = Command().command(_load_provenance_graph).build().execute()
 
     cmd_result = (
         Command().command(_export_graph).with_database(write=False).require_migration().build().execute()
     )
 
     if cmd_result.status == cmd_result.FAILURE:
-        raise RenkuException("asdf")
+        raise RenkuException("fail to load the renku graph")
     graph = _conjunctive_graph(cmd_result.output)
 
     graph.bind("aqs", "http://www.w3.org/ns/aqs#")
