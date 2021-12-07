@@ -35,9 +35,7 @@ from renku.core.commands.format.graph import _conjunctive_graph
 from renku.core.errors import RenkuException
 from renku.core.management.client import LocalClient
 
-from renku.core.commands.graph import (
-    _get_graph_for_all_objects
-)
+from renku.core.commands.graph import _get_graph_for_all_objects
 
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
@@ -145,12 +143,11 @@ def _export_graph():
 def _graph(revision, paths):
     # FIXME: use (revision, paths) filter
 
-    cmd_result = (
-        Command().command(_export_graph).with_database(write=False).require_migration().build().execute()
-    )
+    cmd = Command().command(_export_graph).with_database(write=False).require_migration()
+    cmd_result = cmd.build().execute()
 
     if cmd_result.status == cmd_result.FAILURE:
-        raise RenkuException("fail to load the renku graph")
+        raise RenkuException("fail to export the renku graph")
     graph = _conjunctive_graph(cmd_result.output)
 
     graph.bind("aqs", "http://www.w3.org/ns/aqs#")
