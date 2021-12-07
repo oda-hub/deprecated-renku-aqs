@@ -62,7 +62,7 @@ class AQS(object):
     @property
     @inject.autoparams("client_dispatcher")
     def renku_aqs_path(self, client_dispatcher: IClientDispatcher):
-        """Return a ``Path`` instance of Renku AQS metadata folder."""        
+        """Return a ``Path`` instance of Renku AQS metadata folder."""
         return Path(client_dispatcher.current_client.renku_home).joinpath(AQS_DIR).joinpath(COMMON_DIR)
 
     def load_model(self, path):
@@ -73,7 +73,6 @@ class AQS(object):
 
 
 @hookimpl
-# def process_run_annotations(run):
 def activity_annotations(activity):
     """``process_run_annotations`` hook implementation."""
     aqs = AQS(activity)
@@ -240,7 +239,6 @@ def params(revision, format, paths, diff):
 
     renku_path = renku_context().renku_path
 
-    # model_params = dict()
     # how to use ontology
     output = PrettyTable()
     output.field_names = ["Run ID", "AstroQuery Module", "Astro Object"]
