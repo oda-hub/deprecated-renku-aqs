@@ -185,7 +185,7 @@ def build_query_where(input_notebook: str = None):
                          <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                          a ?run_rdf_type ;
                          ^oa:hasBody/oa:hasTarget ?runId ;
-                         ^oa:hasBody/oa:hasTarget ?activity .
+                         ^oa:hasBody/oa:hasTarget ?activityRun .
 
                     ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ;
                         a ?aq_mod_rdf_type .
@@ -205,7 +205,7 @@ def build_query_where(input_notebook: str = None):
                          <http://odahub.io/ontology#isRequestingAstroRegion> ?a_region ;
                          a ?run_rdf_type ;
                          ^oa:hasBody/oa:hasTarget ?runId ;
-                         ^oa:hasBody/oa:hasTarget ?activity .
+                         ^oa:hasBody/oa:hasTarget ?activityRun .
 
                     ?aq_module a ?aq_mod_rdf_type ;
                         <http://purl.org/dc/terms/title> ?aq_module_name .
@@ -231,7 +231,7 @@ def build_query_where(input_notebook: str = None):
                          <http://odahub.io/ontology#isRequestingAstroImage> ?a_image ;
                          a ?run_rdf_type ;
                          ^oa:hasBody/oa:hasTarget ?runId ;
-                         ^oa:hasBody/oa:hasTarget ?activity .
+                         ^oa:hasBody/oa:hasTarget ?activityRun .
 
                     ?aq_module a ?aq_mod_rdf_type ;
                         <http://purl.org/dc/terms/title> ?aq_module_name .
@@ -312,7 +312,7 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                     <http://odahub.io/ontology#isRequestingAstroImage> ?a_image ;
                     <http://purl.org/dc/terms/title> ?run_title ;
                     <http://odahub.io/ontology#isUsing> ?aq_module ;
-                    oa:hasTarget ?activity ;
+                    oa:hasTarget ?activityRun ;
                     a ?run_rdf_type .
 
                 ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
@@ -500,6 +500,7 @@ def extract_activity_start_time(g):
     # extract the info about the activity start time
     # get the activities and extract for each the startedTime into, and attach it to the related Action
     start_time_activity_list = g[:rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime')]
+
     for activity_node, activity_start_time in start_time_activity_list:
         # get the association and then the action
         qualified_association_list = g[activity_node:rdflib.URIRef(
