@@ -174,8 +174,8 @@ def build_query_where(input_notebook: str = None):
 
             {
                 ?activity a ?activityType ;
-                    <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
+                    <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
                     <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
 
                 ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
@@ -186,7 +186,7 @@ def build_query_where(input_notebook: str = None):
                          a ?run_rdf_type ;
                          ^oa:hasBody/oa:hasTarget ?runId ;
                          ^oa:hasBody/oa:hasTarget ?activityRun .
-
+                
                     ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ;
                         a ?aq_mod_rdf_type .
 
@@ -314,7 +314,7 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                     <http://odahub.io/ontology#isUsing> ?aq_module ;
                     oa:hasTarget ?activityRun ;
                     a ?run_rdf_type .
-
+                
                 ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
                     a ?aq_mod_rdf_type .
 
