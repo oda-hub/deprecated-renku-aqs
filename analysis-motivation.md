@@ -10,4 +10,4 @@ In this sense, it is more similar to generation of human-readable sentences: wha
 We want to do something similar - but for scientific processes.
 
 Since we are parsing reported data and papers and generating new ones, we aim to produce a synthetic sequence of workflow executions:
-**build the story of research community reaction to astrophysical events: synthesise part of the scientific process**
+**build the story of research community reaction to astrophysical events.**
