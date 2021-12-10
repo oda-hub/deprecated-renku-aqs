@@ -19,13 +19,15 @@
 import os
 import pathlib
 import json
+import webbrowser
 
 import click
 import rdflib
 import rdflib.tools.rdf2dot
 
 from pathlib import Path
-
+from pyvis.network import Network
+import networkx as nx
 from rdflib.tools import rdf2dot
 from renku.core.models.provenance.annotation import Annotation
 from renku.core.management.command_builder import Command, inject
@@ -487,15 +489,59 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
 
-    # list of edges and simple color change
-    for edge in pydot_graph.get_edge_list():
-        graph_utils.customize_edge(edge)
+    # pyvis graph
+    net = Network(
+        height='750px', width='100%',
+    )
+    # TODO not fully working yet, needs to investigate
+    # with open('graph.dot', 'w+') as fd:
+    #     rdf2dot.rdf2dot(G, fd)
+    # netx = nx.drawing.nx_pydot.read_dot('graph.dot')
+    # net.from_nx(netx)
 
     for node in pydot_graph.get_nodes():
+        id_node = graph_utils.get_id_node(node)
         graph_utils.customize_node(node,
                                    graph_configuration,
                                    type_label_values_dict=type_label_values_dict
                                    )
+        if id_node is not None:
+            type_node = type_label_values_dict[id_node]
+            node_configuration = graph_configuration.get(type_node,
+                                                         graph_configuration['Default'])
+            node_value = node_configuration.get('value', graph_configuration['Default']['value'])
+            hidden = False
+            if type_node.startswith('CommandOutput') or type_node.startswith('CommandInput'):
+                hidden = True
+            net.add_node(node.get_name(),
+                         label=type_node,
+                         color=node_configuration['color'],
+                         shape=node_configuration['shape'],
+                         value=node_value,
+                         hidden=hidden)
 
+    # list of edges and simple color change
+    for edge in pydot_graph.get_edge_list():
+        graph_utils.customize_edge(edge)
+        edge_label = graph_utils.get_edge_label(edge)
+        source_node = edge.get_source()
+        dest_node = edge.get_destination()
+        hidden = False
+        node_id = (source_node + '_' + dest_node)
+        if edge_label.startswith('isInputOf') or edge_label.startswith('hasOutputs'):
+            hidden = True
+        if source_node is not None and dest_node is not None:
+            net.add_edge(source_node, dest_node,
+                         id=node_id,
+                         title=edge_label,
+                         hidden=hidden)
+
+    # to tweak physics related options
+    # net.show_buttons(filter_=['physics'])
+    net.write_html('graph.html')
+
+    graph_utils.add_js_click_functionality(net, 'graph.html')
+
+    webbrowser.open('graph.html')
     # final output write over the png image
-    pydot_graph.write_png(filename)
+    # pydot_graph.write_png(filename)

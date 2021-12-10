@@ -5,21 +5,25 @@ Default:
     border: 0
     cellborder: 0
     display_type_title: True
+    value: 10
 
 AstroqueryModule:
     shape: ellipse
     color: '#00CC00'
     style: filled
+    value: 50
 
 AstrophysicalObject:
     shape: ellipse
     color: '#6262be'
     style: filled
+    value: 50
 
 AstrophysicalRegion:
     shape: ellipse
     color: '#6262bf'
     style: filled
+    value: 50
 
 AstrophysicalImage:
     shape: ellipse
@@ -70,6 +74,7 @@ Action:
     color: '#D5C15D'
     style: filled
     display_type_title: False
+    value: 400
 
 Angle:
     shape: box
