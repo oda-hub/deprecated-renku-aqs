@@ -483,10 +483,15 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     graph_utils.analyze_outputs(G, out_default_value_dict)
     graph_utils.analyze_types(G, type_label_values_dict)
 
+    with open('type_label_values_dict.yaml', 'w+') as ft:
+        yaml.dump(type_label_values_dict, ft, allow_unicode=True)
+
     graph_utils.clean_graph(G)
 
     stream = io.StringIO()
     rdf2dot.rdf2dot(G, stream, opts={display})
+    with open('graph.dot', 'w+') as fd:
+        rdf2dot.rdf2dot(G, fd)
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
 
     # pyvis graph
@@ -494,8 +499,6 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
         height='750px', width='100%',
     )
     # TODO not fully working yet, needs to investigate
-    # with open('graph.dot', 'w+') as fd:
-    #     rdf2dot.rdf2dot(G, fd)
     # netx = nx.drawing.nx_pydot.read_dot('graph.dot')
     # net.from_nx(netx)
 
@@ -544,4 +547,4 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 
     webbrowser.open('graph.html')
     # final output write over the png image
-    # pydot_graph.write_png(filename)
+    pydot_graph.write_png(filename)

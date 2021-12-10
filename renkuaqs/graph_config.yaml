@@ -27,8 +27,9 @@ AstrophysicalRegion:
 
 AstrophysicalImage:
     shape: ellipse
-    color: '#6262bg'
+    color: '#027F45'
     style: filled
+    value: 50
 
 CommandParameter:
     shape: box
