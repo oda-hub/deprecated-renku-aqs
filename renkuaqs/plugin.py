@@ -512,6 +512,20 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
                   "damping": 0.54
                 },
                 "minVelocity": 0.75
+            },
+            "edges": {
+                "arrows": {
+                  "to": {
+                    "enabled": true,
+                    "scaleFactor": 0.45
+                    }
+                },
+                "arrowStrikethrough": false,
+                "color": {
+                    "inherit": true
+                },
+                "physics": false,
+                "smooth": false
             }
         }"""
     )
