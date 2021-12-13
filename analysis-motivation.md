@@ -22,7 +22,9 @@ Each newly added workflow step should satisfy two conditions:
 
 Each synthesised workflow is expected to produce a `result`. Before the workflow is executed, we do not know the `result`. But we can deduce a lot about it: used instruments, data selection, etc. 
 
-Any `result`, in principle, can be published. If a workflow outputs a "standard" publication - it can be published in traditional way. The `result` may be also included in other workflows, some of which produce "standard" publications. We also often want to produce sequences of "standard" publications.
+Any `result`, in principle, can be published. If a workflow outputs a "standard" publication - it can be published in traditional way. The `result` may be also included in other workflows, some of which produce "standard" publications. 
+
+We also often want to produce sequences of "standard" publications. E.g., following a new transient: publishing existing observatory data at the time of the event; ordering and publishing new observations; publishing combination of observatory data with recently reported information.
 
 While selecting new workflows we want to optimize amount and quality of **references** (i.e. citations) to the `result`.
 
