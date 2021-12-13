@@ -726,40 +726,58 @@ def process_skycoord_obj(g, coordinate_node, coordinate_value):
                rdflib.Literal(sky_coord_obj_default_value)))
 
 
-def add_js_click_functionality(net, output_path):
+def add_js_click_functionality(net, output_path, hidden_nodes_dic, hidden_edges_dic):
     f_click = '''
-    var toggle = false;
-    network.on("click", function(e) {
-    
-        selected_node = nodes.get(e.nodes[0]);
-        if (selected_node.label == "Action") {
-            for (let i = 0; i < e.edges.length; i++) {
-              let edge = edges.get(e.edges[i]);
-              if (edge.title == "isInputOf" || edge.title == "hasOutputs") {
-                  edges.update([
-                    {id: edge.id, hidden: toggle}
-                  ]);
-                  let to_node = edges.get(e.edges[i]).to;
-                  if (to_node != e.nodes[0]) {
-                    nodes.update([
-                        {id: to_node, hidden: toggle}
-                    ]);
-                  }
-                  let from_node = edges.get(e.edges[i]).from;
-                  if (from_node != e.nodes[0]) {
-                    nodes.update([
-                        {id: from_node, hidden: toggle}
-                    ]);
-                  }
-              }
+        var toggle = false;
+        network.on("click", function(e) {
+
+            selected_node = nodes.get(e.nodes[0]);
+            if (selected_node.label == "Action") {
+                console.log(selected_node);
+            '''
+    for hidden_edge in hidden_edges_dic:
+        hidden_node_id = None
+        if hidden_edge['dest_node'] in hidden_nodes_dic:
+            hidden_node_id = hidden_edge['dest_node']
+        elif hidden_edge['source_node'] in hidden_nodes_dic:
+            hidden_node_id = hidden_edge['source_node']
+        if hidden_node_id is not None:
+            f_click += f'''
+                    if(selected_node.id == "{hidden_edge['source_node']}" || selected_node.id == "{hidden_edge['dest_node']}") {{
+                        if(edges.get("{hidden_edge['id']}") == null) {{
+                            nodes.add([
+                                {{id: "{hidden_node_id}", 
+                                shape: "{hidden_nodes_dic[hidden_node_id]['shape']}", 
+                                color: "{hidden_nodes_dic[hidden_node_id]['color']}", 
+                                label: "{hidden_nodes_dic[hidden_node_id]['label']}" }}
+                            ])
+                            edges.add([
+                                {{id: "{hidden_edge['id']}", 
+                                from: "{hidden_edge['source_node']}", 
+                                to: "{hidden_edge['dest_node']}", 
+                                title:"{hidden_edge['title']}", 
+                                hidden:false }}
+                            ]);
+                        }}
+                        else {{
+                            nodes.remove([
+                                {{id: "{hidden_node_id}"}}
+                            ])
+                            edges.remove([
+                                {{id: "{hidden_edge['id']}"}},
+                            ]);
+                        }}
+                    }}
+            '''
+
+    f_click += '''
             }
             // switch toggle
             // network.fit();
-            toggle = !toggle;
-        }
-    });
-    return network;
-    '''
+            network.redraw();
+        });
+        return network;
+        '''
     net.html = net.html.replace('return network;', f_click)
 
     with open(output_path, "w+") as out:

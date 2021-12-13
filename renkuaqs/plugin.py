@@ -502,6 +502,23 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     # netx = nx.drawing.nx_pydot.read_dot('graph.dot')
     # net.from_nx(netx)
 
+    net.set_options(
+        """{
+            "physics": {
+                "barnesHut": {
+                  "gravitationalConstant": -2850,
+                  "centralGravity": 0.9,
+                  "springConstant": 0,
+                  "damping": 0.54
+                },
+                "minVelocity": 0.75
+            }
+        }"""
+    )
+
+    hidden_nodes_dic = {}
+    hidden_edges = []
+
     for node in pydot_graph.get_nodes():
         id_node = graph_utils.get_id_node(node)
         graph_utils.customize_node(node,
@@ -516,12 +533,21 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
             hidden = False
             if type_node.startswith('CommandOutput') or type_node.startswith('CommandInput'):
                 hidden = True
-            net.add_node(node.get_name(),
-                         label=type_node,
-                         color=node_configuration['color'],
-                         shape=node_configuration['shape'],
-                         value=node_value,
-                         hidden=hidden)
+            if not hidden:
+                net.add_node(node.get_name(),
+                             label=type_node,
+                             color=node_configuration['color'],
+                             shape=node_configuration['shape'],
+                             value=node_value)
+            else:
+                node_info = dict(
+                    id=node.get_name(),
+                    label=type_node,
+                    color=node_configuration['color'],
+                    shape=node_configuration['shape'],
+                    value=node_value
+                )
+                hidden_nodes_dic[node.get_name()] = node_info
 
     # list of edges and simple color change
     for edge in pydot_graph.get_edge_list():
@@ -530,20 +556,28 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
         source_node = edge.get_source()
         dest_node = edge.get_destination()
         hidden = False
-        node_id = (source_node + '_' + dest_node)
+        edge_id = (source_node + '_' + dest_node)
         if edge_label.startswith('isInputOf') or edge_label.startswith('hasOutputs'):
             hidden = True
         if source_node is not None and dest_node is not None:
-            net.add_edge(source_node, dest_node,
-                         id=node_id,
-                         title=edge_label,
-                         hidden=hidden)
+            if not hidden:
+                net.add_edge(source_node, dest_node,
+                             id=edge_id,
+                             title=edge_label)
+            else:
+                edge_info = dict(
+                    source_node=source_node,
+                    dest_node=dest_node,
+                    id=edge_id,
+                    title=edge_label
+                )
+                hidden_edges.append(edge_info)
 
     # to tweak physics related options
-    # net.show_buttons(filter_=['physics'])
+    net.show_buttons(filter_=['physics'])
     net.write_html('graph.html')
 
-    graph_utils.add_js_click_functionality(net, 'graph.html')
+    graph_utils.add_js_click_functionality(net, 'graph.html', hidden_nodes_dic, hidden_edges)
 
     webbrowser.open('graph.html')
     # final output write over the png image
