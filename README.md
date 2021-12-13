@@ -1,6 +1,6 @@
 ## Is this a recommendation engine?
 
-In a way, it is. But it could be better seen as engine using existing blocks to constucting new scientific activities (workflow plans) producing to publications, selected for best fit in scientific story (publication history). See more details [here](analysis-motivation.md)!
+In a way, it is. But it could be better seen as engine using existing blocks to constucting new scientific activities (workflow plans) producing to publications, selected for best fit in collective scientific story (publication history). See more details [here](analysis-motivation.md)!
 
 ## How is the Upstream Graph populated?
 
