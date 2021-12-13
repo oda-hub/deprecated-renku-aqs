@@ -776,6 +776,16 @@ def add_js_click_functionality(net, output_path, hidden_nodes_dic, hidden_edges_
             // network.fit();
             network.redraw();
         });
+        
+        var container_configure = document.getElementsByClassName("vis-configuration-wrapper");
+        if(container_configure) {
+            container_configure = container_configure[0];
+            container_configure.style = {};
+            container_configure.style.height="300px";
+            container_configure.style.overflow="scroll";
+            console.log(container_configure);
+        }
+        
         return network;
         '''
     net.html = net.html.replace('return network;', f_click)
