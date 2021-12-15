@@ -31,9 +31,11 @@ While selecting new workflows we want to optimize amount and quality of **refere
 We can **train** our selection process by splitting past publication timeline in training and verification section.
 
 
-## Negative effects of selection bias in publishing
+## Effects of selection bias in publishing
 
-Sometimes predicted impact of different `result` is equal, but actual impact, after the result is computed, is very different. Often, "positive" `results` are not published, creating selection bias in the publication stream, which may lead to misjudged trial factors. There is some sense to it: it is useful to keep publication stream "interesting". Our proposal (in line with) to produce and publish both "negative" and "positive" results independently. Naturally, since "positive" results
+Sometimes predicted impact of different `result` is equal, but actual impact, after the result is computed, is very different. Often, "positive" `results` are not published, creating selection bias in the publication stream, which may lead to misjudged trial factors. There is some sense to it: it is useful to keep publication stream "interesting". Our proposal (in line with) to produce and publish both "negative" and "positive" results independently. Naturally, since "positive" results attract more interest, they are more likely to be published.
+
+Another interesting point addressed by publication selection is over-selectiong of "positive" results for publications. At what point a result is justified in some space? Clearly, not every detection is worth a result. Should it be motivated by expected citations, or there are other factors?
 
 ## Different kinds of references
 
