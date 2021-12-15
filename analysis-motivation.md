@@ -35,7 +35,7 @@ We can **train** our selection process by splitting past publication timeline in
 
 Sometimes predicted impact of different `result` is equal, but actual impact, after the result is computed, is very different. Often, "positive" `results` are not published, creating selection bias in the publication stream, which may lead to misjudged trial factors. There is some sense to it: it is useful to keep publication stream "interesting". Our proposal (in line with) to produce and publish both "negative" and "positive" results independently. Naturally, since "positive" results attract more interest, they are more likely to be published.
 
-Another interesting point addressed by publication selection is over-selectiong of "positive" results for publications. At what point a result is justified in some space? Clearly, not every detection is worth a result. Should it be motivated by expected citations, or there are other factors?
+Another interesting point addressed by publication selection is over-selectiong of "positive" results for publications. At what point a result is justified in some space? Clearly, not every detection is worth a result. Should it be motivated by expected citations, or there are other factors? This is especially relevant in publishing on open data, where diverse actors are present.
 
 ## Different kinds of references
 
