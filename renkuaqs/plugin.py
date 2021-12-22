@@ -20,7 +20,6 @@ import os
 import pathlib
 import json
 import webbrowser
-import bs4
 import click
 import rdflib
 import rdflib.tools.rdf2dot
@@ -587,22 +586,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 
     graph_utils.add_js_click_functionality(net, html_fn, hidden_nodes_dic, hidden_edges)
 
-    # let's patch the template
-    # load the file
-    with open(html_fn) as template:
-        html_code = template.read()
-        soup = bs4.BeautifulSoup(html_code, "html.parser")
-    # remove old version ov visjs import
-    soup.head.link.decompose()
-    soup.head.script.decompose()
-    # import the latest version of visjs
-    new_script = soup.new_tag("script", type="application/javascript",
-                              src="https://unpkg.com/vis-network/standalone/umd/vis-network.js")
-    soup.head.append(new_script)
-
-    # save the file again
-    with open(html_fn, "w") as outf:
-        outf.write(str(soup))
+    graph_utils.update_vis_library_version(html_fn)
 
     webbrowser.open(html_fn)
     # final output write over the png image
