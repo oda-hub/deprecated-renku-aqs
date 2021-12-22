@@ -20,14 +20,15 @@ import os
 import pathlib
 import json
 import webbrowser
-
+import bs4
 import click
 import rdflib
 import rdflib.tools.rdf2dot
+import time
+import yaml
 
 from pathlib import Path
 from pyvis.network import Network
-import networkx as nx
 from rdflib.tools import rdf2dot
 from renku.core.models.provenance.annotation import Annotation
 from renku.core.management.command_builder import Command, inject
@@ -41,9 +42,6 @@ from renku.core.commands.graph import _get_graph_for_all_objects
 
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
-
-import time
-import yaml
 
 import renkuaqs.graph_utils as graph_utils
 
@@ -445,6 +443,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 
     graph = _graph(revision, paths)
 
+    html_fn = 'graph.html'
     renku_path = renku_context().renku_path
 
     query_where = graph_utils.build_query_where(input_notebook=input_notebook)
@@ -502,70 +501,60 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     # netx = nx.drawing.nx_pydot.read_dot('graph.dot')
     # net.from_nx(netx)
 
-    net.set_options(
-        """{
-            "physics": {
-                "barnesHut": {
-                  "gravitationalConstant": -2850,
-                  "centralGravity": 0.9,
-                  "springConstant": 0,
-                  "damping": 0.54
-                },
-                "minVelocity": 0.75
-            },
-            "edges": {
-                "arrows": {
-                  "to": {
-                    "enabled": true,
-                    "scaleFactor": 0.45
-                    }
-                },
-                "arrowStrikethrough": false,
-                "color": {
-                    "inherit": true
-                },
-                "physics": false,
-                "smooth": false
-            }
-        }"""
-    )
+    graph_utils.set_graph_options(net)
 
     hidden_nodes_dic = {}
     hidden_edges = []
 
     for node in pydot_graph.get_nodes():
         id_node = graph_utils.get_id_node(node)
-        graph_utils.customize_node(node,
-                                   graph_configuration,
-                                   type_label_values_dict=type_label_values_dict
-                                   )
         if id_node is not None:
             type_node = type_label_values_dict[id_node]
+            node_label, node_title = graph_utils.get_node_graphical_info(node, type_node)
+            print("node_label: ", node_label)
+            print("node_title: ", node_title)
             node_configuration = graph_configuration.get(type_node,
                                                          graph_configuration['Default'])
             node_value = node_configuration.get('value', graph_configuration['Default']['value'])
+            node_level = node_configuration.get('level', graph_configuration['Default']['level'])
             hidden = False
             if type_node.startswith('CommandOutput') or type_node.startswith('CommandInput'):
                 hidden = True
             if not hidden:
                 net.add_node(node.get_name(),
-                             label=type_node,
+                             label=node_label,
+                             title=node_title,
+                             type=type_node,
                              color=node_configuration['color'],
+                             level=node_level,
                              shape=node_configuration['shape'],
-                             value=node_value)
+                             font={
+                                 'multi': "html",
+                                 'face': "courier"
+                             })
             else:
                 node_info = dict(
                     id=node.get_name(),
-                    label=type_node,
+                    label=node_label,
+                    title=node_title,
+                    type=type_node,
                     color=node_configuration['color'],
                     shape=node_configuration['shape'],
-                    value=node_value
+                    level=node_level,
+                    font={
+                        'multi': "html",
+                        'face': "courier"
+                    }
                 )
                 hidden_nodes_dic[node.get_name()] = node_info
+        # for the png output
+        graph_utils.customize_node(node,
+                                   graph_configuration,
+                                   type_label_values_dict=type_label_values_dict
+                                   )
 
     # list of edges and simple color change
     for edge in pydot_graph.get_edge_list():
-        graph_utils.customize_edge(edge)
         edge_label = graph_utils.get_edge_label(edge)
         source_node = edge.get_source()
         dest_node = edge.get_destination()
@@ -586,13 +575,31 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
                     title=edge_label
                 )
                 hidden_edges.append(edge_info)
+        # for the png putput
+        graph_utils.customize_edge(edge)
 
     # to tweak physics related options
-    net.show_buttons(filter_=['physics'])
-    net.write_html('graph.html')
+    net.write_html(html_fn)
 
-    graph_utils.add_js_click_functionality(net, 'graph.html', hidden_nodes_dic, hidden_edges)
+    graph_utils.add_js_click_functionality(net, html_fn, hidden_nodes_dic, hidden_edges)
 
-    webbrowser.open('graph.html')
+    # let's patch the template
+    # load the file
+    with open(html_fn) as template:
+        html_code = template.read()
+        soup = bs4.BeautifulSoup(html_code, "html.parser")
+    # remove old version ov visjs import
+    soup.head.link.decompose()
+    soup.head.script.decompose()
+    # import the latest version of visjs
+    new_script = soup.new_tag("script", type="application/javascript",
+                              src="https://unpkg.com/vis-network/standalone/umd/vis-network.js")
+    soup.head.append(new_script)
+
+    # save the file again
+    with open(html_fn, "w") as outf:
+        outf.write(str(soup))
+
+    webbrowser.open(html_fn)
     # final output write over the png image
     pydot_graph.write_png(filename)

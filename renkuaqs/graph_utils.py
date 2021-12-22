@@ -9,6 +9,55 @@ from dateutil import parser
 from astropy.coordinates import SkyCoord, Angle
 
 
+def set_graph_options(graph):
+    graph.set_options(
+        """{
+            "physics": {
+                "hierarchicalRepulsion": {
+                    "nodeDistance": 175,
+                    "damping": 0.15
+                },
+                "minVelocity": 0.75,
+                "solver": "hierarchicalRepulsion"
+            },
+            "configure": {
+                "filter": ""
+            },
+            "layout": {
+                "hierarchical": {
+                    "enabled": true,
+                    "levelSeparation": -150,
+                    "sortMethod": "directed"
+                }
+            },
+            "nodes": {
+                "scaling": {
+                  "min": 10,
+                  "max": 100,
+                  "label": {
+                    "enabled": true
+                  }
+                },
+                "labelHighlightBold": true
+            },
+            "edges": {
+                "arrows": {
+                  "to": {
+                    "enabled": true,
+                    "scaleFactor": 0.45
+                    }
+                },
+                "arrowStrikethrough": true,
+                "color": {
+                    "inherit": true
+                },
+                "physics": false,
+                "smooth": false
+            }
+        }"""
+    )
+
+
 def customize_edge(edge: typing.Union[pydotplus.Edge]):
     if 'label' in edge.obj_dict['attributes']:
         edge_html = etree.fromstring(edge.obj_dict['attributes']['label'][1:-1])
@@ -48,6 +97,39 @@ def get_id_node(node: typing.Union[pydotplus.Node]) -> str:
                 id_node = b_element_title[0].text
 
     return id_node
+
+
+def get_node_graphical_info(node: typing.Union[pydotplus.Node],
+                   type_node) -> [str, str]:
+    node_label = ""
+    node_title = ""
+    if 'label' in node.obj_dict['attributes']:
+        # parse the whole node table into a lxml object
+        table_html = etree.fromstring(node.get_label()[1:-1])
+        tr_list = table_html.findall('tr')
+        for tr in tr_list:
+            list_td = tr.findall('td')
+            if len(list_td) == 2:
+                list_left_column_element = list_td[0].text.split(':')
+                # setting label
+                if type_node == 'Action':
+                    if 'command' in list_left_column_element:
+                        node_label = '<b>' + list_td[1].text[1:-1] + '</b>'
+                elif type_node == 'CommandInput':
+                    node_label = '<b><i>' + list_td[1].text[1:-1] + '</i></b>'
+                else:
+                    node_label = ('<b>' + type_node + '</b>\n' + list_td[1].text[1:-1])
+                # setting title
+                if 'startedAtTime' in list_left_column_element:
+                    parsed_startedAt_time = parser.parse(list_td[1].text.replace('^^xsd:dateTime', '')[1:-1])
+                    # create an additional row to attach at the bottom, so that time is always at the bottom
+                    node_title += parsed_startedAt_time.strftime('%Y-%m-%d %H:%M:%S') + '\n'
+
+    if node_label == "":
+        node_label = '<b>' + type_node + '</b>'
+    if node_title == "":
+        node_title = type_node
+    return node_label, node_title
 
 
 def customize_node(node: typing.Union[pydotplus.Node],
@@ -149,7 +231,6 @@ def customize_node(node: typing.Union[pydotplus.Node],
 
 
 def build_query_where(input_notebook: str = None):
-    # TODO still to fully verify that the results is the expected one
     if input_notebook is not None:
         query_where = f"""WHERE {{
             {{
@@ -728,13 +809,11 @@ def process_skycoord_obj(g, coordinate_node, coordinate_value):
 
 def add_js_click_functionality(net, output_path, hidden_nodes_dic, hidden_edges_dic):
     f_click = '''
-        var toggle = false;
-        network.on("click", function(e) {
-
-            selected_node = nodes.get(e.nodes[0]);
-            if (selected_node.label == "Action") {
-                console.log(selected_node);
-            '''
+    var toggle = false;
+    network.on("click", function(e) {
+        selected_node = nodes.get(e.nodes[0]);
+        if (selected_node.type == "Action") {
+        '''
     for hidden_edge in hidden_edges_dic:
         hidden_node_id = None
         if hidden_edge['dest_node'] in hidden_nodes_dic:
@@ -742,52 +821,55 @@ def add_js_click_functionality(net, output_path, hidden_nodes_dic, hidden_edges_
         elif hidden_edge['source_node'] in hidden_nodes_dic:
             hidden_node_id = hidden_edge['source_node']
         if hidden_node_id is not None:
+            node_label = hidden_nodes_dic[hidden_node_id]['label'].replace("\n", '\\n')
+            node_title = hidden_nodes_dic[hidden_node_id]['title'].replace("\n", '\\n')
             f_click += f'''
-                    if(selected_node.id == "{hidden_edge['source_node']}" || selected_node.id == "{hidden_edge['dest_node']}") {{
-                        if(edges.get("{hidden_edge['id']}") == null) {{
-                            nodes.add([
-                                {{id: "{hidden_node_id}", 
-                                shape: "{hidden_nodes_dic[hidden_node_id]['shape']}", 
-                                color: "{hidden_nodes_dic[hidden_node_id]['color']}", 
-                                label: "{hidden_nodes_dic[hidden_node_id]['label']}" }}
-                            ])
-                            edges.add([
-                                {{id: "{hidden_edge['id']}", 
-                                from: "{hidden_edge['source_node']}", 
-                                to: "{hidden_edge['dest_node']}", 
-                                title:"{hidden_edge['title']}", 
-                                hidden:false }}
-                            ]);
-                        }}
-                        else {{
-                            nodes.remove([
-                                {{id: "{hidden_node_id}"}}
-                            ])
-                            edges.remove([
-                                {{id: "{hidden_edge['id']}"}},
-                            ]);
-                        }}
+                if(selected_node.id == "{hidden_edge['source_node']}" || selected_node.id == "{hidden_edge['dest_node']}") {{
+                    if(edges.get("{hidden_edge['id']}") == null) {{
+                        nodes.add([
+                            {{id: "{hidden_node_id}",
+                            label: "{node_label}",
+                            title: "{node_title}",
+                            color: "{hidden_nodes_dic[hidden_node_id]['color']}",
+                            shape: "{hidden_nodes_dic[hidden_node_id]['shape']}",
+                            type: "{hidden_nodes_dic[hidden_node_id]['type']}",
+                            font: {hidden_nodes_dic[hidden_node_id]['font']},
+                            level: "{hidden_nodes_dic[hidden_node_id]['level']}"}}
+                        ]);
+                        edges.add([
+                            {{id: "{hidden_edge['id']}", 
+                            from: "{hidden_edge['source_node']}", 
+                            to: "{hidden_edge['dest_node']}", 
+                            title:"{hidden_edge['title']}", 
+                            hidden:false }}
+                        ]);
                     }}
-            '''
+                    else {{
+                        nodes.remove([
+                            {{id: "{hidden_node_id}"}}
+                        ])
+                        edges.remove([
+                            {{id: "{hidden_edge['id']}"}},
+                        ]);
+                    }}
+                }}
+        '''
 
     f_click += '''
-            }
-            // switch toggle
-            // network.fit();
-            network.redraw();
-        });
-        
-        var container_configure = document.getElementsByClassName("vis-configuration-wrapper");
-        if(container_configure) {
-            container_configure = container_configure[0];
-            container_configure.style = {};
-            container_configure.style.height="300px";
-            container_configure.style.overflow="scroll";
-            console.log(container_configure);
         }
-        
-        return network;
-        '''
+        // network.fit();
+        // network.redraw();
+    });
+
+    var container_configure = document.getElementsByClassName("vis-configuration-wrapper");
+    if(container_configure) {
+        container_configure = container_configure[0];
+        container_configure.style = {};
+        container_configure.style.height="300px";
+        container_configure.style.overflow="scroll";
+    }
+    return network;
+    '''
     net.html = net.html.replace('return network;', f_click)
 
     with open(output_path, "w+") as out:
