@@ -812,7 +812,7 @@ def add_js_click_functionality(net, output_path, hidden_nodes_dic, hidden_edges_
     var toggle = false;
     network.on("click", function(e) {
         selected_node = nodes.get(e.nodes[0]);
-        if (selected_node.type == "Action") {
+        if (selected_node.hasOwnProperty('type') && (selected_node.type == "Action" || selected_node.type.startsWith("Astrophysical"))) {
         '''
     for hidden_edge in hidden_edges_dic:
         hidden_node_id = None
