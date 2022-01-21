@@ -1,10 +1,12 @@
 ## Is this a recommendation engine?
 
-In a way, it is. But it could be better seen as engine using existing blocks to constucting new scientific activities (workflow plans) producing to publications, selected for best fit in collective scientific story (publication history). See more details [here](analysis-motivation.md)!
+In a way, it is. But it could be better seen as engine using existing blocks to constucting new scientific activities (workflow plans) producing publications, selected for best fit in collective scientific story (publication history). See more details [here](analysis-motivation.md)!
 
 ## How is the Upstream Graph populated?
 
-* Runs of renku, including metadata harvested with plugin 
+We want to use the knowledge base of our activies, described in a knowledge graph. It includes:
+
+* Runs of renku, including metadata harvested with the plugin we developed
 * Multi-messenger events, from GCNs, ATels, and other sources. See [high-level preview page](https://integral-observatory.github.io/).
 * Workflows, their input parameter types and default values; when suitable - output parameter types:
   * Multi-messenger analysis workflows
