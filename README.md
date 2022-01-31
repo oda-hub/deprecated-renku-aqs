@@ -12,6 +12,9 @@ We want to use the knowledge base of our activies, described in a knowledge grap
   * Multi-messenger analysis workflows
   * Cross-Calibration Workflows for INTEGRAL/ISGRI: includes contributed data reduction and elaboration of a [variety of high-energy sources](https://share.streamlit.io/volodymyrss/streamlit-cc/app.py).
 
+* Does every paper correspond to a deterministic workflow?
+  * in principle, yes. Since every paper was produced in some, albeit unknown, way. We can always identify a recipe for a paper, but we do not always have the means to execute it.
+
 We also plan to include:
 * All MMODA requests
 * "Standard" results from fresh INTEGRAL data (Quick Look Activities).
