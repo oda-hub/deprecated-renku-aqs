@@ -382,8 +382,7 @@ def build_query_where(input_notebook: str = None):
 def build_query_construct_base_graph(no_oda_info=False):
     query_construct_action = """
             ?action a <http://schema.org/Action> ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-                ?has ?actionParam .
+                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand .
         
             ?activity a ?activityType ;
                 <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;

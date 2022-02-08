@@ -446,7 +446,8 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     renku_path = renku_context().renku_path
 
     query_where = graph_utils.build_query_where(input_notebook=input_notebook)
-    query_construct = graph_utils.build_query_construct(input_notebook=input_notebook, no_oda_info=no_oda_info)
+    # query_construct = graph_utils.build_query_construct(input_notebook=input_notebook, no_oda_info=no_oda_info)
+    query_construct = graph_utils.build_query_construct_base_graph()
 
     query = f"""{query_construct}
         {query_where}
@@ -507,7 +508,8 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 
     for node in pydot_graph.get_nodes():
         id_node = graph_utils.get_id_node(node)
-        if id_node is not None:
+        print("id_node: ", id_node)
+        if id_node is not None and id_node in type_label_values_dict:
             type_node = type_label_values_dict[id_node]
             node_label, node_title = graph_utils.get_node_graphical_info(node, type_node)
             print("node_label: ", node_label)
