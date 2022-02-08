@@ -384,10 +384,6 @@ def build_query_construct_base_graph(no_oda_info=False):
             ?action a <http://schema.org/Action> ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                 ?has ?actionParam .
-
-            ?actionParam a ?actionParamType ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
-                <http://schema.org/defaultValue> ?actionParamValue .
         
             ?activity a ?activityType ;
                 <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
@@ -395,6 +391,12 @@ def build_query_construct_base_graph(no_oda_info=False):
 
             ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
     """
+
+    query_construct = f"""CONSTRUCT {{
+                {query_construct_action}
+            }}"""
+
+    return query_construct
 
 
 def build_query_construct(input_notebook: str = None, no_oda_info=False):
