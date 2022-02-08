@@ -398,6 +398,10 @@ def build_query_construct_base_graph(no_oda_info=False):
     return query_construct
 
 
+def build_query_per_node(node):
+    pass
+
+
 def build_query_construct(input_notebook: str = None, no_oda_info=False):
     if input_notebook is not None:
         query_construct_action = f"""
