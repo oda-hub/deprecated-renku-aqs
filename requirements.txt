@@ -2,3 +2,4 @@
 -e git+https://github.com/oda-hub/aqsmodel-converters#egg=aqsconverters
 pydotplus
 rdflib
+bs4
