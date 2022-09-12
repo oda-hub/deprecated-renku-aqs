@@ -43,7 +43,8 @@ from renku.core.commands.graph import _get_graph_for_all_objects
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
 
-import renkuaqs.graph_utils as graph_utils, javascript_graph_utils
+import renkuaqs.graph_utils as graph_utils
+import renkuaqs.javascript_graph_utils as javascript_graph_utils
 
 # TODO improve this
 __this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
