@@ -539,19 +539,13 @@ def show_graph(revision, paths, input_notebook):
 
     serial = G.serialize(format="n3")
 
-    ttl_fn = 'graph.ttl'
-    with open(ttl_fn, "w") as f:
-        f.write(serial)
-
     html_fn = 'graph.html'
 
     default_graph_graphical_config_fn = 'graph_graphical_config.json'
     graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
     graph_reduction_config_fn = 'graph_reduction_config.json'
 
-    fd = open(ttl_fn, 'r')
-    graph_ttl_str = fd.read()
-    fd.close()
+    graph_ttl_str = serial
     nodes_graph_config_obj = {}
     edges_graph_config_obj = {}
 
@@ -589,6 +583,11 @@ def show_graph(revision, paths, input_notebook):
     net = Network(
         height='750px', width='100%',
     )
+
+    # to tweak physics related options
+    net.write_html(html_fn)
+
+    javascript_graph_utils.set_graph_options(net, html_fn)
 
     javascript_graph_utils.add_js_click_functionality(net, html_fn,
                                                       graph_ttl_stream=graph_ttl_str,
