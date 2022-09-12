@@ -80,6 +80,7 @@ def activity_annotations(activity):
     annotations = []
 
     print("process_run_annotations")
+    print(aqs.renku_aqs_path)
 
     if os.path.exists(aqs.renku_aqs_path):
         for p in aqs.renku_aqs_path.iterdir():
@@ -139,7 +140,7 @@ def _export_graph():
     return graph
 
 
-def _graph(revision, paths):
+def _graph(revision=None, paths=None):
     # FIXME: use (revision, paths) filter
 
     cmd = Command().command(_export_graph).with_database(write=False).require_migration()
@@ -446,8 +447,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     renku_path = renku_context().renku_path
 
     query_where = graph_utils.build_query_where(input_notebook=input_notebook)
-    # query_construct = graph_utils.build_query_construct(input_notebook=input_notebook, no_oda_info=no_oda_info)
-    query_construct = graph_utils.build_query_construct_base_graph()
+    query_construct = graph_utils.build_query_construct(input_notebook=input_notebook, no_oda_info=no_oda_info)
 
     query = f"""{query_construct}
         {query_where}
@@ -464,6 +464,11 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     G.bind("oda", "http://odahub.io/ontology#")
     G.bind("odas", "https://odahub.io/ontology#") # the same
     G.bind("local-renku", f"file://{renku_path}/")
+
+    # serial = G.serialize(format="n3")
+    #
+    # with open("subgraph.ttl", "w") as f:
+    #     f.write(serial)
 
     graph_utils.extract_activity_start_time(G)
 
@@ -482,75 +487,64 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     graph_utils.analyze_outputs(G, out_default_value_dict)
     graph_utils.analyze_types(G, type_label_values_dict)
 
-    with open('type_label_values_dict.yaml', 'w+') as ft:
-        yaml.dump(type_label_values_dict, ft, allow_unicode=True)
-
     graph_utils.clean_graph(G)
 
     stream = io.StringIO()
     rdf2dot.rdf2dot(G, stream, opts={display})
-    with open('graph.dot', 'w+') as fd:
-        rdf2dot.rdf2dot(G, fd)
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
 
-    # pyvis graph
-    net = Network(
-        height='750px', width='100%',
-    )
-    # TODO not fully working yet, needs to investigate
-    # netx = nx.drawing.nx_pydot.read_dot('graph.dot')
-    # net.from_nx(netx)
+    # # pyvis graph
+    # net = Network(
+    #     height='750px', width='100%',
+    # )
 
-    graph_utils.set_graph_options(net)
+    # graph_utils.set_graph_options(net)
 
     hidden_nodes_dic = {}
     hidden_edges = []
 
     for node in pydot_graph.get_nodes():
         id_node = graph_utils.get_id_node(node)
-        print("id_node: ", id_node)
-        if id_node is not None and id_node in type_label_values_dict:
-            type_node = type_label_values_dict[id_node]
-            node_label, node_title = graph_utils.get_node_graphical_info(node, type_node)
-            print("node_label: ", node_label)
-            print("node_title: ", node_title)
-            node_configuration = graph_configuration.get(type_node,
-                                                         graph_configuration['Default'])
-            node_value = node_configuration.get('value', graph_configuration['Default']['value'])
-            node_level = node_configuration.get('level', graph_configuration['Default']['level'])
-            hidden = False
-            if type_node.startswith('CommandOutput') or type_node.startswith('CommandInput') \
-                    or type_node.startswith('Angle') or type_node.startswith('Pixels') \
-                    or type_node.startswith('Coordinates') or type_node.startswith('Position') \
-                    or type_node.startswith('SkyCoordinates'):
-                hidden = True
-            if not hidden:
-                net.add_node(node.get_name(),
-                             label=node_label,
-                             title=node_title,
-                             type=type_node,
-                             color=node_configuration['color'],
-                             level=node_level,
-                             shape=node_configuration['shape'],
-                             font={
-                                 'multi': "html",
-                                 'face': "courier"
-                             })
-            else:
-                node_info = dict(
-                    id=node.get_name(),
-                    label=node_label,
-                    title=node_title,
-                    type=type_node,
-                    color=node_configuration['color'],
-                    shape=node_configuration['shape'],
-                    level=node_level,
-                    font={
-                        'multi': "html",
-                        'face': "courier"
-                    }
-                )
-                hidden_nodes_dic[node.get_name()] = node_info
+        # if id_node is not None and id_node in type_label_values_dict:
+        #     type_node = type_label_values_dict[id_node]
+        #     node_label, node_title = graph_utils.get_node_graphical_info(node, type_node)
+        #     node_configuration = graph_configuration.get(type_node,
+        #                                                  graph_configuration['Default'])
+        #     node_value = node_configuration.get('value', graph_configuration['Default']['value'])
+        #     node_level = node_configuration.get('level', graph_configuration['Default']['level'])
+            # hidden = False
+            # if type_node.startswith('CommandOutput') or type_node.startswith('CommandInput') \
+            #         or type_node.startswith('Angle') or type_node.startswith('Pixels') \
+            #         or type_node.startswith('Coordinates') or type_node.startswith('Position') \
+            #         or type_node.startswith('SkyCoordinates'):
+            #     hidden = True
+            # if not hidden:
+            #     net.add_node(node.get_name(),
+            #                  label=node_label,
+            #                  title=node_title,
+            #                  type=type_node,
+            #                  color=node_configuration['color'],
+            #                  level=node_level,
+            #                  shape=node_configuration['shape'],
+            #                  font={
+            #                      'multi': "html",
+            #                      'face': "courier"
+            #                  })
+            # else:
+            #     node_info = dict(
+            #         id=node.get_name(),
+            #         label=node_label,
+            #         title=node_title,
+            #         type=type_node,
+            #         color=node_configuration['color'],
+            #         shape=node_configuration['shape'],
+            #         level=node_level,
+            #         font={
+            #             'multi': "html",
+            #             'face': "courier"
+            #         }
+            #     )
+            #     hidden_nodes_dic[node.get_name()] = node_info
         # for the png output
         graph_utils.customize_node(node,
                                    graph_configuration,
@@ -559,37 +553,81 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 
     # list of edges and simple color change
     for edge in pydot_graph.get_edge_list():
-        edge_label = graph_utils.get_edge_label(edge)
-        source_node = edge.get_source()
-        dest_node = edge.get_destination()
-        hidden = False
-        edge_id = (source_node + '_' + dest_node)
-        if edge_label.startswith('isInputOf') or edge_label.startswith('hasOutputs') \
-                or edge_label.startswith('isUsing'):
-            hidden = True
-        if source_node is not None and dest_node is not None:
-            if not hidden:
-                net.add_edge(source_node, dest_node,
-                             id=edge_id,
-                             title=edge_label)
-            else:
-                edge_info = dict(
-                    source_node=source_node,
-                    dest_node=dest_node,
-                    id=edge_id,
-                    title=edge_label
-                )
-                hidden_edges.append(edge_info)
+        # edge_label = graph_utils.get_edge_label(edge)
+        # source_node = edge.get_source()
+        # dest_node = edge.get_destination()
+        # hidden = False
+        # edge_id = (source_node + '_' + dest_node)
+        # if edge_label.startswith('isInputOf') or edge_label.startswith('hasOutputs') \
+        #         or edge_label.startswith('isUsing'):
+        #     hidden = True
+        # if source_node is not None and dest_node is not None:
+        #     if not hidden:
+        #         net.add_edge(source_node, dest_node,
+        #                      id=edge_id,
+        #                      title=edge_label)
+        #     else:
+        #         edge_info = dict(
+        #             source_node=source_node,
+        #             dest_node=dest_node,
+        #             id=edge_id,
+        #             title=edge_label
+        #         )
+        #         hidden_edges.append(edge_info)
         # for the png putput
         graph_utils.customize_edge(edge)
 
-    # to tweak physics related options
-    net.write_html(html_fn)
+    # graph_utils.add_js_click_functionality(net, html_fn, hidden_nodes_dic, hidden_edges)
+    #
+    # graph_utils.update_vis_library_version(html_fn)
 
-    graph_utils.add_js_click_functionality(net, html_fn, hidden_nodes_dic, hidden_edges)
-
-    graph_utils.update_vis_library_version(html_fn)
-
-    webbrowser.open(html_fn)
     # final output write over the png image
     pydot_graph.write_png(filename)
+
+
+@aqs.command()
+@click.option(
+    "--revision",
+    default="HEAD",
+    help="The git revision to generate the log for, default: HEAD",
+)
+@click.option("--input-notebook", default=None, help="Input notebook to process")
+@click.argument("paths", type=click.Path(exists=False), nargs=-1)
+def show_graph(revision, paths, input_notebook):
+    """Simple graph visualization """
+    import io
+    from IPython.display import display
+    import pydotplus
+
+    graph = _graph(revision, paths)
+
+    html_fn = 'graph.html'
+    renku_path = renku_context().renku_path
+
+    query_where = graph_utils.build_query_where(input_notebook=input_notebook)
+    query_construct = graph_utils.build_query_construct(input_notebook=input_notebook)
+
+    query = f"""{query_construct}
+            {query_where}
+            """
+
+    print("Before starting the query")
+    t1 = time.perf_counter()
+    r = graph.query(query)
+    t2 = time.perf_counter()
+    print("Query completed in %d !" % (t2 - t1))
+
+    G = rdflib.Graph()
+    G.parse(data=r.serialize(format="n3").decode(), format="n3")
+    G.bind("oda", "http://odahub.io/ontology#")
+    G.bind("odas", "https://odahub.io/ontology#")  # the same
+    G.bind("local-renku", f"file://{renku_path}/")
+
+    serial = G.serialize(format="n3")
+
+    with open("subgraph.ttl", "w") as f:
+        f.write(serial)
+
+    # to tweak physics related options
+    net.write_html(html_fn)
+    # webbrowser.open(html_fn)
