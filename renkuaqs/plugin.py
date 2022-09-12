@@ -26,6 +26,7 @@ import rdflib.tools.rdf2dot
 import time
 import yaml
 
+from importlib import resources
 from pathlib import Path
 from pyvis.network import Network
 from rdflib.tools import rdf2dot
@@ -42,7 +43,7 @@ from renku.core.commands.graph import _get_graph_for_all_objects
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
 
-import renkuaqs.graph_utils as graph_utils
+import renkuaqs.graph_utils as graph_utils, javascript_graph_utils
 
 # TODO improve this
 __this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
@@ -511,14 +512,9 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 @click.option("--input-notebook", default=None, help="Input notebook to process")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def show_graph(revision, paths, input_notebook):
-    """Simple graph visualization """
-    import io
-    from IPython.display import display
-    import pydotplus
 
     graph = _graph(revision, paths)
 
-    html_fn = 'graph.html'
     renku_path = renku_context().renku_path
 
     query_where = graph_utils.build_query_where(input_notebook=input_notebook)
@@ -542,9 +538,71 @@ def show_graph(revision, paths, input_notebook):
 
     serial = G.serialize(format="n3")
 
-    with open("subgraph.ttl", "w") as f:
+    ttl_fn = 'graph.ttl'
+    with open(ttl_fn, "w") as f:
         f.write(serial)
 
-    # to tweak physics related options
-    net.write_html(html_fn)
-    # webbrowser.open(html_fn)
+    html_fn = 'graph.html'
+
+    default_graph_graphical_config_fn = 'graph_graphical_config.json'
+    graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
+    graph_reduction_config_fn = 'graph_reduction_config.json'
+
+    fd = open(ttl_fn, 'r')
+    graph_ttl_str = fd.read()
+    fd.close()
+    nodes_graph_config_obj = {}
+    edges_graph_config_obj = {}
+
+    graph_config_names_list = []
+    with resources.open_text("renkuaqs", default_graph_graphical_config_fn) as graph_config_fn_f:
+        graph_config_loaded = json.load(graph_config_fn_f)
+        nodes_graph_config_obj_loaded = graph_config_loaded.get('Nodes', {})
+        edges_graph_config_obj_loaded = graph_config_loaded.get('Edges', {})
+
+    if nodes_graph_config_obj_loaded:
+        for config_type in nodes_graph_config_obj_loaded:
+            nodes_graph_config_obj_loaded[config_type]['config_file'] = default_graph_graphical_config_fn
+        nodes_graph_config_obj.update(nodes_graph_config_obj_loaded)
+    if edges_graph_config_obj_loaded:
+        for config_type in edges_graph_config_obj_loaded:
+            edges_graph_config_obj_loaded[config_type]['config_file'] = default_graph_graphical_config_fn
+        edges_graph_config_obj.update(edges_graph_config_obj_loaded)
+    graph_config_names_list.append(default_graph_graphical_config_fn)
+    # for compatibility with Javascript
+    nodes_graph_config_obj_str = json.dumps(nodes_graph_config_obj)
+    edges_graph_config_obj_str = json.dumps(edges_graph_config_obj)
+
+    with resources.open_text("renkuaqs", graph_reduction_config_fn) as graph_reduction_config_fn_f:
+        graph_reduction_config_obj = json.load(graph_reduction_config_fn_f)
+
+    # for compatibility with Javascript
+    graph_reductions_obj_str = json.dumps(graph_reduction_config_obj)
+
+    with resources.open_text("renkuaqs", graph_nodes_subset_config_fn) as graph_nodes_subset_config_fn_f:
+        graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
+
+    # for compatibility with Javascript
+    graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj)
+
+    net = Network(
+        height='750px', width='100%',
+    )
+
+    javascript_graph_utils.add_js_click_functionality(net, html_fn,
+                                                      graph_ttl_stream=graph_ttl_str,
+                                                      nodes_graph_config_obj_str=nodes_graph_config_obj_str,
+                                                      edges_graph_config_obj_str=edges_graph_config_obj_str,
+                                                      graph_reductions_obj_str=graph_reductions_obj_str,
+                                                      graph_nodes_subset_config_obj_str=graph_nodes_subset_config_obj_str)
+
+    javascript_graph_utils.set_html_content(net, html_fn,
+                                            graph_config_names_list=graph_config_names_list,
+                                            nodes_graph_config_obj_dict=nodes_graph_config_obj,
+                                            edges_graph_config_obj_dict=edges_graph_config_obj,
+                                            graph_reduction_config_obj_dict=graph_reduction_config_obj,
+                                            graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj)
+
+    javascript_graph_utils.update_js_libraries(html_fn)
+
+    webbrowser.open(html_fn)
