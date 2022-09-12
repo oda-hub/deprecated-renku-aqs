@@ -465,11 +465,6 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     G.bind("odas", "https://odahub.io/ontology#") # the same
     G.bind("local-renku", f"file://{renku_path}/")
 
-    # serial = G.serialize(format="n3")
-    #
-    # with open("subgraph.ttl", "w") as f:
-    #     f.write(serial)
-
     graph_utils.extract_activity_start_time(G)
 
     if not no_oda_info:
@@ -493,59 +488,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     rdf2dot.rdf2dot(G, stream, opts={display})
     pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
 
-    # # pyvis graph
-    # net = Network(
-    #     height='750px', width='100%',
-    # )
-
-    # graph_utils.set_graph_options(net)
-
-    hidden_nodes_dic = {}
-    hidden_edges = []
-
     for node in pydot_graph.get_nodes():
-        id_node = graph_utils.get_id_node(node)
-        # if id_node is not None and id_node in type_label_values_dict:
-        #     type_node = type_label_values_dict[id_node]
-        #     node_label, node_title = graph_utils.get_node_graphical_info(node, type_node)
-        #     node_configuration = graph_configuration.get(type_node,
-        #                                                  graph_configuration['Default'])
-        #     node_value = node_configuration.get('value', graph_configuration['Default']['value'])
-        #     node_level = node_configuration.get('level', graph_configuration['Default']['level'])
-            # hidden = False
-            # if type_node.startswith('CommandOutput') or type_node.startswith('CommandInput') \
-            #         or type_node.startswith('Angle') or type_node.startswith('Pixels') \
-            #         or type_node.startswith('Coordinates') or type_node.startswith('Position') \
-            #         or type_node.startswith('SkyCoordinates'):
-            #     hidden = True
-            # if not hidden:
-            #     net.add_node(node.get_name(),
-            #                  label=node_label,
-            #                  title=node_title,
-            #                  type=type_node,
-            #                  color=node_configuration['color'],
-            #                  level=node_level,
-            #                  shape=node_configuration['shape'],
-            #                  font={
-            #                      'multi': "html",
-            #                      'face': "courier"
-            #                  })
-            # else:
-            #     node_info = dict(
-            #         id=node.get_name(),
-            #         label=node_label,
-            #         title=node_title,
-            #         type=type_node,
-            #         color=node_configuration['color'],
-            #         shape=node_configuration['shape'],
-            #         level=node_level,
-            #         font={
-            #             'multi': "html",
-            #             'face': "courier"
-            #         }
-            #     )
-            #     hidden_nodes_dic[node.get_name()] = node_info
-        # for the png output
         graph_utils.customize_node(node,
                                    graph_configuration,
                                    type_label_values_dict=type_label_values_dict
@@ -553,33 +496,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 
     # list of edges and simple color change
     for edge in pydot_graph.get_edge_list():
-        # edge_label = graph_utils.get_edge_label(edge)
-        # source_node = edge.get_source()
-        # dest_node = edge.get_destination()
-        # hidden = False
-        # edge_id = (source_node + '_' + dest_node)
-        # if edge_label.startswith('isInputOf') or edge_label.startswith('hasOutputs') \
-        #         or edge_label.startswith('isUsing'):
-        #     hidden = True
-        # if source_node is not None and dest_node is not None:
-        #     if not hidden:
-        #         net.add_edge(source_node, dest_node,
-        #                      id=edge_id,
-        #                      title=edge_label)
-        #     else:
-        #         edge_info = dict(
-        #             source_node=source_node,
-        #             dest_node=dest_node,
-        #             id=edge_id,
-        #             title=edge_label
-        #         )
-        #         hidden_edges.append(edge_info)
-        # for the png putput
         graph_utils.customize_edge(edge)
-
-    # graph_utils.add_js_click_functionality(net, html_fn, hidden_nodes_dic, hidden_edges)
-    #
-    # graph_utils.update_vis_library_version(html_fn)
 
     # final output write over the png image
     pydot_graph.write_png(filename)
