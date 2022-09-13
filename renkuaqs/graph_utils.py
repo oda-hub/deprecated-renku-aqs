@@ -228,7 +228,6 @@ def build_query_where(input_notebook: str = None):
                                         ) .
         """
 
-                # ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
     query_where = query_where + """
                 OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition } .
             }
@@ -361,7 +360,6 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                 <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
                 <http://www.w3.org/ns/prov#hadPlan> ?action .
     """
-            # ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
 
     query_construct_oda_info = ""
     if not no_oda_info:
@@ -424,7 +422,6 @@ def clean_graph(g):
     # remove not-needed triples
     g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
     g.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
-    g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation'), None))
     g.remove((None, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), None))
     g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), None))
     g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), None))
@@ -561,53 +558,45 @@ def extract_activity_start_time(g):
     start_time_activity_list = g[:rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime')]
 
     for activity_node, activity_start_time in start_time_activity_list:
-        # get the association and then the action
-        qualified_association_list = g[activity_node:rdflib.URIRef(
-            'http://www.w3.org/ns/prov#qualifiedAssociation')]
-        for association_node in qualified_association_list:
-            plan_list = g[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
-            for plan_node in plan_list:
-                g.add(
-                    (plan_node, rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime'), activity_start_time))
-                g.remove((activity_node, rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime'),
-                          activity_start_time))
+        plan_list = g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
+        for plan_node in plan_list:
+            g.add(
+                (plan_node, rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime'), activity_start_time))
+            g.remove((activity_node, rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime'),
+                      activity_start_time))
 
 
 def process_oda_info(g):
-    # find a way to the action form the Run by extracting activity qualified association
     run_target_list = g[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
     for run_node, activity_node in run_target_list:
-        # run_node is the run, act_node is the activity
-        qualified_association_list = g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#qualifiedAssociation')]
-        for association_node in qualified_association_list:
-            action_list = g[association_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
-            # or plan_node list
-            for action_node in action_list:
-                # we inferred a connection from the run to an action
-                # and we can now infer the request of a certain astroObject and the usage of a certain module
-                used_module_list = list(g[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')])
-                # one module in use per annotation and one requested AstroObject/AstroRegion
-                module_node = used_module_list[0]
-                # query_object
-                process_query_object_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
-                # query_region
-                process_query_region_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
-                # get_images
-                process_get_images_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
+        action_list = g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
+        # or plan_node list
+        for action_node in action_list:
+            # we inferred a connection from the run to an action
+            # and we can now infer the request of a certain astroObject and the usage of a certain module
+            used_module_list = list(g[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')])
+            # one module in use per annotation and one requested AstroObject/AstroRegion
+            module_node = used_module_list[0]
+            # query_object
+            process_query_object_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
+            # query_region
+            process_query_region_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
+            # get_images
+            process_get_images_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
 
-                # some clean-up
-                g.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isUsing'),
-                          None))
-                g.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion'),
-                          None))
-                g.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
-                          None))
-                g.remove((run_node,
-                          rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage'),
-                          None))
+            # some clean-up
+            g.remove((run_node,
+                      rdflib.URIRef('http://odahub.io/ontology#isUsing'),
+                      None))
+            g.remove((run_node,
+                      rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion'),
+                      None))
+            g.remove((run_node,
+                      rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
+                      None))
+            g.remove((run_node,
+                      rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage'),
+                      None))
 
 
 def process_query_object_info(g, run_node=None, module_node=None, action_node=None):
