@@ -1239,7 +1239,7 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
         out.write(net.html)
 
 
-def update_js_libraries(html_fn):
+def set_html_head(html_fn):
     # let's patch the template
     # load the file
     with open(html_fn) as template:
@@ -1261,6 +1261,13 @@ def update_js_libraries(html_fn):
                                                    src="https://rdf.js.org/comunica-browser/versions/latest"
                                                        "/engines/query-sparql-rdfjs/comunica-browser.js")
     soup.head.append(new_script_query_sparql_library)
+
+    title_tag = soup.new_tag("title")
+    title_tag.string = "Graph visualization"
+
+    soup.head.append(title_tag)
+
+    sou
 
     # save the file again
     with open(html_fn, "w") as outf:

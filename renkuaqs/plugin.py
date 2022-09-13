@@ -604,6 +604,6 @@ def show_graph(revision, paths):
                                             graph_reduction_config_obj_dict=graph_reduction_config_obj,
                                             graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj)
 
-    javascript_graph_utils.update_js_libraries(html_fn)
+    javascript_graph_utils.set_html_head(html_fn)
 
     webbrowser.open(html_fn)
