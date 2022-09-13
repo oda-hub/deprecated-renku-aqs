@@ -1267,8 +1267,6 @@ def set_html_head(html_fn):
 
     soup.head.append(title_tag)
 
-    sou
-
     # save the file again
     with open(html_fn, "w") as outf:
         outf.write(str(soup))
