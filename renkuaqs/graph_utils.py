@@ -228,6 +228,7 @@ def build_query_where(input_notebook: str = None):
                                         ) .
         """
 
+                # ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
     query_where = query_where + """
                 OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition } .
             }
@@ -236,9 +237,8 @@ def build_query_where(input_notebook: str = None):
                 ?activity a ?activityType ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
                     <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                    <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
+                    <http://www.w3.org/ns/prov#qualifiedAssociation>/<http://www.w3.org/ns/prov#hadPlan> ?action .
 
-                ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
 
                 {
                     ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
@@ -330,25 +330,6 @@ def build_query_where(input_notebook: str = None):
     return query_where
 
 
-def build_query_construct_base_graph():
-    query_construct_action = """
-            ?action a <http://schema.org/Action> ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand .
-        
-            ?activity a ?activityType ;
-                <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
-
-            ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
-    """
-
-    query_construct = f"""CONSTRUCT {{
-                {query_construct_action}
-            }}"""
-
-    return query_construct
-
-
 def build_query_construct(input_notebook: str = None, no_oda_info=False):
     if input_notebook is not None:
         query_construct_action = f"""
@@ -378,10 +359,9 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
     query_construct_action += """
             ?activity a ?activityType ;
                 <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                <http://www.w3.org/ns/prov#qualifiedAssociation> ?activity_qualified_association .
-
-            ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
+                <http://www.w3.org/ns/prov#hadPlan> ?action .
     """
+            # ?activity_qualified_association <http://www.w3.org/ns/prov#hadPlan> ?action .
 
     query_construct_oda_info = ""
     if not no_oda_info:

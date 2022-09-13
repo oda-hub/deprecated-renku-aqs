@@ -510,16 +510,17 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     default="HEAD",
     help="The git revision to generate the log for, default: HEAD",
 )
-@click.option("--input-notebook", default=None, help="Input notebook to process")
+# TODO to discuss if is wanted/needed
+# @click.option("--input-notebook", default=None, help="Input notebook to process")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
-def show_graph(revision, paths, input_notebook):
+def show_graph(revision, paths):
 
     graph = _graph(revision, paths)
 
     renku_path = renku_context().renku_path
 
-    query_where = graph_utils.build_query_where(input_notebook=input_notebook)
-    query_construct = graph_utils.build_query_construct(input_notebook=input_notebook)
+    query_construct = graph_utils.build_query_construct(no_oda_info=True)
+    query_where = graph_utils.build_query_where()
 
     query = f"""{query_construct}
             {query_where}
