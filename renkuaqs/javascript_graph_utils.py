@@ -199,6 +199,19 @@ def set_html_content(net, output_path,
             </div>
     '''
 
+    net.html = net.html.replace('<html>', '<!DOCTYPE html>')
+    net.html = net.html.replace('<style type="text/css">',
+                                ('<style type="text/css">'
+                                 'h1 { '
+                                 '  font-family: \"Source Sans Pro\", '
+                                 '  sans-serif; '
+                                 '  font-weight: 700; '
+                                 '  color: rgb(49, 51, 63); '
+                                 '  line-height: 1.2; '
+                                 '}'))
+    net_h1_html_match = re.search(r'<center>.*<h1></h1>.*</center>', net.html, flags=re.DOTALL)
+    if net_h1_html_match is not None:
+        net.html = net.html.replace(net_h1_html_match.group(0), '<h1>ODA Graph Export Quick-Look</h1>')
     net.html = net.html.replace('<div id = "mynetwork"></div>', html_code)
     with open(output_path, "w+") as out:
         out.write(net.html)

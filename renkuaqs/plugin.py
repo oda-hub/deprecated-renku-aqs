@@ -537,6 +537,9 @@ def show_graph(revision, paths):
 
     serial = G.serialize(format="n3")
 
+    with open('full_graph.ttl', 'w') as gfn:
+        gfn.write(serial)
+
     html_fn = 'graph.html'
 
     default_graph_graphical_config_fn = 'graph_graphical_config.json'
