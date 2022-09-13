@@ -715,23 +715,20 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                         ?s ?p_literal ?s_literal .
                         FILTER isLiteral(?s_literal) .
 
-                        FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
-                                ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
+                        FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
                     }
                     UNION
                     {
                         ?s ?p <${clicked_node_id}> .
                         ?s a ?s_type .
 
-                        FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
-                                ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
+                        FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
                     }
                     UNION
                     {
                         ?s ?p <${clicked_node_id}> .
 
-                        FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
-                                ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
+                        FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
                     }
                     UNION
                     {
@@ -740,23 +737,20 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                         ?o ?p_literal ?o_literal .
                         FILTER isLiteral(?o_literal) .
 
-                        FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
-                                ?p != <http://www.w3.org/ns/prov#hadPlan> ) .                    
+                        FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .                    
                     }
                     UNION
                     {
                         <${clicked_node_id}> ?p ?o .
                         ?o a ?o_type
 
-                        FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
-                                ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
+                        FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
                     }
                     UNION
                     {
                         <${clicked_node_id}> ?p ?o .
 
-                        FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
-                                ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
+                        FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
                     }
                     UNION
                     {
@@ -765,7 +759,7 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
 
                         ?activity a ?activityType ;
                             <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                            <http://www.w3.org/ns/prov#qualifiedAssociation>/<http://www.w3.org/ns/prov#hadPlan> ?action .
+                            <http://www.w3.org/ns/prov#hadPlan> ?action .
 
                         FILTER (?activity = <${clicked_node_id}> ||
                                 ?action = <${clicked_node_id}> ) .
