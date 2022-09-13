@@ -503,17 +503,11 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 
 
 @aqs.command()
-@click.option(
-    "--revision",
-    default="HEAD",
-    help="The git revision to generate the log for, default: HEAD",
-)
 # TODO to discuss if is wanted/needed
 # @click.option("--input-notebook", default=None, help="Input notebook to process")
-@click.argument("paths", type=click.Path(exists=False), nargs=-1)
-def show_graph(revision, paths):
+def show_graph():
 
-    graph = _graph(revision, paths)
+    graph = _graph()
     renku_path = renku_context().renku_path
 
     query_construct = graph_utils.build_query_construct()
