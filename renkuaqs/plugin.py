@@ -531,7 +531,6 @@ def show_graph(revision, paths):
 
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
-    # G.parse(data=graph.serialize(format="n3"), format="n3")
     G.bind("oda", "http://odahub.io/ontology#")
     G.bind("odas", "https://odahub.io/ontology#")  # the same
     G.bind("local-renku", f"file://{renku_path}/")

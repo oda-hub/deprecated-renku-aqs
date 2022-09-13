@@ -692,26 +692,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
     f_query_clicked_node_formatting = '''
 
             function format_query_clicked_node(clicked_node_id) {
-
-                let filter_s_type = '';
-                let filter_s = '';
-                let filter_o_type = '';
-                let filter_o = '';
-                let filter_p_literal = '';
-/*                for (let prefix_idx in prefixes_graph) {
-                    let checkbox_config = document.getElementById(prefix_idx + '_filter');
-                    if (checkbox_config !== null && !checkbox_config.checked) {
-                        let values_input = checkbox_config.value.split(",");
-                        for (let value_input_idx in values_input) {
-                            filter_s_type += `FILTER ( ! STRSTARTS(STR(?s_type), "${prefixes_graph[values_input[value_input_idx].trim()]}") ). `;
-                            filter_s += `FILTER ( ! STRSTARTS(STR(?s), "${prefixes_graph[values_input[value_input_idx].trim()]}") ). `;
-                            filter_o_type += `FILTER ( ! STRSTARTS(STR(?o_type), "${prefixes_graph[values_input[value_input_idx].trim()]}") ). `;
-                            filter_o += `FILTER ( ! STRSTARTS(STR(?o), "${prefixes_graph[values_input[value_input_idx].trim()]}") ). `;
-                            filter_p_literal += `FILTER ( ! STRSTARTS(STR(?p_literal), "${prefixes_graph[values_input[value_input_idx].trim()]}") ). `;
-                        }
-                    }
-                }
-*/
                 let query = `CONSTRUCT {
                     ?s ?p <${clicked_node_id}> ;
                         a ?s_type ;
@@ -734,8 +714,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                         ?s a ?s_type .
                         ?s ?p_literal ?s_literal .
                         FILTER isLiteral(?s_literal) .
-                        ${filter_s_type}
-                        ${filter_p_literal}
 
                         FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
                                 ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
@@ -744,7 +722,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                     {
                         ?s ?p <${clicked_node_id}> .
                         ?s a ?s_type .
-                        ${filter_s_type}
 
                         FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
                                 ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
@@ -752,7 +729,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                     UNION
                     {
                         ?s ?p <${clicked_node_id}> .
-                        ${filter_s}
 
                         FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
                                 ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
@@ -763,8 +739,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                         ?o a ?o_type .
                         ?o ?p_literal ?o_literal .
                         FILTER isLiteral(?o_literal) .
-                        ${filter_o_type}
-                        ${filter_p_literal}
 
                         FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
                                 ?p != <http://www.w3.org/ns/prov#hadPlan> ) .                    
@@ -773,7 +747,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                     {
                         <${clicked_node_id}> ?p ?o .
                         ?o a ?o_type
-                        ${filter_o_type}
 
                         FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
                                 ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
@@ -781,7 +754,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                     UNION
                     {
                         <${clicked_node_id}> ?p ?o .
-                        ${filter_o}
 
                         FILTER (?p != <http://www.w3.org/ns/prov#qualifiedAssociation> && 
                                 ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
