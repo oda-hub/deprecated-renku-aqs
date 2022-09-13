@@ -200,18 +200,11 @@ def set_html_content(net, output_path,
     '''
 
     net.html = net.html.replace('<html>', '<!DOCTYPE html>')
-    net.html = net.html.replace('<style type="text/css">',
-                                ('<style type="text/css">'
-                                 'h1 { '
-                                 '  font-family: \"Source Sans Pro\", '
-                                 '  sans-serif; '
-                                 '  font-weight: 700; '
-                                 '  color: rgb(49, 51, 63); '
-                                 '  line-height: 1.2; '
-                                 '}'))
     net_h1_html_match = re.search(r'<center>.*<h1></h1>.*</center>', net.html, flags=re.DOTALL)
     if net_h1_html_match is not None:
-        net.html = net.html.replace(net_h1_html_match.group(0), '<h1>ODA Graph Export Quick-Look</h1>')
+        net.html = net.html.replace(net_h1_html_match.group(0), '')
+    net.html = net.html.replace('<body>', ('<body>'
+                                           '<h1>ODA Graph Export Quick-Look</h1>'))
     net.html = net.html.replace('<div id = "mynetwork"></div>', html_code)
     with open(output_path, "w+") as out:
         out.write(net.html)
@@ -1249,6 +1242,15 @@ def set_html_head(html_fn):
     soup.head.link.decompose()
     soup.head.script.decompose()
 
+    css_tag = soup.head.find('style', type="text/css")
+    css_tag.string += ('h1 {\n'
+                       '  font-family: \"Source Sans Pro\", sans-serif;\n'
+                       '  font-weight: 700;\n'
+                       '  color: rgb(49, 51, 63);\n'
+                       '  line-height: 1.2;\n'
+                       '}')
+    print(css_tag.string)
+
     new_script_updated_vis_library = soup.new_tag("script", type="application/javascript",
                                                   src="https://unpkg.com/vis-network/standalone/umd/vis-network.js")
     soup.head.append(new_script_updated_vis_library)
@@ -1264,7 +1266,6 @@ def set_html_head(html_fn):
 
     title_tag = soup.new_tag("title")
     title_tag.string = "Graph visualization"
-
     soup.head.append(title_tag)
 
     # save the file again
