@@ -444,8 +444,6 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     import pydotplus
 
     graph = _graph(revision, paths)
-
-    html_fn = 'graph.html'
     renku_path = renku_context().renku_path
 
     query_where = graph_utils.build_query_where(input_notebook=input_notebook)
@@ -516,10 +514,9 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 def show_graph(revision, paths):
 
     graph = _graph(revision, paths)
-
     renku_path = renku_context().renku_path
 
-    query_construct = graph_utils.build_query_construct(no_oda_info=True)
+    query_construct = graph_utils.build_query_construct()
     query_where = graph_utils.build_query_where()
 
     query = f"""{query_construct}
@@ -534,6 +531,7 @@ def show_graph(revision, paths):
 
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
+    # G.parse(data=graph.serialize(format="n3"), format="n3")
     G.bind("oda", "http://odahub.io/ontology#")
     G.bind("odas", "https://odahub.io/ontology#")  # the same
     G.bind("local-renku", f"file://{renku_path}/")

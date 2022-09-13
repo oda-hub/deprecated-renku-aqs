@@ -1073,6 +1073,23 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                     store.addQuad(triple.subject, triple.predicate, triple.object);
                 }} else {{
                     prefixes_graph = prefixes;
+                    (async() => {{
+                        const bindingsStreamCall = await myEngine.queryQuads(query_initial_graph,
+                            {{
+                                sources: [ store ] 
+                            }}
+                        ); 
+                        bindingsStreamCall.on('data', (binding) => {{
+                            process_binding(binding);
+                        }});
+                        bindingsStreamCall.on('end', () => {{
+                            let checked_radiobox = document.querySelector('input[name="graph_layout"]:checked');
+                            toggle_layout(checked_radiobox);
+                        }});
+                        bindingsStreamCall.on('error', (error) => {{ 
+                            console.error(error);
+                        }});
+                    }})();
                 }}
 
             }}
@@ -1201,24 +1218,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                 }}
             }}
         }});
-
-        (async() => {{
-            const bindingsStreamCall = await myEngine.queryQuads(query_initial_graph,
-                {{
-                    sources: [ store ] 
-                }}
-            ); 
-            bindingsStreamCall.on('data', (binding) => {{
-                process_binding(binding);
-            }});
-            bindingsStreamCall.on('end', () => {{
-                let checked_radiobox = document.querySelector('input[name="graph_layout"]:checked');
-                toggle_layout(checked_radiobox);
-            }});
-            bindingsStreamCall.on('error', (error) => {{ 
-                console.error(error);
-            }});
-        }})();
 
         var container_configure = document.getElementsByClassName("vis-configuration-wrapper");
         if(container_configure && container_configure.length > 0) {{
