@@ -1249,7 +1249,6 @@ def set_html_head(html_fn):
                        '  color: rgb(49, 51, 63);\n'
                        '  line-height: 1.2;\n'
                        '}')
-    print(css_tag.string)
 
     new_script_updated_vis_library = soup.new_tag("script", type="application/javascript",
                                                   src="https://unpkg.com/vis-network/standalone/umd/vis-network.js")
