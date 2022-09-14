@@ -761,13 +761,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                     }
                     UNION
                     {
-                        ?s ?p <${clicked_node_id}> .
-                        ?s a ?s_type .
-
-                        FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
-                    }
-                    UNION
-                    {
                         <${clicked_node_id}> ?p ?o .
                         
                         ?o a ?o_type ;
@@ -776,13 +769,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                         FILTER isLiteral(?o_literal) .
 
                         FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .                    
-                    }
-                    UNION
-                    {
-                        <${clicked_node_id}> ?p ?o .
-                        ?o a ?o_type .
-                        
-                        FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
                     }
                     UNION
                     {
@@ -795,7 +781,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
 
                         FILTER (?activity = <${clicked_node_id}> ||
                                 ?action = <${clicked_node_id}> ) .
-
                     }
                 }`;
 
