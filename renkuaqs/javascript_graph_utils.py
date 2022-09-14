@@ -698,6 +698,41 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
     f_query_clicked_node_formatting = '''
 
             function format_query_clicked_node(clicked_node_id) {
+            
+                let filter_object_node_type = `FILTER ( 
+                    CONTAINS(str(?o_type), "CommandInput") || 
+                    CONTAINS(str(?o_type), "CommandOutput") || 
+                    CONTAINS(str(?o_type), "Run") ||
+                    CONTAINS(str(?o_type), "Activity") ||
+                    CONTAINS(str(?o_type), "AstroqueryModule") ||
+                    CONTAINS(str(?o_type), "AstrophysicalObject") ||
+                    CONTAINS(str(?o_type), "AstrophysicalRegion") ||
+                    CONTAINS(str(?o_type), "AstrophysicalImage") ||
+                    CONTAINS(str(?o_type), "Action") ||
+                    CONTAINS(str(?o_type), "Coordinates") ||
+                    CONTAINS(str(?o_type), "Angle") ||
+                    CONTAINS(str(?o_type), "SkyCoordinates") ||
+                    CONTAINS(str(?o_type), "Pixels") ||
+                    CONTAINS(str(?o_type), "Position")
+                    ) . `;
+                                
+                let filter_subject_node_type = `FILTER ( 
+                    CONTAINS(str(?s_type), "CommandInput") || 
+                    CONTAINS(str(?s_type), "CommandOutput") || 
+                    CONTAINS(str(?s_type), "Run") ||
+                    CONTAINS(str(?s_type), "Activity") ||
+                    CONTAINS(str(?s_type), "AstroqueryModule") ||
+                    CONTAINS(str(?s_type), "AstrophysicalObject") ||
+                    CONTAINS(str(?s_type), "AstrophysicalRegion") ||
+                    CONTAINS(str(?s_type), "AstrophysicalImage") ||
+                    CONTAINS(str(?s_type), "Action") ||
+                    CONTAINS(str(?s_type), "Coordinates") ||
+                    CONTAINS(str(?s_type), "Angle") ||
+                    CONTAINS(str(?s_type), "SkyCoordinates") ||
+                    CONTAINS(str(?s_type), "Pixels") ||
+                    CONTAINS(str(?s_type), "Position")
+                    ) . `;
+            
                 let query = `CONSTRUCT {
                     ?s ?p <${clicked_node_id}> ;
                         a ?s_type ;
@@ -737,7 +772,7 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                         
                         ?o a ?o_type ;
                            ?p_literal ?o_literal .
-                        
+                           
                         FILTER isLiteral(?o_literal) .
 
                         FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .                    
@@ -746,7 +781,7 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                     {
                         <${clicked_node_id}> ?p ?o .
                         ?o a ?o_type .
-
+                        
                         FILTER ( ?p != <http://www.w3.org/ns/prov#hadPlan> ) .
                     }
                     UNION
