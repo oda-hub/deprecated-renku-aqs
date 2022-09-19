@@ -30,15 +30,12 @@ from importlib import resources
 from pathlib import Path
 from pyvis.network import Network
 from rdflib.tools import rdf2dot
-from renku.core.models.provenance.annotation import Annotation
-from renku.core.management.command_builder import Command, inject
-from renku.core.management.interface.client_dispatcher import IClientDispatcher
-from renku.core.plugins import hookimpl
-from renku.core.commands.format.graph import _conjunctive_graph
+from renku.domain_model.provenance.annotation import Annotation
+from renku.core.interface.client_dispatcher import IClientDispatcher
+from renku.core.plugin import hookimpl
+from renku.command.graph import export_graph_command
 from renku.core.errors import RenkuException
 from renku.core.management.client import LocalClient
-
-from renku.core.commands.graph import _get_graph_for_all_objects
 
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
@@ -56,7 +53,6 @@ class AQS(object):
         self.run = run
 
     @property
-    @inject.autoparams("client_dispatcher")
     def renku_aqs_path(self, client_dispatcher: IClientDispatcher):
         """Return a ``Path`` instance of Renku AQS metadata folder."""
         return Path(client_dispatcher.current_client.renku_home).joinpath(AQS_DIR).joinpath(COMMON_DIR)
@@ -136,21 +132,15 @@ def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
 
 
-def _export_graph():
-    graph = _get_graph_for_all_objects()
-
-    return graph
-
-
 def _graph(revision=None, paths=None):
     # FIXME: use (revision, paths) filter
 
-    cmd = Command().command(_export_graph).with_database(write=False).require_migration()
-    cmd_result = cmd.build().execute()
+    client = LocalClient(path=".", external_storage_requested=False)
+    cmd_result = export_graph_command().with_client(client).build().execute()
 
     if cmd_result.status == cmd_result.FAILURE:
         raise RenkuException("fail to export the renku graph")
-    graph = _conjunctive_graph(cmd_result.output)
+    graph = cmd_result.output.as_rdflib_graph()
 
     graph.bind("aqs", "http://www.w3.org/ns/aqs#")
     graph.bind("oa", "http://www.w3.org/ns/oa#")
