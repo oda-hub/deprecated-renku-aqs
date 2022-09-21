@@ -32,6 +32,7 @@ from pyvis.network import Network
 from rdflib.tools import rdf2dot
 from renku.domain_model.provenance.annotation import Annotation
 from renku.core.interface.client_dispatcher import IClientDispatcher
+from renku.command.command_builder import inject
 from renku.core.plugin import hookimpl
 from renku.command.graph import export_graph_command
 from renku.core.errors import RenkuException
@@ -53,6 +54,7 @@ class AQS(object):
         self.run = run
 
     @property
+    @inject.autoparams("client_dispatcher")
     def renku_aqs_path(self, client_dispatcher: IClientDispatcher):
         """Return a ``Path`` instance of Renku AQS metadata folder."""
         return Path(client_dispatcher.current_client.renku_home).joinpath(AQS_DIR).joinpath(COMMON_DIR)

@@ -61,8 +61,8 @@ def set_html_content(net, output_path,
                      edges_graph_config_obj_dict=None,
                      graph_reduction_config_obj_dict=None,
                      graph_nodes_subset_config_obj_dict=None):
-    print(json.dumps(nodes_graph_config_obj_dict, indent=4, sort_keys=True))
-    print(json.dumps(edges_graph_config_obj_dict, indent=4, sort_keys=True))
+    # print(json.dumps(nodes_graph_config_obj_dict, indent=4, sort_keys=True))
+    # print(json.dumps(edges_graph_config_obj_dict, indent=4, sort_keys=True))
 
     html_code = '''
         <div style="margin: 5px 0px 15px 5px">
