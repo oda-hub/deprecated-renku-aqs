@@ -54,66 +54,6 @@ def set_graph_options(net, output_path):
         out.write(net.html)
 
 
-def get_node_graphical_info(node: typing.Union[pydotplus.Node],
-                            type_node) -> [str, str]:
-    node_label = ""
-    node_title = ""
-    if 'label' in node.obj_dict['attributes']:
-        # parse the whole node table into a lxml object
-        table_html = etree.fromstring(node.get_label()[1:-1])
-        tr_list = table_html.findall('tr')
-        for tr in tr_list:
-            list_td = tr.findall('td')
-            if len(list_td) == 2:
-                list_left_column_element = list_td[0].text.split(':')
-                # setting label
-                if type_node == 'Action':
-                    if 'command' in list_left_column_element:
-                        node_label = '<b>' + list_td[1].text[1:-1] + '</b>'
-                elif type_node == 'CommandInput':
-                    node_label = '<b><i>' + list_td[1].text[1:-1] + '</i></b>'
-                else:
-                    node_label = ('<b>' + type_node + '</b>\n' + list_td[1].text[1:-1])
-                # setting title
-                if 'startedAtTime' in list_left_column_element:
-                    parsed_startedAt_time = parser.parse(list_td[1].text.replace('^^xsd:dateTime', '')[1:-1])
-                    # create an additional row to attach at the bottom, so that time is always at the bottom
-                    node_title += parsed_startedAt_time.strftime('%Y-%m-%d %H:%M:%S') + '\n'
-
-    if node_label == "":
-        node_label = '<b>' + type_node + '</b>'
-    if node_title == "":
-        node_title = type_node
-    return node_label, node_title
-
-
-def get_id_node(node: typing.Union[pydotplus.Node]) -> str:
-    id_node = None
-    if 'label' in node.obj_dict['attributes']:
-        table_html = etree.fromstring(node.get_label()[1:-1])
-        tr_list = table_html.findall('tr')
-
-        td_list_first_row = tr_list[0].findall('td')
-        if td_list_first_row is not None:
-            b_element_title = td_list_first_row[0].findall('B')
-            if b_element_title is not None:
-                id_node = b_element_title[0].text
-
-    return id_node
-
-
-def get_edge_label(edge: typing.Union[pydotplus.Edge]) -> str:
-    edge_label = None
-    if 'label' in edge.obj_dict['attributes']:
-        edge_html = etree.fromstring(edge.obj_dict['attributes']['label'][1:-1])
-        edge_label_list = edge_html.text.split(":")
-        if len(edge_label_list) == 1:
-            edge_label = edge_html.text.split(":")[0]
-        else:
-            edge_label = edge_html.text.split(":")[1]
-    return edge_label
-
-
 def set_html_content(net, output_path,
                      graph_config_names_list=None,
                      nodes_graph_config_obj_dict=None,
