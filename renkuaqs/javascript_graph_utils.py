@@ -2,6 +2,7 @@ import re
 import typing
 import pydotplus
 import bs4
+import json
 
 from lxml import etree
 from dateutil import parser
@@ -60,6 +61,9 @@ def set_html_content(net, output_path,
                      edges_graph_config_obj_dict=None,
                      graph_reduction_config_obj_dict=None,
                      graph_nodes_subset_config_obj_dict=None):
+    print(json.dumps(nodes_graph_config_obj_dict, indent=4, sort_keys=True))
+    print(json.dumps(edges_graph_config_obj_dict, indent=4, sort_keys=True))
+
     html_code = '''
         <div style="margin: 5px 0px 15px 5px">
             <button type="button" onclick="reset_graph()">Reset graph!</button>
@@ -127,6 +131,20 @@ def set_html_content(net, output_path,
                         </div>
                     '''
                     checkboxes_config_added.append(graph_config_name)
+
+        for config_edge_type in edges_graph_config_obj_dict:
+            if 'config_file' in edges_graph_config_obj_dict[config_edge_type]:
+                graph_config_name = edges_graph_config_obj_dict[config_edge_type]['config_file']
+                if graph_config_name not in checkboxes_config_added:
+                    # for graph_config_name in graph_config_names_list:
+                    html_code += f'''
+                        <div style="margin: 5px">
+                            <label><input type="checkbox" id="config_{graph_config_name}" value="{graph_config_name}" onchange="toggle_graph_config(this)" checked>
+                            {graph_config_name}</label>
+                        </div>
+                    '''
+                    checkboxes_config_added.append(graph_config_name)
+
     html_code += '''
                 </div>
             </div>
