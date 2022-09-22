@@ -16,7 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from asyncio.log import logger
 import os
 import pathlib
 import json
@@ -511,11 +510,11 @@ def start_session():
             new_session_urls.append(f"https://renkulab.io/projects/{r.group(1)}/sessions/new?autostart=1&branch=master")
 
     if (n:=len(new_session_urls)) > 1:
-        logger.warning("using first of many session URLs: %s", new_session_urls)
+        click.echo(f"using first of many session URLs: {new_session_urls}")
     elif n == 0:
         raise RuntimeError("unable to find any session URLs")        
 
-    logger.info('will open new session: %s', new_session_urls[0])
+    click.echo(f"will open new session: {new_session_urls[0]}")
     
     webbrowser.open(new_session_urls[0])
             
