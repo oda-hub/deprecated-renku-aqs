@@ -69,6 +69,16 @@
          "value": 15,
          "level": 3
       },
+      "Entity": {
+         "shape": "box",
+         "color": "#DBA3BC",
+         "style": "filled",
+         "value": 20,
+         "level": 3,
+         "displayed_type_name": "Input",
+         "displayed_information": "literals",
+         "displayed_literals_format": "atLocation:no"
+      },
       "CommandOutput": {
          "shape": "box",
          "color": "#FFFF00",

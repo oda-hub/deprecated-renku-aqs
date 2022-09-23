@@ -215,16 +215,14 @@ def build_query_where(input_notebook: str = None):
                     ?has ?actionParam .
                     
                 FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>,
-                    <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>,
-                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs>
+                    <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>
                     ))
 
                 ?actionParam a ?actionParamType ;
                     <http://schema.org/defaultValue> ?actionParamValue .
 
                 FILTER ( ?actionParamType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput>,
-                                        <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>,
-                                        <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput>)
+                                        <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>)
                                         ) .
         """
 
@@ -332,16 +330,14 @@ def build_query_where(input_notebook: str = None):
     return query_where
 
 
+                # ?actionParamInput a ?actionParamInputType ;
+                #     <http://schema.org/defaultValue> '{input_notebook}' .
 def build_query_construct(input_notebook: str = None, no_oda_info=False):
     if input_notebook is not None:
         query_construct_action = f"""
                 ?action a <http://schema.org/Action> ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?actionParamInput ;
                     ?has ?actionParam .
-
-                ?actionParamInput a ?actionParamInputType ;
-                    <http://schema.org/defaultValue> '{input_notebook}' .
 
                 ?actionParam a ?actionParamType ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
@@ -351,6 +347,7 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
         query_construct_action = """
                 ?action a <http://schema.org/Action> ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
+                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?entity ; 
                     ?has ?actionParam .
                     
                 ?actionParam a ?actionParamType ;
@@ -364,8 +361,7 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                     
             ?activity a ?activityType ;
                 <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                <http://www.w3.org/ns/prov#hadPlan> ?action ;
-                <http://www.w3.org/ns/prov#entity> ?entity .
+                <http://www.w3.org/ns/prov#hadPlan> ?action .
     """
 
     query_construct_oda_info = ""
@@ -548,15 +544,16 @@ def label(x, g):
 def analyze_inputs(g, in_default_value_dict):
     # analyze inputs
     for s, o in g[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs')]:
-        s_label = label(s, g)
-        if s_label not in in_default_value_dict:
-            in_default_value_dict[s_label] = []
-        for input_o in g[o:rdflib.URIRef('http://schema.org/defaultValue')]:
-            in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
-            for entity in g[:rdflib.URIRef('http://www.w3.org/ns/prov#atLocation'):rdflib.Literal(input_o.n3().strip('\"'))]:
-                # infer isInputOf property
-                g.add((entity, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
-            g.remove((o, rdflib.URIRef('http://schema.org/defaultValue'), input_o))
+        g.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
+        # s_label = label(s, g)
+        # if s_label not in in_default_value_dict:
+        #     in_default_value_dict[s_label] = []
+        # for input_o in g[o:rdflib.URIRef('http://schema.org/defaultValue')]:
+        #     in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
+        #     for entity in g[:rdflib.URIRef('http://www.w3.org/ns/prov#atLocation'):rdflib.Literal(input_o.n3().strip('\"'))]:
+        #         # infer isInputOf property
+        #         g.add((entity, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
+        #     g.remove((o, rdflib.URIRef('http://schema.org/defaultValue'), input_o))
 
 
 def extract_activity_start_time(g):
