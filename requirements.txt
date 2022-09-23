@@ -1,5 +1,5 @@
 -e git+https://github.com/oda-hub/astroquery.git#egg=astroquery
--e git+https://github.com/oda-hub/aqsmodel-converters#egg=aqsconverters
+-e git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters
 pydotplus
 rdflib
 bs4

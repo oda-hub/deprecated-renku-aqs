@@ -89,6 +89,14 @@ CommandInput:
     value: 20
     level: 3
 
+Entity:
+    shape: box
+    color: '#DBA3BC'
+    style: filled
+    display_type_title: False
+    value: 20
+    level: 3
+
 Action:
     shape: circle
     color: '#D5C15D'

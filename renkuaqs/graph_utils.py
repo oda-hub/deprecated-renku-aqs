@@ -213,6 +213,9 @@ def build_query_where(input_notebook: str = None):
                 ?action a <http://schema.org/Action> ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                     ?has ?actionParam .
+                    
+                ?entity a <http://www.w3.org/ns/prov#Entity> ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
 
                 FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>,
                     <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>,
@@ -236,8 +239,8 @@ def build_query_where(input_notebook: str = None):
                 ?activity a ?activityType ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
                     <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                    <http://www.w3.org/ns/prov#qualifiedAssociation>/<http://www.w3.org/ns/prov#hadPlan> ?action .
-
+                    <http://www.w3.org/ns/prov#qualifiedAssociation>/<http://www.w3.org/ns/prov#hadPlan> ?action ;
+                    <http://www.w3.org/ns/prov#qualifiedUsage>/<http://www.w3.org/ns/prov#entity> ?entity .
 
                 {
                     ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
@@ -349,6 +352,9 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                 ?action a <http://schema.org/Action> ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                     ?has ?actionParam .
+                    
+                ?entity a <http://www.w3.org/ns/prov#Entity> ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
 
                 ?actionParam a ?actionParamType ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
@@ -358,7 +364,8 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
     query_construct_action += """
             ?activity a ?activityType ;
                 <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                <http://www.w3.org/ns/prov#hadPlan> ?action .
+                <http://www.w3.org/ns/prov#hadPlan> ?action ;
+                <http://www.w3.org/ns/prov#entity> ?entity .
     """
 
     query_construct_oda_info = ""
@@ -420,9 +427,10 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
 
 def clean_graph(g):
     # remove not-needed triples
-    g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
     g.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
     g.remove((None, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), None))
+    g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#entity'), None))
+    g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan'), None))
     g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#position'), None))
     g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasArguments'), None))
     g.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs'), None))
@@ -539,25 +547,22 @@ def label(x, g):
 
 def analyze_inputs(g, in_default_value_dict):
     # analyze inputs
-    inputs_list = g[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs')]
-    for s, o in inputs_list:
+    for s, o in g[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs')]:
         s_label = label(s, g)
         if s_label not in in_default_value_dict:
             in_default_value_dict[s_label] = []
-        input_obj_list = g[o]
-        for input_p, input_o in input_obj_list:
-            if input_p.n3() == "<http://schema.org/defaultValue>":
-                in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
-        # infer isInputOf property
-        g.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
+        for input_o in g[o:rdflib.URIRef('http://schema.org/defaultValue')]:
+            in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
+            for entity in g[:rdflib.URIRef('http://www.w3.org/ns/prov#atLocation'):rdflib.Literal(input_o.n3().strip('\"'))]:
+                # infer isInputOf property
+                g.add((entity, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
+            g.remove((o, rdflib.URIRef('http://schema.org/defaultValue'), input_o))
 
 
 def extract_activity_start_time(g):
     # extract the info about the activity start time
     # get the activities and extract for each the startedTime into, and attach it to the related Action
-    start_time_activity_list = g[:rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime')]
-
-    for activity_node, activity_start_time in start_time_activity_list:
+    for activity_node, activity_start_time in g[:rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime')]:
         plan_list = g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
         for plan_node in plan_list:
             g.add(
@@ -569,9 +574,8 @@ def extract_activity_start_time(g):
 def process_oda_info(g):
     run_target_list = g[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
     for run_node, activity_node in run_target_list:
-        action_list = g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
         # or plan_node list
-        for action_node in action_list:
+        for action_node in g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]:
             # we inferred a connection from the run to an action
             # and we can now infer the request of a certain astroObject and the usage of a certain module
             used_module_list = list(g[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')])
