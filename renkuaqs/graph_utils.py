@@ -214,9 +214,6 @@ def build_query_where(input_notebook: str = None):
                     <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                     ?has ?actionParam .
                     
-                ?entity a <http://www.w3.org/ns/prov#Entity> ;
-                    <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
-
                 FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>,
                     <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>,
                     <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs>
@@ -236,6 +233,9 @@ def build_query_where(input_notebook: str = None):
             }
 
             {
+                ?entity a <http://www.w3.org/ns/prov#Entity> ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
+                    
                 ?activity a ?activityType ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
                     <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
@@ -353,15 +353,15 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                     <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                     ?has ?actionParam .
                     
-                ?entity a <http://www.w3.org/ns/prov#Entity> ;
-                    <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
-
                 ?actionParam a ?actionParamType ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
                     <http://schema.org/defaultValue> ?actionParamValue .
         """
     # add time activity information
     query_construct_action += """
+            ?entity a <http://www.w3.org/ns/prov#Entity> ;
+                <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
+                    
             ?activity a ?activityType ;
                 <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
                 <http://www.w3.org/ns/prov#hadPlan> ?action ;
