@@ -541,19 +541,10 @@ def label(x, g):
         return x
 
 
-def analyze_inputs(g, in_default_value_dict):
+def analyze_inputs(g):
     # analyze inputs
     for s, o in g[:rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#hasInputs')]:
         g.add((o, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
-        # s_label = label(s, g)
-        # if s_label not in in_default_value_dict:
-        #     in_default_value_dict[s_label] = []
-        # for input_o in g[o:rdflib.URIRef('http://schema.org/defaultValue')]:
-        #     in_default_value_dict[s_label].append(input_o.n3().strip('\"'))
-        #     for entity in g[:rdflib.URIRef('http://www.w3.org/ns/prov#atLocation'):rdflib.Literal(input_o.n3().strip('\"'))]:
-        #         # infer isInputOf property
-        #         g.add((entity, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#isInputOf'), s))
-        #     g.remove((o, rdflib.URIRef('http://schema.org/defaultValue'), input_o))
 
 
 def extract_activity_start_time(g):

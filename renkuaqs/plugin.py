@@ -466,10 +466,9 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     action_node_dict = {}
     type_label_values_dict = {}
     args_default_value_dict = {}
-    in_default_value_dict = {}
     out_default_value_dict = {}
 
-    graph_utils.analyze_inputs(G, in_default_value_dict)
+    graph_utils.analyze_inputs(G)
     graph_utils.analyze_arguments(G, action_node_dict, args_default_value_dict)
     graph_utils.analyze_outputs(G, out_default_value_dict)
     graph_utils.analyze_types(G, type_label_values_dict)
