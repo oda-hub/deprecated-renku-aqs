@@ -191,10 +191,8 @@ def build_query_where(input_notebook: str = None):
                 <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
                 ?has ?actionParam .
 
-            ?actionParamInput a ?actionParamInputType ;
+            ?actionParamInput a <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput> ;
                 <http://schema.org/defaultValue> '{input_notebook}' .
-
-            FILTER ( ?actionParamInputType = <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput>) .
 
             FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>, 
                 <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>
@@ -245,7 +243,7 @@ def build_query_where(input_notebook: str = None):
                          <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
                          a ?run_rdf_type ;
                          ^oa:hasBody/oa:hasTarget ?runId ;
-                         ^oa:hasBody/oa:hasTarget ?activityRun .
+                         ^oa:hasBody/oa:hasTarget ?activity .
                 
                     ?aq_module <http://purl.org/dc/terms/title> ?aq_module_name ;
                         a ?aq_mod_rdf_type .
@@ -265,7 +263,7 @@ def build_query_where(input_notebook: str = None):
                          <http://odahub.io/ontology#isRequestingAstroRegion> ?a_region ;
                          a ?run_rdf_type ;
                          ^oa:hasBody/oa:hasTarget ?runId ;
-                         ^oa:hasBody/oa:hasTarget ?activityRun .
+                         ^oa:hasBody/oa:hasTarget ?activity .
 
                     ?aq_module a ?aq_mod_rdf_type ;
                         <http://purl.org/dc/terms/title> ?aq_module_name .
@@ -291,7 +289,7 @@ def build_query_where(input_notebook: str = None):
                          <http://odahub.io/ontology#isRequestingAstroImage> ?a_image ;
                          a ?run_rdf_type ;
                          ^oa:hasBody/oa:hasTarget ?runId ;
-                         ^oa:hasBody/oa:hasTarget ?activityRun .
+                         ^oa:hasBody/oa:hasTarget ?activity .
 
                     ?aq_module a ?aq_mod_rdf_type ;
                         <http://purl.org/dc/terms/title> ?aq_module_name .
@@ -337,6 +335,7 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
         query_construct_action = f"""
                 ?action a <http://schema.org/Action> ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
+                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?entity ;
                     ?has ?actionParam .
 
                 ?actionParam a ?actionParamType ;
@@ -347,7 +346,7 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
         query_construct_action = """
                 ?action a <http://schema.org/Action> ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?entity ; 
+                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?entity ;
                     ?has ?actionParam .
                     
                 ?actionParam a ?actionParamType ;
@@ -361,7 +360,8 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                     
             ?activity a ?activityType ;
                 <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                <http://www.w3.org/ns/prov#hadPlan> ?action .
+                <http://www.w3.org/ns/prov#hadPlan> ?action ;
+                <http://www.w3.org/ns/prov#entity> ?entity .
     """
 
     query_construct_oda_info = ""
@@ -372,7 +372,7 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                     <http://odahub.io/ontology#isRequestingAstroImage> ?a_image ;
                     <http://purl.org/dc/terms/title> ?run_title ;
                     <http://odahub.io/ontology#isUsing> ?aq_module ;
-                    oa:hasTarget ?activityRun ;
+                    oa:hasTarget ?activity ;
                     a ?run_rdf_type .
                 
                 ?aq_module <https://odahub.io/ontology#AQModule> ?aq_module_name ;
@@ -562,6 +562,7 @@ def extract_activity_start_time(g):
 def process_oda_info(g):
     run_target_list = g[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
     for run_node, activity_node in run_target_list:
+        print("run_node: " + run_node)
         # or plan_node list
         for action_node in g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]:
             # we inferred a connection from the run to an action
