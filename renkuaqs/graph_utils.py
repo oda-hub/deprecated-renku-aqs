@@ -329,30 +329,17 @@ def build_query_where(input_notebook: str = None):
 
 
 def build_query_construct(input_notebook: str = None, no_oda_info=False):
-    if input_notebook is not None:
-        query_construct_action = f"""
-                ?action a <http://schema.org/Action> ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?entity ;
-                    ?has ?actionParam .
-
-                ?actionParam a ?actionParamType ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
-                    <http://schema.org/defaultValue> ?actionParamValue .
-        """
-    else:
-        query_construct_action = """
-                ?action a <http://schema.org/Action> ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?entity ;
-                    ?has ?actionParam .
-                    
-                ?actionParam a ?actionParamType ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
-                    <http://schema.org/defaultValue> ?actionParamValue .
-        """
     # add time activity information
-    query_construct_action += """
+    query_construct_action = """
+            ?action a <http://schema.org/Action> ;
+                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
+                <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?entity ;
+                ?has ?actionParam .
+                    
+            ?actionParam a ?actionParamType ;
+                <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
+                <http://schema.org/defaultValue> ?actionParamValue .
+                
             ?entity a <http://www.w3.org/ns/prov#Entity> ;
                 <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
                     
@@ -555,16 +542,17 @@ def extract_activity_start_time(g):
     for activity_node, activity_start_time in g[:rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime')]:
         plan_list = g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]
         for plan_node in plan_list:
-            g.add(
-                (plan_node, rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime'), activity_start_time))
-            g.remove((activity_node, rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime'),
+            g.add((plan_node,
+                   rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime'),
+                   activity_start_time))
+            g.remove((activity_node,
+                      rdflib.URIRef('http://www.w3.org/ns/prov#startedAtTime'),
                       activity_start_time))
 
 
 def process_oda_info(g):
     run_target_list = g[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
     for run_node, activity_node in run_target_list:
-        print("run_node: " + run_node)
         # or plan_node list
         for action_node in g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]:
             # we inferred a connection from the run to an action
@@ -578,20 +566,6 @@ def process_oda_info(g):
             process_query_region_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
             # get_images
             process_get_images_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
-
-            # # some clean-up
-            # g.remove((run_node,
-            #           rdflib.URIRef('http://odahub.io/ontology#isUsing'),
-            #           None))
-            # g.remove((run_node,
-            #           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion'),
-            #           None))
-            # g.remove((run_node,
-            #           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
-            #           None))
-            # g.remove((run_node,
-            #           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage'),
-            #           None))
 
 
 def process_query_object_info(g, run_node=None, module_node=None, action_node=None):
