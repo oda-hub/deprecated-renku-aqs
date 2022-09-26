@@ -186,6 +186,9 @@ def build_query_where(input_notebook: str = None):
     if input_notebook is not None:
         query_where = f"""WHERE {{
             {{
+            ?entity a <http://www.w3.org/ns/prov#Entity> ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
+                    
             ?action a <http://schema.org/Action> ; 
                 <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?actionParamInput ;
                 <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
@@ -193,6 +196,8 @@ def build_query_where(input_notebook: str = None):
 
             ?actionParamInput a <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput> ;
                 <http://schema.org/defaultValue> '{input_notebook}' .
+                
+            FILTER ( ?entityLocation = '{input_notebook}' ) .
 
             FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>, 
                 <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>
@@ -208,9 +213,18 @@ def build_query_where(input_notebook: str = None):
     else:
         query_where = """WHERE {
             {
+                ?entity a <http://www.w3.org/ns/prov#Entity> ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
+                    
                 ?action a <http://schema.org/Action> ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
+                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?actionParamInput ;
                     ?has ?actionParam .
+                    
+                ?actionParamInput a <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput> ;
+                    <http://schema.org/defaultValue> $actionParamInputDefaultValue .
+                
+                FILTER ( ?entityLocation = ?actionParamInputDefaultValue ) .
                     
                 FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>,
                     <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>
@@ -228,10 +242,7 @@ def build_query_where(input_notebook: str = None):
                 OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition } .
             }
 
-            {
-                ?entity a <http://www.w3.org/ns/prov#Entity> ;
-                    <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
-                    
+            {    
                 ?activity a ?activityType ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
                     <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
@@ -345,8 +356,7 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
                     
             ?activity a ?activityType ;
                 <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                <http://www.w3.org/ns/prov#hadPlan> ?action ;
-                <http://www.w3.org/ns/prov#entity> ?entity .
+                <http://www.w3.org/ns/prov#hadPlan> ?action .
     """
 
     query_construct_oda_info = ""
