@@ -328,8 +328,6 @@ def build_query_where(input_notebook: str = None):
     return query_where
 
 
-                # ?actionParamInput a ?actionParamInputType ;
-                #     <http://schema.org/defaultValue> '{input_notebook}' .
 def build_query_construct(input_notebook: str = None, no_oda_info=False):
     if input_notebook is not None:
         query_construct_action = f"""
@@ -422,7 +420,11 @@ def build_query_construct(input_notebook: str = None, no_oda_info=False):
 
 
 def clean_graph(g):
-    # remove not-needed triples
+    # remove not-needed predicates
+    g.remove((None, rdflib.URIRef('http://odahub.io/ontology#isUsing'), None))
+    g.remove((None, rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion'), None))
+    g.remove((None, rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'), None))
+    g.remove((None, rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage'), None))
     g.remove((None, rdflib.URIRef('http://purl.org/dc/terms/title'), None))
     g.remove((None, rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget'), None))
     g.remove((None, rdflib.URIRef('http://www.w3.org/ns/prov#entity'), None))
@@ -577,19 +579,19 @@ def process_oda_info(g):
             # get_images
             process_get_images_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
 
-            # some clean-up
-            g.remove((run_node,
-                      rdflib.URIRef('http://odahub.io/ontology#isUsing'),
-                      None))
-            g.remove((run_node,
-                      rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion'),
-                      None))
-            g.remove((run_node,
-                      rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
-                      None))
-            g.remove((run_node,
-                      rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage'),
-                      None))
+            # # some clean-up
+            # g.remove((run_node,
+            #           rdflib.URIRef('http://odahub.io/ontology#isUsing'),
+            #           None))
+            # g.remove((run_node,
+            #           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion'),
+            #           None))
+            # g.remove((run_node,
+            #           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject'),
+            #           None))
+            # g.remove((run_node,
+            #           rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage'),
+            #           None))
 
 
 def process_query_object_info(g, run_node=None, module_node=None, action_node=None):
