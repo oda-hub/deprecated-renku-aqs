@@ -335,12 +335,13 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
 
     f_generate_child_nodes = '''
         function draw_child_nodes(origin_node) {
-            let position_origin_node = network.getPosition(origin_node.id);
+            // let position_origin_node = network.getPosition(origin_node.id);
             for (j in origin_node.child_nodes_list_content) {
                 let child_node_obj = JSON.parse(origin_node.child_nodes_list_content[j][0]);
                 let edge_obj = JSON.parse(origin_node.child_nodes_list_content[j][1]);
-                child_node_obj['x'] = position_origin_node.x;
-                child_node_obj['y'] = position_origin_node.y;
+                // child_node_obj['x'] = position_origin_node.x;
+                // child_node_obj['y'] = position_origin_node.y;
+                child_node_obj['fixed'] = false;
                 child_node_obj['hidden'] = false;
                 if(!nodes.get(child_node_obj.id))
                     nodes.add([child_node_obj]);
@@ -1050,6 +1051,7 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
             if(e.nodes[0]) {{
                 if(nodes.get(e.nodes[0])['clickable']) {{
                     let clicked_node = nodes.get(e.nodes[0]);
+                    console.log(clicked_node);
                     if (!('expanded' in clicked_node) || !clicked_node['expanded']) {{
                         nodes.update({{
                             id: clicked_node.id,
