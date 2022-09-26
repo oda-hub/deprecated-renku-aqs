@@ -339,8 +339,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
             for (j in origin_node.child_nodes_list_content) {
                 let child_node_obj = JSON.parse(origin_node.child_nodes_list_content[j][0]);
                 let edge_obj = JSON.parse(origin_node.child_nodes_list_content[j][1]);
-                // child_node_obj['x'] = position_origin_node.x;
-                // child_node_obj['y'] = position_origin_node.y;
                 child_node_obj['fixed'] = false;
                 child_node_obj['hidden'] = false;
                 if(!nodes.get(child_node_obj.id))
