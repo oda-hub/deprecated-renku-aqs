@@ -1,8 +1,8 @@
 import re
-import typing
-import pydotplus
+import subprocess
+import os
 import bs4
-import json
+import shutil
 
 from lxml import etree
 from dateutil import parser
@@ -175,65 +175,11 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                                graph_nodes_subset_config_obj_str=None):
     f_graph_vars = f'''
 
-        // initialize global variables and graph configuration
-        const graph_node_config_obj_default = {{ 
-            "default": {{
-                "shape": "box",
-                "color": "#FFFFFF",
-                "style": "filled",
-                "border": 0,
-                "cellborder": 0,
-                "value": 20,
-                "config_file": null,
-                "font": {{
-                    "multi": "html",
-                    "face": "courier",
-                    "size": 24,
-                    "bold": {{
-                        "size": 36
-                    }}
-                }},
-                "margin": 10
-           }}
-        }}
-        const graph_edge_config_obj_default = {{ 
-            "default": {{
-                config_file: null,
-                font: {{
-                      "multi": "html",
-                      "face": "courier",
-                      "size": 24
-                     }},
-           }}
-        }}
-
         var graph_reductions_obj = JSON.parse('{graph_reductions_obj_str}');
         var nodes_graph_config_obj = JSON.parse('{nodes_graph_config_obj_str}');
         var edges_graph_config_obj = JSON.parse('{edges_graph_config_obj_str}');
         var subset_nodes_config_obj = JSON.parse('{graph_nodes_subset_config_obj_str}');
 
-        const parser = new N3.Parser({{ format: 'ttl' }});
-
-        let prefixes_graph = {{}};
-        const stack_promises = [];
-        const store = new N3.Store();
-        const myEngine = new Comunica.QueryEngine();
-        const query_initial_graph = `CONSTRUCT {{
-            ?action a <http://schema.org/Action> ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand .
-
-            ?activity a ?activityType ;
-                <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                <http://www.w3.org/ns/prov#hadPlan> ?action .
-            }}
-            WHERE {{ 
-                ?action a <http://schema.org/Action> ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand .
-
-                ?activity a ?activityType ;
-                    <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                    <http://www.w3.org/ns/prov#hadPlan> ?action .
-            }}`
     '''
 
     f_enable_filter = '''
@@ -1178,23 +1124,6 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
     if net_html_match is not None:
         net.html = net.html.replace(net_html_match.group(0), f_draw_graph)
 
-    net_html_match = re.search(r'function drawGraph\(\) {', net.html, flags=re.DOTALL)
-    if net_html_match is not None:
-        net.html = net.html.replace(net_html_match.group(0),
-                                    f_enable_filter +
-                                    f_apply_layout +
-                                    f_toggle_graph_config +
-                                    f_stop_animation +
-                                    f_fit_graph +
-                                    f_apply_reduction_change +
-                                    f_generate_child_nodes +
-                                    f_reset_graph +
-                                    f_extract_info_string +
-                                    f_query_node_type +
-                                    f_query_clicked_node_formatting +
-                                    f_fix_release_nodes +
-                                    f_process_binding)
-
     net.html = net.html.replace('// initialize global variables.', f_graph_vars)
 
     with open(output_path, "w+") as out:
@@ -1231,6 +1160,23 @@ def set_html_head(html_fn):
                                                    src="https://rdf.js.org/comunica-browser/versions/latest"
                                                        "/engines/query-sparql-rdfjs/comunica-browser.js")
     soup.head.append(new_script_query_sparql_library)
+
+    new_script_jquery_library = soup.new_tag("script", type="application/javascript",
+                                             src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js")
+    soup.head.append(new_script_jquery_library)
+
+    # TODO git clone js library from git, better to have it in a proper location
+    repo_name = "renku-aqs-graph-library"
+    repo_dir = repo_name
+
+    if os.path.exists(repo_dir):
+        shutil.rmtree(repo_dir)
+    subprocess.check_call(
+        ["git", "clone", f"git@github.com:burnout87/{repo_name}.git", "renku-aqs-graph-library"]
+    )
+    graph_helper_library = soup.new_tag("script", type="application/javascript",
+                                        src="renku-aqs-graph-library/graph_helper.js")
+    soup.head.append(graph_helper_library)
 
     title_tag = soup.new_tag("title")
     title_tag.string = "Graph visualization"
