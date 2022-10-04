@@ -174,7 +174,7 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                                graph_reductions_obj_str=None,
                                graph_nodes_subset_config_obj_str=None):
     f_graph_vars = f'''
-
+        // initialize global variables.
         var graph_reductions_obj = JSON.parse('{graph_reductions_obj_str}');
         var nodes_graph_config_obj = JSON.parse('{nodes_graph_config_obj_str}');
         var edges_graph_config_obj = JSON.parse('{edges_graph_config_obj_str}');
