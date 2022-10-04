@@ -19,6 +19,8 @@
 import os
 import pathlib
 import json
+import re
+import subprocess
 import webbrowser
 import click
 import rdflib
@@ -491,6 +493,30 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 
     # final output write over the png image
     pydot_graph.write_png(filename)
+
+
+@aqs.command()
+def start_session():
+    gitlab_url = subprocess.check_output(["git", "remote", "get-url", "origin"]).decode().strip()
+
+    new_session_urls = []
+
+    for pattern in [
+        'https://renkulab.io/gitlab/(.*)\.git',
+        'git@renkulab.io:(.*)\.git'
+    ]:
+        if (r:=re.match(pattern, gitlab_url)) is not None:
+            new_session_urls.append(f"https://renkulab.io/projects/{r.group(1)}/sessions/new?autostart=1&branch=master")
+
+    if (n:=len(new_session_urls)) > 1:
+        click.echo(f"using first of many session URLs: {new_session_urls}")
+    elif n == 0:
+        raise RuntimeError("unable to find any session URLs")        
+
+    click.echo(f"will open new session: {new_session_urls[0]}")
+    
+    webbrowser.open(new_session_urls[0])
+            
 
 
 @aqs.command()
