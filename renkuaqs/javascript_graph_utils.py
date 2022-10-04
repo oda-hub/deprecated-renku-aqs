@@ -10,46 +10,42 @@ from dateutil import parser
 
 def set_graph_options(net, output_path):
     options_str = (
-        """
-
-        var options = {
-            autoResize: true,
-            nodes: {
-                scaling: {
-                    min: 10,
-                    max: 30
-                },
-                font: {
-                    size: 14,
-                    face: "Tahoma",
-                },
+    """var data;
+    var options = {
+        autoResize: true,
+        nodes: {
+            scaling: {
+                min: 10,
+                max: 30
             },
-            edges: {
-                smooth: false,
-                arrows: {
-                  to: {
-                    enabled: true,
-                    scaleFactor: 1.2
-                    }
-                },
-                width: 4
-
+            font: {
+                size: 14,
+                face: "Tahoma",
             },
-            layout: {
-                hierarchical: {
-                    enabled: false
+        },
+        edges: {
+            smooth: false,
+            arrows: {
+              to: {
+                enabled: true,
+                scaleFactor: 1.2
                 }
             },
-            interaction: {
+            width: 4
 
-            },
-        };
+        },
+        layout: {
+            hierarchical: {
+                enabled: false
+            }
+        },
+        interaction: {
 
-        """
+        },
+    };"""
     )
-    net_html_match = re.search(r'var options = {.*};', net.html, flags=re.DOTALL)
-    if net_html_match is not None:
-        net.html = net.html.replace(net_html_match.group(0), options_str)
+
+    net.html = net.html.replace('var options, data;', options_str)
 
     with open(output_path, "w+") as out:
         out.write(net.html)
