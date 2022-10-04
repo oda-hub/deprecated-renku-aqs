@@ -4,9 +4,6 @@ import os
 import bs4
 import shutil
 
-from lxml import etree
-from dateutil import parser
-
 
 def set_graph_options(net, output_path):
     options_str = (
