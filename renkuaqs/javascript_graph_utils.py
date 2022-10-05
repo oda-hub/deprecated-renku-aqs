@@ -225,17 +225,20 @@ def set_html_head(html_fn):
                                              src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js")
     soup.head.append(new_script_jquery_library)
 
-    # TODO git clone js library from git, better to have it in a proper location
-    repo_name = "renku-aqs-graph-library"
-    repo_dir = repo_name
+    # # TODO git clone js library from git, better to have it in a proper location
+    # repo_name = "renku-aqs-graph-library"
+    # repo_dir = repo_name
+    #
+    # if os.path.exists(repo_dir):
+    #     shutil.rmtree(repo_dir)
+    # subprocess.check_call(
+    #     ["git", "clone", f"git@github.com:burnout87/{repo_name}.git", "renku-aqs-graph-library"]
+    # )
+    # graph_helper_library = soup.new_tag("script", type="application/javascript",
+    #                                     src="renku-aqs-graph-library/graph_helper.js")
 
-    if os.path.exists(repo_dir):
-        shutil.rmtree(repo_dir)
-    subprocess.check_call(
-        ["git", "clone", f"git@github.com:burnout87/{repo_name}.git", "renku-aqs-graph-library"]
-    )
     graph_helper_library = soup.new_tag("script", type="application/javascript",
-                                        src="renku-aqs-graph-library/graph_helper.js")
+                                        src="https://odahub.io/renku-aqs-graph-library/graph_helper.js")
     soup.head.append(graph_helper_library)
 
     title_tag = soup.new_tag("title")
