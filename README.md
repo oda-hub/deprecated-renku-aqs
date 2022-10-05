@@ -28,17 +28,22 @@ local-renku:dd481450-d5e4-11eb-a2dc-b5ff8b3b1162 a oda:Run ;
   ```
 ![](readme_imgs/subgraph.png)
 
+# Graphical visualization of the graph
+Starting from the knowledge graph generated and enriched during the various executions of the notebooks present within 
+the repository, this is queried to retrieve the needed information, perform some inferring and generate a graphical 
+representation.
+
+In particular, two commands are provided:
+* `display` to generate a representation of the graph over an output image
+* `show-graph` to start an interactive visualization of the graph over the browser 
+
 ## `display` command
 
-CLI command to generate an output graph and export it over an output image. 
-
-Starting from the knowledge graph generated during the execution of a notebook,
-this is queried to retrieve the needed information, perform some inferring and generate the output graph that will be finally
-exported over an output picture.
+CLI command to generate a graphical representation of the graph over an image.
 
 In particular, the following information are elaborated:
 * inputs/arguments/outputs of the notebook execution;
-* [astroquery](https://github.com/oda-hub/astroquery/tree/DESILegacySurvey) modules used and the main query methods called ([astroquery api](https://github.com/astropy/astroquery/blob/main/docs/api.rst)).
+* [astroquery](https://github.com/oda-hub/astroquery/) modules used and the main query methods called ([astroquery api](https://github.com/astropy/astroquery/blob/main/docs/api.rst)).
 
 ### Parameters
 
@@ -63,3 +68,14 @@ $ (cd renku-aqs-test-case/; renku aqs display --input-notebook final-an.ipynb --
  ```
 
 ![](readme_imgs/example_display_graph_final-an_no-oda-info.png)
+
+## `show-graph` command
+
+CLI command to generate an interactive graphical representation of the graph.
+
+```bash
+$ (cd renku-aqs-test-case/; renku aqs show-graph)
+ ```
+
+![](readme_imgs/example_show-graph.png)
+

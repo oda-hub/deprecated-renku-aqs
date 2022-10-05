@@ -518,10 +518,7 @@ def start_session():
     webbrowser.open(new_session_urls[0])
             
 
-
 @aqs.command()
-# TODO to discuss if is wanted/needed
-# @click.option("--input-notebook", default=None, help="Input notebook to process")
 def show_graph():
 
     graph = _graph()
