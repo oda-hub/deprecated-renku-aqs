@@ -88,9 +88,7 @@ The interface provides the user with a number of configurations:
 * **Apply reductions on the graph**: allows to enable the display of certain nodes with the relative child ones 
 absorbed within, and viceversa (eg in the example images, the `Plan` node has a number of child nodes, those
 can be visualized inside the `Plan` as well as regular ones) 
-<div align="center">
-<img align="left" width="45%" src="readme_imgs/expanded_plan.png">
-<img align="right" width="45%" src="readme_imgs/reduced_plan.png">
-</div>
+
+![image alt <](readme_imgs/expanded_plan.png) ![image alt >](readme_imgs/reduced_plan.png)
 
 * **Enable/disable graphical configurations for the graph**:
