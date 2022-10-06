@@ -89,13 +89,13 @@ This is configurable via a dedicated json file.
 * **Apply reductions on the graph**: allows to enable the display of certain nodes with the relative child ones 
 absorbed within, and viceversa (eg in the example images, the `Plan` node has a number of child nodes, those
 can be visualized inside the `Plan`, left image, as well as regular ones, right image) 
+This is configurable via a dedicated json file.
 <div align="center">
 <img align="left" width="37%" src="readme_imgs/reduced_plan.png">
 <img align="right" width="38%" src="readme_imgs/expanded_plan.png">
 </div>
 <br clear="left"/>
 <br clear="left"/>
-This is configurable via a dedicated json file.
 
 * **Enable/disable graphical configurations for the graph**: enable/disable a set of graphical configurations for
 the graph (nodes and edges), where each configuration is loaded from a dedicated json file. In the image displayed below,
