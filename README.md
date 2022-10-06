@@ -95,7 +95,6 @@ This is configurable via a dedicated json file.
 <img align="center" style="margin: 15px" width="38%" src="readme_imgs/expanded_plan.png">
 </div>
 <br clear="left"/>
-<br clear="left"/>
 
 * **Enable/disable graphical configurations for the graph**: enable/disable a set of graphical configurations for
 the graph (nodes and edges), where each configuration is loaded from a dedicated json file. In the image displayed below,
