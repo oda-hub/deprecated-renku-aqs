@@ -91,8 +91,8 @@ absorbed within, and viceversa (eg in the example images, the `Plan` node has a 
 can be visualized inside the `Plan`, left image, as well as regular ones, right image) 
 This is configurable via a dedicated json file.
 <div align="center">
-<img align="left" width="37%" src="readme_imgs/reduced_plan.png">
-<img align="right" width="38%" src="readme_imgs/expanded_plan.png">
+<img align="center" style="margin: 15px" width="37%" src="readme_imgs/reduced_plan.png">
+<img align="center" style="margin: 15px" width="38%" src="readme_imgs/expanded_plan.png">
 </div>
 <br clear="left"/>
 <br clear="left"/>
