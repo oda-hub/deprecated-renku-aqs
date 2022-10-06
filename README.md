@@ -89,8 +89,8 @@ The interface provides the user with a number of configurations:
 absorbed within, and viceversa (eg in the example images, the `Plan` node has a number of child nodes, those
 can be visualized inside the `Plan`, left image, as well as regular ones, right image) 
 <div align="center">
-<img align="left" width="45%" src="readme_imgs/reduced_plan.png">
-<img align="right" width="46%" src="readme_imgs/expanded_plan.png">
+<img align="left" width="37%" src="readme_imgs/reduced_plan.png">
+<img align="right" width="38%" src="readme_imgs/expanded_plan.png">
 </div>
 <br clear="left"/>
 <br clear="left"/>
@@ -100,4 +100,6 @@ can be visualized inside the `Plan`, left image, as well as regular ones, right 
 * **Enable/disable graphical configurations for the graph**: enable/disable a set of graphical configurations for
 the graph (nodes and edges), where each configuration is loaded from a dedicated json file. In the image displayed below,
 two json files have been loaded, and the related checkbox will enable/disable that configuration.
-![](readme_imgs/enable_disable_configuration-graph.png)
+<div align="center">
+<img width="70%" src="readme_imgs/enable_disable_configuration-graph.png">
+</div>
