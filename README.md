@@ -79,3 +79,14 @@ $ (cd renku-aqs-test-case/; renku aqs show-graph)
 
 ![](readme_imgs/example_show-graph.png)
 
+The interface provides the user with a number of configurations:
+
+* **Change graph layout**: Two possible layouts are at the moment supported
+  * _random_: where nodes and edges are displayed in a random fashion over the dedicated frame 
+  * _hierarchical_: where a hierarchical visualization is applied to the nodes and the edges
+* **Enable/disable selection of subsets of nodes**: filtering of certain subset of nodes (eg astroquery-related nodes) 
+* **Apply reductions on the graph**: allows to enable the display of certain nodes with the relative child ones 
+absorbed within, and viceversa (eg in the example images, the `Plan` node has a number of child nodes, those
+can be visualized inside the `Plan` as well as regular ones)
+  ![](readme_imgs/expanded_plan.png)  ![](readme_imgs/reduced_plan.png)
+* **Enable/disable graphical configurations for the graph**
