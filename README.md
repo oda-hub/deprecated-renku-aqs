@@ -94,5 +94,7 @@ can be visualized inside the `Plan`, left image, as well as regular ones, right 
 </div>
 <br clear="left"/>
 <br clear="left"/>
+<br clear="left"/>
+<br clear="left"/>
 
 * **Enable/disable graphical configurations for the graph**:
