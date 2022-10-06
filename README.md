@@ -98,5 +98,6 @@ can be visualized inside the `Plan`, left image, as well as regular ones, right 
 <br clear="left"/>
 
 * **Enable/disable graphical configurations for the graph**: enable/disable a set of graphical configurations for
-the graph (nodes and edges),where each configuration is loaded from a dedicated json file. For the sake of this 
-demonstrator, two json files have been loaded, and the related checkbox will apply that configuration
+the graph (nodes and edges), where each configuration is loaded from a dedicated json file. In the image displayed below,
+two json files have been loaded, and the related checkbox will enable/disable that configuration.
+![](readme_imgs/enable_disable_configuration-graph.png)
