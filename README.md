@@ -87,7 +87,7 @@ The interface provides the user with a number of configurations:
   * _hierarchical_: where a hierarchical visualization is applied to the nodes and the edges, an example of 
   this is displayed in the image below
   <div align="center">
-  <img src="readme_imgs/hierarchical_view.png" width="50%" />
+  <img src="readme_imgs/hierarchical_view.png" width="65%" />
   </div>
   
 * **Enable/disable selection of subsets of nodes**: filtering of certain subset of nodes (eg astroquery-related nodes).
@@ -108,3 +108,10 @@ two json files have been loaded, and the related checkbox will enable/disable th
 <div align="center">
 <img width="70%" src="readme_imgs/enable_disable_configuration-graph.png">
 </div>
+
+
+The functionalities for the graph drawing and its behavior are developed in javascript. In particular, using the following libraries:
+* [Vis netowrk](https://github.com/visjs/vis-network) - to provide the means to draw nodes and edges 
+* [N3](https://github.com/rdfjs/N3.js/) - a library that offers the functionalities to handle RDF, in particular to 
+perform operations of parsing, writing and storing triples in several various formats (eg Turtle, TriG, N-Triples, N-Quads to name some), 
+* [Comunica](https://github.com/comunica/comunica) - for querying the graph
