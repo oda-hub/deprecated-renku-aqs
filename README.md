@@ -93,5 +93,6 @@ can be visualized inside the `Plan` as well as regular ones)
 <img align="right" width="45%" src="readme_imgs/reduced_plan.png">
 </div>
 <br clear="left"/>
+<br clear="left"/>
 
 * **Enable/disable graphical configurations for the graph**:
