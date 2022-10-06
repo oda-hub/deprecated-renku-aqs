@@ -86,7 +86,9 @@ The interface provides the user with a number of configurations:
   (this layout is used in the above picture)
   * _hierarchical_: where a hierarchical visualization is applied to the nodes and the edges, an example of 
   this is displayed in the image below
-  ![hierarachical example](readme_imgs/hierarchical_view.png){width=60}
+  <div align="center">
+  <img src="readme_imgs/hierarchical_view.png" width="50%" />
+  </div>
   
 * **Enable/disable selection of subsets of nodes**: filtering of certain subset of nodes (eg astroquery-related nodes).
 This is configurable via a dedicated json file.
