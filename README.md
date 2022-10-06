@@ -84,7 +84,8 @@ The interface provides the user with a number of configurations:
 * **Change graph layout**: Two possible layouts are at the moment supported
   * _random_: where nodes and edges are displayed in a random fashion over the dedicated frame 
   * _hierarchical_: where a hierarchical visualization is applied to the nodes and the edges
-* **Enable/disable selection of subsets of nodes**: filtering of certain subset of nodes (eg astroquery-related nodes) 
+* **Enable/disable selection of subsets of nodes**: filtering of certain subset of nodes (eg astroquery-related nodes).
+This is configurable via a dedicated json file.
 * **Apply reductions on the graph**: allows to enable the display of certain nodes with the relative child ones 
 absorbed within, and viceversa (eg in the example images, the `Plan` node has a number of child nodes, those
 can be visualized inside the `Plan`, left image, as well as regular ones, right image) 
@@ -94,8 +95,7 @@ can be visualized inside the `Plan`, left image, as well as regular ones, right 
 </div>
 <br clear="left"/>
 <br clear="left"/>
-<br clear="left"/>
-<br clear="left"/>
+This is configurable via a dedicated json file.
 
 * **Enable/disable graphical configurations for the graph**: enable/disable a set of graphical configurations for
 the graph (nodes and edges), where each configuration is loaded from a dedicated json file. In the image displayed below,
