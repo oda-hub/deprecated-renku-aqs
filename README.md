@@ -89,7 +89,7 @@ The interface provides the user with a number of configurations:
 absorbed within, and viceversa (eg in the example images, the `Plan` node has a number of child nodes, those
 can be visualized inside the `Plan` as well as regular ones)
 <p align="center">
-  <img align="left" width="50%" src="readme_imgs/expanded_plan.png">
-  <img align="right" width="50%" src="readme_imgs/reduced_plan.png">
+  <img align="left" width="45%" src="readme_imgs/expanded_plan.png">
+  <img align="right" width="45%" src="readme_imgs/reduced_plan.png">
 </p>
 * **Enable/disable graphical configurations for the graph**
