@@ -88,6 +88,7 @@ This is also visible in the animation below.
 <div align="center">
 <img align="center" width="65%" src="readme_imgs/animation_expansion_retraction.gif">
 </div>
+<br clear="left"/>
 
 The interface provides the user with a number of adjustable options:
 
