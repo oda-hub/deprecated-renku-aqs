@@ -79,6 +79,12 @@ $ renku aqs show-graph
 
 ![](readme_imgs/example_show-graph.png)
 
+The user can interact with the graph via a single click on one of its nodes: upon clicking, 
+a `SPARQL` query is dynamically built, and this will retrieve all the nodes and edges directly connected to the clicked 
+node, as shown in the animation below.
+
+![](readme_imgs/animation_expansion_retraction.gif)
+
 The interface provides the user with a number of adjustable options:
 
 * **Change graph layout**: Two possible layouts are at the moment supported
