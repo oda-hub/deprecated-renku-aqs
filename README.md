@@ -57,14 +57,14 @@ $ (cd renku-aqs-test-case/; renku aqs display)
 
 ### Specify executed notebook
 ```bash
-$ (cd renku-aqs-test-case/; renku aqs display --input-notebook final-an.ipynb)
+$ renku aqs display --input-notebook final-an.ipynb
  ```
 
 ![](readme_imgs/example_display_graph_final-an.png)
 
 ### Do not display oda-related information
 ```bash
-$ (cd renku-aqs-test-case/; renku aqs display --input-notebook final-an.ipynb --no-oda-info)
+$ renku aqs display --input-notebook final-an.ipynb --no-oda-info
  ```
 
 ![](readme_imgs/example_display_graph_final-an_no-oda-info.png)
@@ -74,7 +74,7 @@ $ (cd renku-aqs-test-case/; renku aqs display --input-notebook final-an.ipynb --
 CLI command to generate an interactive graphical representation of the graph.
 
 ```bash
-$ (cd renku-aqs-test-case/; renku aqs show-graph)
+$ renku aqs show-graph
  ```
 
 ![](readme_imgs/example_show-graph.png)
