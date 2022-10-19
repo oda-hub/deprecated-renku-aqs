@@ -45,7 +45,7 @@ In particular, the following information are elaborated:
 * inputs/arguments/outputs of the notebook execution;
 * [astroquery](https://github.com/oda-hub/astroquery/) modules used and the main query methods called ([astroquery api](https://github.com/astropy/astroquery/blob/main/docs/api.rst)).
 
-### Parameters
+#### Parameters
 
 * `--filename` The filename of the output file image, until now, only png images are supported (eg `--filename graph.png`), default is `graph.png`
 * `--input-notebook` Input notebook to process, if not specified, will query for all the executions from all notebooks  
@@ -55,14 +55,14 @@ $ renku aqs display
  ```
 ![](readme_imgs/example_display_graph_complete.png)
 
-### Specify executed notebook
+#### Specify executed notebook
 ```bash
 $ renku aqs display --input-notebook final-an.ipynb
  ```
 
 ![](readme_imgs/example_display_graph_final-an.png)
 
-### Do not display oda-related information
+#### Do not display oda-related information
 ```bash
 $ renku aqs display --input-notebook final-an.ipynb --no-oda-info
  ```
