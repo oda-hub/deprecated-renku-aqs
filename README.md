@@ -79,7 +79,7 @@ $ renku aqs show-graph
 
 ![](readme_imgs/example_show-graph.png)
 
-The interface provides the user with a number of configurations:
+The interface provides the user with a number of adjustable options:
 
 * **Change graph layout**: Two possible layouts are at the moment supported
   * _random_: where nodes and edges are displayed in a random fashion over the dedicated frame 
