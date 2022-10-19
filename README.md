@@ -83,7 +83,9 @@ The user can interact with the graph via a single click on one of its nodes: upo
 a `SPARQL` query is dynamically built, and this will retrieve all the nodes and edges directly connected to the clicked 
 node, as shown in the animation below.
 
-![](readme_imgs/animation_expansion_retraction.gif)
+<div align="center">
+<img align="center" width="65%" src="readme_imgs/animation_expansion_retraction.gif">
+</div>
 
 The interface provides the user with a number of adjustable options:
 
