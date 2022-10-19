@@ -51,7 +51,7 @@ In particular, the following information are elaborated:
 * `--input-notebook` Input notebook to process, if not specified, will query for all the executions from all notebooks  
 * `--no-oda-info` Exclude oda related information in the output graph, an output much closer to the lineage graph provided in the renkulab will be generated
 ```bash
-$ (cd renku-aqs-test-case/; renku aqs display)
+$ renku aqs display
  ```
 ![](readme_imgs/example_display_graph_complete.png)
 
