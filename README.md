@@ -81,7 +81,9 @@ $ renku aqs show-graph
 
 The user can interact with the graph via a single click on one of its nodes: upon clicking, 
 a `SPARQL` query is dynamically built, and this will retrieve all the nodes and edges directly connected to the clicked 
-node, as shown in the animation below.
+node, as shown in the animation below. Once the node has been expanded, the newly added nodes, along 
+with the directly connected leaves nodes, can be re-absorbed by clicking again on the very same node. 
+This is also visible in the animation below.
 
 <div align="center">
 <img align="center" width="65%" src="readme_imgs/animation_expansion_retraction.gif">
