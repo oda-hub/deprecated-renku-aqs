@@ -139,7 +139,7 @@ def _run_id(activity_id):
 def _graph(revision=None, paths=None):
     # FIXME: use (revision, paths) filter
 
-    client = LocalClient(path=".", external_storage_requested=False)
+    client = LocalClient(path=Path("."), external_storage_requested=False)
     cmd_result = export_graph_command().with_client(client).build().execute()
 
     if cmd_result.status == cmd_result.FAILURE:
@@ -441,7 +441,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     renku_path = renku_context().renku_path
 
     query_where = graph_utils.build_query_where(input_notebook=input_notebook)
-    query_construct = graph_utils.build_query_construct(input_notebook=input_notebook, no_oda_info=no_oda_info)
+    query_construct = graph_utils.build_query_construct(no_oda_info=no_oda_info)
 
     query = f"""{query_construct}
         {query_where}
@@ -522,6 +522,10 @@ def start_session():
 def show_graph():
 
     graph = _graph()
+
+    with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
+        graph = graph.parse(source=ttl_ontology_fn)
+
     renku_path = renku_context().renku_path
 
     query_construct = graph_utils.build_query_construct()
@@ -537,8 +541,13 @@ def show_graph():
     t2 = time.perf_counter()
     print("Query completed in %d !" % (t2 - t1))
 
+    data = r.serialize(format="n3").decode()
+    # data = graph.serialize(format="n3")
+
+    print(data)
+
     G = rdflib.Graph()
-    G.parse(data=r.serialize(format="n3").decode(), format="n3")
+    G.parse(data=data, format="n3")
     G.bind("oda", "http://odahub.io/ontology#")
     G.bind("odas", "https://odahub.io/ontology#")  # the same
     G.bind("local-renku", f"file://{renku_path}/")
@@ -549,7 +558,6 @@ def show_graph():
         gfn.write(serial)
 
     html_fn = 'graph.html'
-
     default_graph_graphical_config_fn = 'graph_graphical_config.json'
     graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
     graph_reduction_config_fn = 'graph_reduction_config.json'

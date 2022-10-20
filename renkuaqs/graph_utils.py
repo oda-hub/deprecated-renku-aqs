@@ -339,7 +339,7 @@ def build_query_where(input_notebook: str = None):
     return query_where
 
 
-def build_query_construct(input_notebook: str = None, no_oda_info=False):
+def build_query_construct(no_oda_info=False):
     # add time activity information
     query_construct_action = """
             ?action a <http://schema.org/Action> ;
