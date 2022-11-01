@@ -16,11 +16,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from setuptools import find_packages, setup
 
-install_requires = ['deepdiff', 'astroquery']
-#install_requires = ['aqsmodel-converters', 'deepdiff']
+install_requires = [
+    'deepdiff',
+    'pydotplus',
+    'rdflib',
+    'bs4',
+    'aqsconverters @ git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters',
+    'pyvis',
+    'pydotplus'
+]
+
 packages = find_packages()
 version_file = open('VERSION')
 
