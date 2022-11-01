@@ -136,7 +136,7 @@ def _run_id(activity_id):
 def _graph(revision=None, paths=None):
     # FIXME: use (revision, paths) filter
 
-    cmd_result = export_graph_command().build().execute()
+    cmd_result = export_graph_command().working_directory(project_context.path).build().execute()
 
     if cmd_result.status == cmd_result.FAILURE:
         raise RenkuException("fail to export the renku graph")
