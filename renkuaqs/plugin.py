@@ -33,12 +33,10 @@ from pathlib import Path
 from pyvis.network import Network
 from rdflib.tools import rdf2dot
 from renku.domain_model.provenance.annotation import Annotation
-from renku.core.interface.client_dispatcher import IClientDispatcher
-from renku.command.command_builder import inject
+from renku.domain_model.project_context import project_context
 from renku.core.plugin import hookimpl
 from renku.command.graph import export_graph_command
 from renku.core.errors import RenkuException
-from renku.core.management.client import LocalClient
 
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
@@ -56,10 +54,9 @@ class AQS(object):
         self.run = run
 
     @property
-    @inject.autoparams("client_dispatcher")
-    def renku_aqs_path(self, client_dispatcher: IClientDispatcher):
+    def renku_aqs_path(self):
         """Return a ``Path`` instance of Renku AQS metadata folder."""
-        return Path(client_dispatcher.current_client.renku_home).joinpath(AQS_DIR).joinpath(COMMON_DIR)
+        return Path(project_context.metadata_path).joinpath(AQS_DIR).joinpath(COMMON_DIR)
 
     def load_model(self, path):
         """Load AQS reference file."""
@@ -139,8 +136,7 @@ def _run_id(activity_id):
 def _graph(revision=None, paths=None):
     # FIXME: use (revision, paths) filter
 
-    client = LocalClient(path=Path("."), external_storage_requested=False)
-    cmd_result = export_graph_command().with_client(client).build().execute()
+    cmd_result = export_graph_command().build().execute()
 
     if cmd_result.status == cmd_result.FAILURE:
         raise RenkuException("fail to export the renku graph")
@@ -151,11 +147,6 @@ def _graph(revision=None, paths=None):
     graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
 
     return graph
-
-
-def renku_context():
-    ctx = click.get_current_context().ensure_object(LocalClient)
-    return ctx
 
 
 def _create_leaderboard(data, metric, format=None):
@@ -226,7 +217,7 @@ def params(revision, format, paths, diff):
 
     graph = _graph(revision, paths)
 
-    renku_path = renku_context().renku_path
+    renku_path = project_context.path
 
     # how to use ontology
     output = PrettyTable()
@@ -438,7 +429,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     import pydotplus
 
     graph = _graph(revision, paths)
-    renku_path = renku_context().renku_path
+    renku_path = project_context.path
 
     query_where = graph_utils.build_query_where(input_notebook=input_notebook)
     query_construct = graph_utils.build_query_construct(no_oda_info=no_oda_info)
@@ -526,7 +517,7 @@ def show_graph():
     with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
         graph = graph.parse(source=ttl_ontology_fn)
 
-    renku_path = renku_context().renku_path
+    renku_path = project_context.path
 
     query_construct = graph_utils.build_query_construct()
     query_where = graph_utils.build_query_where()
@@ -543,8 +534,6 @@ def show_graph():
 
     data = r.serialize(format="n3").decode()
     # data = graph.serialize(format="n3")
-
-    print(data)
 
     G = rdflib.Graph()
     G.parse(data=data, format="n3")
