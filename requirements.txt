@@ -1,2 +1,0 @@
--e git+https://github.com/oda-hub/astroquery.git#egg=astroquery
-renku==1.8.1

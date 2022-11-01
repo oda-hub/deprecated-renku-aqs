@@ -23,6 +23,8 @@ install_requires = [
     'pydotplus',
     'rdflib',
     'bs4',
+    'renku==1.8.1',
+    'astroquery @ git+https://github.com/oda-hub/astroquery.git#egg=astroquery',
     'aqsconverters @ git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters',
     'pyvis',
     'pydotplus'
