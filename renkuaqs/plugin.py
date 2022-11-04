@@ -431,7 +431,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     graph = _graph(revision, paths)
     renku_path = project_context.path
 
-    query_where = graph_utils.build_query_where(input_notebook=input_notebook)
+    query_where = graph_utils.build_query_where(input_notebook=input_notebook, no_oda_info=no_oda_info)
     query_construct = graph_utils.build_query_construct(no_oda_info=no_oda_info)
 
     query = f"""{query_construct}

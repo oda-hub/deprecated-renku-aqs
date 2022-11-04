@@ -182,7 +182,7 @@ def customize_node(node: typing.Union[pydotplus.Node],
             node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
 
 
-def build_query_where(input_notebook: str = None):
+def build_query_where(input_notebook: str = None, no_oda_info=False):
     if input_notebook is not None:
         query_where = f"""WHERE {{
             {{
@@ -238,10 +238,12 @@ def build_query_where(input_notebook: str = None):
                                         ) .
         """
 
-    query_where = query_where + """
+    query_where += """
                 OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition } .
             }
-
+            """
+    if not no_oda_info:
+        query_where += """
             {    
                 ?activity a ?activityType ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
@@ -333,6 +335,9 @@ def build_query_where(input_notebook: str = None):
 
                     ?run ?p ?o .
                 }
+                """
+
+        query_where += """
             }
         }
         """
