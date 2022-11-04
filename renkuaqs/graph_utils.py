@@ -250,6 +250,7 @@ def build_query_where(input_notebook: str = None, no_oda_info=False):
             """
     if not no_oda_info:
         query_where += """
+            OPTIONAL {
                 {
                     ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
                          <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
@@ -334,6 +335,7 @@ def build_query_where(input_notebook: str = None, no_oda_info=False):
 
                     ?run ?p ?o .
                 }
+            }
                 """
 
     query_where += """
