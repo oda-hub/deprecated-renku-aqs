@@ -241,16 +241,15 @@ def build_query_where(input_notebook: str = None, no_oda_info=False):
     query_where += """
                 OPTIONAL { ?actionParam <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition } .
             }
-            """
-    if not no_oda_info:
-        query_where += """
             {    
                 ?activity a ?activityType ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
                     <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
                     <http://www.w3.org/ns/prov#qualifiedAssociation>/<http://www.w3.org/ns/prov#hadPlan> ?action ;
                     <http://www.w3.org/ns/prov#qualifiedUsage>/<http://www.w3.org/ns/prov#entity> ?entity .
-
+            """
+    if not no_oda_info:
+        query_where += """
                 {
                     ?run <http://odahub.io/ontology#isUsing> ?aq_module ;
                          <http://odahub.io/ontology#isRequestingAstroObject> ?a_object ;
