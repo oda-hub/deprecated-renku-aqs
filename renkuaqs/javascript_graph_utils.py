@@ -156,7 +156,9 @@ def set_html_content(net, output_path,
         net.html = net.html.replace(net_h1_html_match.group(0), '')
     net.html = net.html.replace('<body>', ('<body>'
                                            '<h1>ODA Graph Export Quick-Look</h1>'))
-    net.html = net.html.replace('<div id = "mynetwork"></div>', html_code)
+    net_div_mynetwork_html_match = re.search(r'<div.*"mynetwork".*></div>', net.html)
+    if net_div_mynetwork_html_match is not None:
+        net.html = net.html.replace(net_div_mynetwork_html_match.group(0), html_code)
     with open(output_path, "w+") as out:
         out.write(net.html)
 
