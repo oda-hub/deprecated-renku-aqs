@@ -337,10 +337,10 @@ def build_query_where(input_notebook: str = None, no_oda_info=False):
                 }
                 """
 
-        query_where += """
-            }
+    query_where += """
         }
-        """
+    }
+    """
     return query_where
 
 
