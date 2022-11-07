@@ -593,8 +593,6 @@ def show_graph():
     # to tweak physics related options
     net.write_html(html_fn)
 
-    # javascript_graph_utils.set_graph_options(net, html_fn)
-
     javascript_graph_utils.add_js_click_functionality(net, html_fn,
                                                       graph_ttl_stream=graph_ttl_str,
                                                       nodes_graph_config_obj_str=nodes_graph_config_obj_str,
