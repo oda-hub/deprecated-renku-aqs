@@ -2,7 +2,7 @@ import re
 import bs4
 
 
-def set_html_content(net, html_fn,
+def set_html_content(html_fn,
                      graph_config_names_list=None,
                      nodes_graph_config_obj_dict=None,
                      edges_graph_config_obj_dict=None,
@@ -124,7 +124,7 @@ def set_html_content(net, html_fn,
         out.write(str(soup.prettify()))
 
 
-def add_js_click_functionality(net, html_fn, graph_ttl_stream=None,
+def add_js_click_functionality(html_fn, graph_ttl_stream=None,
                                nodes_graph_config_obj_str=None,
                                edges_graph_config_obj_str=None,
                                graph_reductions_obj_str=None,
