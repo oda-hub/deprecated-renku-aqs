@@ -145,7 +145,9 @@ def set_html_content(net, html_fn,
             </div>
     '''
 
-    soup = bs4.BeautifulSoup(net.html, "html.parser")
+    # soup = bs4.BeautifulSoup(net.html, "html.parser")
+    with open(html_fn) as template:
+        soup = bs4.BeautifulSoup(template.read(), "html.parser")
 
     soup.center.decompose()
 
@@ -157,41 +159,107 @@ def set_html_content(net, html_fn,
     mynetwork_tag.insert_before(html_code_bs4)
     mynetwork_tag.decompose()
 
-    net.html = net.html.replace('<html>', '<!DOCTYPE html>')
+    # net.html = net.html.replace('<html>', '<!DOCTYPE html>')
     doctype_tag = bs4.Doctype('html')
     soup.insert(0, doctype_tag)
 
-    with open(html_fn, "w+") as out:
+    with open(html_fn, "w") as out:
         out.write(str(soup.prettify()))
 
 
-def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
+def add_js_click_functionality(net, html_fn, graph_ttl_stream=None,
                                nodes_graph_config_obj_str=None,
                                edges_graph_config_obj_str=None,
                                graph_reductions_obj_str=None,
                                graph_nodes_subset_config_obj_str=None):
-    f_graph_vars = f'''
+    # f_graph_vars = f'''
+    # // initialize global variables.
+    # var nodes_graph_config_obj = JSON.parse('{nodes_graph_config_obj_str}');
+    # var edges_graph_config_obj = JSON.parse('{edges_graph_config_obj_str}');
+    # var subset_nodes_config_obj = JSON.parse('{graph_nodes_subset_config_obj_str}');
+    # var graph_reductions_obj = JSON.parse('{graph_reductions_obj_str}');
+    # var graph_ttl_content = `{graph_ttl_stream}`;
+    # '''
+
+    # net_html_match = re.search(r'function drawGraph\(\) {(.*)}', net.html, flags=re.DOTALL)
+    # if net_html_match is not None:
+    #     net.html = net.html.replace(net_html_match.group(0),
+    #                                 '''
+    # window.onload = function () {
+    #     load_graph(nodes_graph_config_obj, edges_graph_config_obj, subset_nodes_config_obj, graph_reductions_obj);
+    # };
+    #                                 ''')
+
+    # net.html = net.html.replace('drawGraph();', '')
+    # net.html = net.html.replace('// initialize global variables.', f_graph_vars)
+
+    # soup = bs4.BeautifulSoup(net.html, "html.parser")
+    with open(html_fn) as template:
+        html_code = template.read()
+        html_code = html_code.replace('drawGraph();', '')
+        soup = bs4.BeautifulSoup(html_code, "html.parser")
+
+    javascript_tag = soup.body.find('script', type='text/javascript')
+    javascript_tag.clear()
+
+    javascript_content = f'''
     // initialize global variables.
     var nodes_graph_config_obj = JSON.parse('{nodes_graph_config_obj_str}');
     var edges_graph_config_obj = JSON.parse('{edges_graph_config_obj_str}');
     var subset_nodes_config_obj = JSON.parse('{graph_nodes_subset_config_obj_str}');
     var graph_reductions_obj = JSON.parse('{graph_reductions_obj_str}');
     var graph_ttl_content = `{graph_ttl_stream}`;
+    
+    var edges;
+    var nodes;
+    var network; 
+    var container;
+    var data;
+    var options = {{
+        autoResize: true,
+        nodes: {{
+            scaling: {{
+                min: 10,
+                max: 30
+            }},
+            font: {{
+                size: 14,
+                face: "Tahoma",
+            }},
+        }},
+        edges: {{
+            smooth: false,
+            arrows: {{
+              to: {{
+                enabled: true,
+                scaleFactor: 1.2
+                }}
+            }},
+            width: 4
+
+        }},
+        layout: {{
+            hierarchical: {{
+                enabled: false
+            }}
+        }},
+        interaction: {{
+
+        }},
+    }};
+    
+    window.onload = function () {{
+        load_graph(nodes_graph_config_obj, edges_graph_config_obj, subset_nodes_config_obj, graph_reductions_obj);
+    }};
     '''
 
-    net_html_match = re.search(r'function drawGraph\(\) {(.*)}', net.html, flags=re.DOTALL)
-    if net_html_match is not None:
-        net.html = net.html.replace(net_html_match.group(0),
-                                    '''
-    window.onload = function () {
-        load_graph(nodes_graph_config_obj, edges_graph_config_obj, subset_nodes_config_obj, graph_reductions_obj);
-    };
-                                    ''')
-    net.html = net.html.replace('drawGraph();', '')
-    net.html = net.html.replace('// initialize global variables.', f_graph_vars)
+    javascript_tag.append(javascript_content)
+    if soup is not None:
+        with open(html_fn, "w") as outf:
+            outf.write(str(soup.prettify()))
 
-    with open(output_path, "w+") as out:
-        out.write(net.html)
+    # with open(output_path, "w+") as out:
+    #     out.write(net.html)
 
 
 def set_html_head(html_fn):
