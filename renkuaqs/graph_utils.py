@@ -2,7 +2,6 @@ import os
 import typing
 import pydotplus
 import rdflib
-import bs4
 
 from rdflib.tools.rdf2dot import LABEL_PROPERTIES
 from lxml import etree

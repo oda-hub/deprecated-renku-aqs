@@ -1,8 +1,5 @@
 import re
-import subprocess
-import os
 import bs4
-import shutil
 
 
 def set_graph_options(net, output_path):
@@ -48,14 +45,12 @@ def set_graph_options(net, output_path):
         out.write(net.html)
 
 
-def set_html_content(net, output_path,
+def set_html_content(net, html_fn,
                      graph_config_names_list=None,
                      nodes_graph_config_obj_dict=None,
                      edges_graph_config_obj_dict=None,
                      graph_reduction_config_obj_dict=None,
                      graph_nodes_subset_config_obj_dict=None):
-    # print(json.dumps(nodes_graph_config_obj_dict, indent=4, sort_keys=True))
-    # print(json.dumps(edges_graph_config_obj_dict, indent=4, sort_keys=True))
 
     html_code = '''
         <div style="margin: 5px 0px 15px 5px">
@@ -150,17 +145,24 @@ def set_html_content(net, output_path,
             </div>
     '''
 
+    soup = bs4.BeautifulSoup(net.html, "html.parser")
+
+    soup.center.decompose()
+
+    mynetwork_tag = soup.body.find('div', id="mynetwork")
+    html_code_bs4 = bs4.BeautifulSoup(html_code, 'html.parser')
+    newh1_str = '<h1>ODA Graph Export Quick-Look</h1>'
+    newh1_tag = bs4.BeautifulSoup(newh1_str, 'html.parser')
+    mynetwork_tag.insert_before(newh1_tag)
+    mynetwork_tag.insert_before(html_code_bs4)
+    mynetwork_tag.decompose()
+
     net.html = net.html.replace('<html>', '<!DOCTYPE html>')
-    net_h1_html_match = re.search(r'<center>.*<h1></h1>.*</center>', net.html, flags=re.DOTALL)
-    if net_h1_html_match is not None:
-        net.html = net.html.replace(net_h1_html_match.group(0), '')
-    net.html = net.html.replace('<body>', ('<body>'
-                                           '<h1>ODA Graph Export Quick-Look</h1>'))
-    net_div_mynetwork_html_match = re.search(r'<div.*"mynetwork".*></div>', net.html)
-    if net_div_mynetwork_html_match is not None:
-        net.html = net.html.replace(net_div_mynetwork_html_match.group(0), html_code)
-    with open(output_path, "w+") as out:
-        out.write(net.html)
+    doctype_tag = bs4.Doctype('html')
+    soup.insert(0, doctype_tag)
+
+    with open(html_fn, "w+") as out:
+        out.write(str(soup.prettify()))
 
 
 def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
@@ -169,21 +171,21 @@ def add_js_click_functionality(net, output_path, graph_ttl_stream=None,
                                graph_reductions_obj_str=None,
                                graph_nodes_subset_config_obj_str=None):
     f_graph_vars = f'''
-        // initialize global variables.
-        var nodes_graph_config_obj = JSON.parse('{nodes_graph_config_obj_str}');
-        var edges_graph_config_obj = JSON.parse('{edges_graph_config_obj_str}');
-        var subset_nodes_config_obj = JSON.parse('{graph_nodes_subset_config_obj_str}');
-        var graph_reductions_obj = JSON.parse('{graph_reductions_obj_str}');
-        var graph_ttl_content = `{graph_ttl_stream}`;
+    // initialize global variables.
+    var nodes_graph_config_obj = JSON.parse('{nodes_graph_config_obj_str}');
+    var edges_graph_config_obj = JSON.parse('{edges_graph_config_obj_str}');
+    var subset_nodes_config_obj = JSON.parse('{graph_nodes_subset_config_obj_str}');
+    var graph_reductions_obj = JSON.parse('{graph_reductions_obj_str}');
+    var graph_ttl_content = `{graph_ttl_stream}`;
     '''
 
     net_html_match = re.search(r'function drawGraph\(\) {(.*)}', net.html, flags=re.DOTALL)
     if net_html_match is not None:
         net.html = net.html.replace(net_html_match.group(0),
                                     '''
-                                    window.onload = function () {
-                                        load_graph(nodes_graph_config_obj, edges_graph_config_obj, subset_nodes_config_obj, graph_reductions_obj);
-                                    };
+    window.onload = function () {
+        load_graph(nodes_graph_config_obj, edges_graph_config_obj, subset_nodes_config_obj, graph_reductions_obj);
+    };
                                     ''')
     net.html = net.html.replace('drawGraph();', '')
     net.html = net.html.replace('// initialize global variables.', f_graph_vars)
