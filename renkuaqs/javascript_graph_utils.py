@@ -102,7 +102,6 @@ def set_html_content(html_fn,
             </div>
     '''
 
-    # soup = bs4.BeautifulSoup(net.html, "html.parser")
     with open(html_fn) as template:
         soup = bs4.BeautifulSoup(template.read(), "html.parser")
 
@@ -193,9 +192,6 @@ def add_js_click_functionality(html_fn, graph_ttl_stream=None,
     if soup is not None:
         with open(html_fn, "w") as outf:
             outf.write(str(soup.prettify()))
-
-    # with open(output_path, "w+") as out:
-    #     out.write(net.html)
 
 
 def set_html_head(html_fn):
