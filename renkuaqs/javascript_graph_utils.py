@@ -1,7 +1,14 @@
 import bs4
+import webbrowser
 
 
-def set_html_content(html_fn,
+def write_modified_html_content(net, html_fn):
+    with open(html_fn, "w") as out:
+        out.write(net.html)
+        webbrowser.open(html_fn)
+
+
+def set_html_content(net,
                      graph_config_names_list=None,
                      nodes_graph_config_obj_dict=None,
                      edges_graph_config_obj_dict=None,
@@ -101,9 +108,12 @@ def set_html_content(html_fn,
             </div>
     '''
 
-    with open(html_fn) as template:
-        soup = bs4.BeautifulSoup(template.read(), "html.parser")
-    soup.center.decompose()
+    # with open(html_fn) as template:
+    #     soup = bs4.BeautifulSoup(template.read(), "html.parser")
+    soup = bs4.BeautifulSoup(net.html, "html.parser")
+
+    for center in soup('center'):
+        center.decompose()
 
     mynetwork_tag = soup.body.find('div', id="mynetwork")
     html_code_bs4 = bs4.BeautifulSoup(html_code, 'html.parser')
@@ -113,24 +123,26 @@ def set_html_content(html_fn,
     mynetwork_tag.insert_before(html_code_bs4)
     mynetwork_tag.decompose()
 
-    # net.html = net.html.replace('<html>', '<!DOCTYPE html>')
     doctype_tag = bs4.Doctype('html')
     soup.insert(0, doctype_tag)
 
-    with open(html_fn, "w") as out:
-        out.write(str(soup.prettify()))
+    # with open(html_fn, "w") as out:
+    #     out.write(str(soup.prettify()))
+    net.html = str(soup.prettify())
 
 
-def add_js_click_functionality(html_fn, graph_ttl_stream=None,
+def add_js_click_functionality(net, graph_ttl_stream=None,
                                nodes_graph_config_obj_str=None,
                                edges_graph_config_obj_str=None,
                                graph_reductions_obj_str=None,
                                graph_nodes_subset_config_obj_str=None):
 
-    with open(html_fn) as template:
-        html_code = template.read()
-        html_code = html_code.replace('drawGraph();', '')
-        soup = bs4.BeautifulSoup(html_code, "html.parser")
+    # with open(html_fn) as template:
+    #     html_code = template.read()
+    #     html_code = html_code.replace('drawGraph();', '')
+    #     soup = bs4.BeautifulSoup(html_code, "html.parser")
+    net.html = net.html.replace('drawGraph();', '')
+    soup = bs4.BeautifulSoup(net.html, "html.parser")
 
     javascript_content = f'''
     // initialize global variables.
@@ -185,17 +197,19 @@ def add_js_click_functionality(html_fn, graph_ttl_stream=None,
     javascript_tag = soup.new_tag("script", type="application/javascript")
     javascript_tag.append(javascript_content)
     soup.head.append(javascript_tag)
-    if soup is not None:
-        with open(html_fn, "w") as outf:
-            outf.write(str(soup.prettify()))
+    # if soup is not None:
+        # with open(html_fn, "w") as outf:
+        #     outf.write(str(soup.prettify()))
+    net.html = str(soup.prettify())
 
 
-def set_html_head(html_fn):
+def set_html_head(net):
     # let's patch the template
     # load the file
-    with open(html_fn) as template:
-        html_code = template.read()
-        soup = bs4.BeautifulSoup(html_code, "html.parser")
+    # with open(html_fn) as template:
+    #     html_code = template.read()
+
+    soup = bs4.BeautifulSoup(net.html, "html.parser")
 
     css_tag = soup.head.find('style', type="text/css")
     css_tag.string += ('h1 {\n'
@@ -227,5 +241,6 @@ def set_html_head(html_fn):
     soup.head.append(title_tag)
 
     # save the file again
-    with open(html_fn, "w") as outf:
-        outf.write(str(soup))
+    # with open(html_fn, "w") as outf:
+    #     outf.write(str(soup.prettify()))
+    net.html = str(soup.prettify())
