@@ -1,4 +1,3 @@
-import re
 import bs4
 
 
@@ -11,9 +10,9 @@ def set_html_content(html_fn,
 
     html_code = '''
         <div style="margin: 5px 0px 15px 5px">
-            <button type="button" onclick="reset_graph()">Reset graph!</button>
-            <button type="button" onclick="fit_graph()">Fit graph!</button>
-            <button type="button" onclick="stop_animation()">Stop animation!</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="reset_graph()">Reset graph!</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="fit_graph()">Fit graph!</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation!</button>
         </div>
         <div style="display:flex;">
             <div style="background-color: #F7F7F7; border-left: 1px double; border-right: 1px double; padding: 5px; margin: 5px 0px 10px 5px">
@@ -104,7 +103,6 @@ def set_html_content(html_fn,
 
     with open(html_fn) as template:
         soup = bs4.BeautifulSoup(template.read(), "html.parser")
-
     soup.center.decompose()
 
     mynetwork_tag = soup.body.find('div', id="mynetwork")
@@ -133,9 +131,6 @@ def add_js_click_functionality(html_fn, graph_ttl_stream=None,
         html_code = template.read()
         html_code = html_code.replace('drawGraph();', '')
         soup = bs4.BeautifulSoup(html_code, "html.parser")
-
-    javascript_tag = soup.body.find('script', type='text/javascript')
-    javascript_tag.clear()
 
     javascript_content = f'''
     // initialize global variables.
@@ -187,8 +182,9 @@ def add_js_click_functionality(html_fn, graph_ttl_stream=None,
         load_graph(nodes_graph_config_obj, edges_graph_config_obj, subset_nodes_config_obj, graph_reductions_obj);
     }};
     '''
-
+    javascript_tag = soup.new_tag("script", type="application/javascript")
     javascript_tag.append(javascript_content)
+    soup.head.append(javascript_tag)
     if soup is not None:
         with open(html_fn, "w") as outf:
             outf.write(str(soup.prettify()))
@@ -201,9 +197,6 @@ def set_html_head(html_fn):
         html_code = template.read()
         soup = bs4.BeautifulSoup(html_code, "html.parser")
 
-    soup.head.link.decompose()
-    soup.head.script.decompose()
-
     css_tag = soup.head.find('style', type="text/css")
     css_tag.string += ('h1 {\n'
                        '  font-family: \"Source Sans Pro\", sans-serif;\n'
@@ -211,10 +204,6 @@ def set_html_head(html_fn):
                        '  color: rgb(49, 51, 63);\n'
                        '  line-height: 1.2;\n'
                        '}')
-
-    new_script_updated_vis_library = soup.new_tag("script", type="application/javascript",
-                                                  src="https://unpkg.com/vis-network/standalone/umd/vis-network.js")
-    soup.head.append(new_script_updated_vis_library)
 
     new_script_rdflib_library = soup.new_tag("script", type="application/javascript",
                                              src="https://unpkg.com/n3/browser/n3.min.js")

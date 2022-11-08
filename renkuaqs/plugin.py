@@ -590,8 +590,9 @@ def show_graph():
         height='750px', width='100%',
     )
 
-    # to tweak physics related options
     net.write_html(html_fn)
+
+    javascript_graph_utils.set_html_head(html_fn)
 
     javascript_graph_utils.add_js_click_functionality(html_fn,
                                                       graph_ttl_stream=graph_ttl_str,
@@ -606,7 +607,5 @@ def show_graph():
                                             edges_graph_config_obj_dict=edges_graph_config_obj,
                                             graph_reduction_config_obj_dict=graph_reduction_config_obj,
                                             graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj)
-
-    javascript_graph_utils.set_html_head(html_fn)
 
     webbrowser.open(html_fn)
