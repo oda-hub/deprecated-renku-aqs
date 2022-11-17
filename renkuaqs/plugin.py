@@ -411,7 +411,7 @@ def params(revision, format, paths, diff):
     G.bind("local-renku", f"file://{renku_path}/")  # ??
 
 
-def generate_graph_image(revision, paths, filename, no_oda_info, input_notebook):
+def show_graph_image(revision, paths, filename, no_oda_info, input_notebook):
     """Simple graph visualization """
     import io
     from IPython.display import display, Image
