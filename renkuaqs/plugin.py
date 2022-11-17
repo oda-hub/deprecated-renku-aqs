@@ -414,7 +414,7 @@ def params(revision, format, paths, diff):
 def generate_graph_image(revision, paths, filename, no_oda_info, input_notebook):
     """Simple graph visualization """
     import io
-    from IPython.display import display
+    from IPython.display import display, Image
     import pydotplus
 
     if paths is None:
@@ -476,6 +476,8 @@ def generate_graph_image(revision, paths, filename, no_oda_info, input_notebook)
 
     # final output write over the png image
     pydot_graph.write_png(filename)
+
+    Image(filename=filename)
 
     return filename
 
