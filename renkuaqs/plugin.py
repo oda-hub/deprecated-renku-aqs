@@ -134,10 +134,7 @@ def _run_id(activity_id):
 
 
 def _graph(revision=None, paths=None):
-    # FIXME: use (revision, paths) filter
-
-    if paths is None:
-        paths = project_context.path
+    # FIXME: use (revision) filter
 
     cmd_result = export_graph_command().working_directory(paths).build().execute()
 
@@ -420,8 +417,11 @@ def generate_graph_image(revision, paths, filename, no_oda_info, input_notebook)
     from IPython.display import display
     import pydotplus
 
+    if paths is None:
+        paths = project_context.path
+
     graph = _graph(revision, paths)
-    renku_path = project_context.path
+    renku_path = paths
 
     query_where = graph_utils.build_query_where(input_notebook=input_notebook, no_oda_info=no_oda_info)
     query_construct = graph_utils.build_query_construct(no_oda_info=no_oda_info)
@@ -492,7 +492,7 @@ def generate_graph_image(revision, paths, filename, no_oda_info, input_notebook)
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def display(revision, paths, filename, no_oda_info, input_notebook):
     path = paths
-    if isinstance(paths, click.Path):
+    if paths is not  None and isinstance(paths, click.Path):
         path = str(path)
     output_filename = generate_graph_image(revision, path, filename, no_oda_info, input_notebook)
     return output_filename
