@@ -414,6 +414,11 @@ def params(revision, format, paths, diff):
     G.bind("local-renku", f"file://{renku_path}/")  # ??
 
 
+def generate_graph_image(revision, paths, filename, no_oda_info, input_notebook):
+    output_filename = display(revision, paths, filename, no_oda_info, input_notebook)
+    return output_filename
+
+
 @aqs.command()
 @click.option(
     "--revision",
@@ -486,6 +491,8 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
 
     # final output write over the png image
     pydot_graph.write_png(filename)
+
+    return filename
 
 
 @aqs.command()
