@@ -432,14 +432,14 @@ def start_session():
 
 @aqs.command()
 def show_graph():
-    net, html_fn = graph_utils.build_graph_html()
+    net, html_fn = graph_utils.build_graph_html(None, None)
 
     javascript_graph_utils.write_modified_html_content(net, html_fn)
     webbrowser.open(html_fn)
 
 
 def display_interactive_graph(revision="HEAD", paths=os.getcwd()):
-    net, html_fn = graph_utils.build_graph_html()
+    net, html_fn = graph_utils.build_graph_html(revision, paths)
     javascript_graph_utils.write_modified_html_content(net, html_fn)
 
     return HTML(f"""
