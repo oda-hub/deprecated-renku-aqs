@@ -430,11 +430,11 @@ def show_graph_image(revision, paths, filename, no_oda_info, input_notebook):
             {query_where}
             """
 
-    print("Before starting the query")
+    # print("Before starting the query")
     t1 = time.perf_counter()
     r = graph.query(query)
     t2 = time.perf_counter()
-    print("Query completed in %d !" % (t2 - t1))
+    # print("Query completed in %d !" % (t2 - t1))
 
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
@@ -496,7 +496,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     path = paths
     if paths is not  None and isinstance(paths, click.Path):
         path = str(path)
-    output_filename = generate_graph_image(revision, path, filename, no_oda_info, input_notebook)
+    output_filename = show_graph_image(revision, path, filename, no_oda_info, input_notebook)
     return output_filename
 
 
@@ -539,11 +539,11 @@ def show_graph():
             {query_where}
             """
 
-    print("Before starting the query")
+    # print("Before starting the query")
     t1 = time.perf_counter()
     r = graph.query(query)
     t2 = time.perf_counter()
-    print("Query completed in %d !" % (t2 - t1))
+    # print("Query completed in %d !" % (t2 - t1))
 
     data = r.serialize(format="n3").decode()
     # data = graph.serialize(format="n3")
