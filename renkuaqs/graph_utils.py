@@ -4,6 +4,7 @@ import typing
 import pydotplus
 import rdflib
 import yaml
+import json
 
 from rdflib.tools.rdf2dot import LABEL_PROPERTIES
 from rdflib.tools import rdf2dot
@@ -11,10 +12,14 @@ from lxml import etree
 from dateutil import parser
 from astropy.coordinates import SkyCoord, Angle
 from IPython.display import display
+from pyvis.network import Network
+from importlib import resources
 
 from renku.domain_model.project_context import project_context
 from renku.command.graph import export_graph_command
 from renku.core.errors import RenkuException
+
+import renkuaqs.javascript_graph_utils as javascript_graph_utils
 
 # TODO improve this
 __this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
@@ -35,6 +40,101 @@ def _graph(revision=None, paths=None):
     graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
 
     return graph
+
+
+def build_graph_html():
+    graph = _graph()
+
+    with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
+        graph = graph.parse(source=ttl_ontology_fn)
+
+    renku_path = project_context.path
+
+    query_construct = build_query_construct()
+    query_where = build_query_where()
+
+    query = f"""{query_construct}
+                {query_where}
+                """
+
+    r = graph.query(query)
+
+    data = r.serialize(format="n3").decode()
+    # data = graph.serialize(format="n3")
+
+    G = rdflib.Graph()
+    G.parse(data=data, format="n3")
+    G.bind("oda", "http://odahub.io/ontology#")
+    G.bind("odas", "https://odahub.io/ontology#")  # the same
+    G.bind("local-renku", f"file://{renku_path}/")
+
+    serial = G.serialize(format="n3")
+
+    with open('full_graph.ttl', 'w') as gfn:
+        gfn.write(serial)
+
+    html_fn = 'graph.html'
+    default_graph_graphical_config_fn = 'graph_graphical_config.json'
+    graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
+    graph_reduction_config_fn = 'graph_reduction_config.json'
+
+    graph_ttl_str = serial
+    nodes_graph_config_obj = {}
+    edges_graph_config_obj = {}
+
+    graph_config_names_list = []
+    with resources.open_text("renkuaqs", default_graph_graphical_config_fn) as graph_config_fn_f:
+        graph_config_loaded = json.load(graph_config_fn_f)
+        nodes_graph_config_obj_loaded = graph_config_loaded.get('Nodes', {})
+        edges_graph_config_obj_loaded = graph_config_loaded.get('Edges', {})
+
+    if nodes_graph_config_obj_loaded:
+        for config_type in nodes_graph_config_obj_loaded:
+            nodes_graph_config_obj_loaded[config_type]['config_file'] = default_graph_graphical_config_fn
+        nodes_graph_config_obj.update(nodes_graph_config_obj_loaded)
+    if edges_graph_config_obj_loaded:
+        for config_type in edges_graph_config_obj_loaded:
+            edges_graph_config_obj_loaded[config_type]['config_file'] = default_graph_graphical_config_fn
+        edges_graph_config_obj.update(edges_graph_config_obj_loaded)
+    graph_config_names_list.append(default_graph_graphical_config_fn)
+    # for compatibility with Javascript
+    nodes_graph_config_obj_str = json.dumps(nodes_graph_config_obj)
+    edges_graph_config_obj_str = json.dumps(edges_graph_config_obj)
+
+    with resources.open_text("renkuaqs", graph_reduction_config_fn) as graph_reduction_config_fn_f:
+        graph_reduction_config_obj = json.load(graph_reduction_config_fn_f)
+
+    # for compatibility with Javascript
+    graph_reductions_obj_str = json.dumps(graph_reduction_config_obj)
+
+    with resources.open_text("renkuaqs", graph_nodes_subset_config_fn) as graph_nodes_subset_config_fn_f:
+        graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
+
+    # for compatibility with Javascript
+    graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj)
+
+    net = Network(
+        height='750px', width='100%',
+    )
+    net.generate_html(html_fn)
+
+    javascript_graph_utils.set_html_head(net)
+
+    javascript_graph_utils.add_js_click_functionality(net,
+                                                      graph_ttl_stream=graph_ttl_str,
+                                                      nodes_graph_config_obj_str=nodes_graph_config_obj_str,
+                                                      edges_graph_config_obj_str=edges_graph_config_obj_str,
+                                                      graph_reductions_obj_str=graph_reductions_obj_str,
+                                                      graph_nodes_subset_config_obj_str=graph_nodes_subset_config_obj_str)
+
+    javascript_graph_utils.set_html_content(net,
+                                            graph_config_names_list=graph_config_names_list,
+                                            nodes_graph_config_obj_dict=nodes_graph_config_obj,
+                                            edges_graph_config_obj_dict=edges_graph_config_obj,
+                                            graph_reduction_config_obj_dict=graph_reduction_config_obj,
+                                            graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj)
+
+    return net, html_fn
 
 
 def build_graph_image(revision, paths, filename, no_oda_info, input_notebook):

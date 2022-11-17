@@ -25,11 +25,8 @@ import webbrowser
 import click
 import rdflib
 import rdflib.tools.rdf2dot
-import yaml
 
-from importlib import resources
 from pathlib import Path
-from pyvis.network import Network
 from renku.domain_model.provenance.annotation import Annotation
 from renku.domain_model.project_context import project_context
 from renku.core.plugin import hookimpl
@@ -435,115 +432,17 @@ def start_session():
 
 @aqs.command()
 def show_graph():
-    net, html_fn = build_graph_html()
+    net, html_fn = graph_utils.build_graph_html()
 
     javascript_graph_utils.write_modified_html_content(net, html_fn)
     webbrowser.open(html_fn)
 
 
 def display_interactive_graph():
-    net, html_fn = build_graph_html()
+    net, html_fn = graph_utils.build_graph_html()
     javascript_graph_utils.write_modified_html_content(net, html_fn)
 
     return HTML(f"""
     <iframe width="100%" height="700px" frameBorder="0" scrolling="no"></iframe>
     """)
 
-
-def build_graph_html():
-    graph = graph_utils._graph()
-
-    with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
-        graph = graph.parse(source=ttl_ontology_fn)
-
-    renku_path = project_context.path
-
-    query_construct = graph_utils.build_query_construct()
-    query_where = graph_utils.build_query_where()
-
-    query = f"""{query_construct}
-                {query_where}
-                """
-
-    # print("Before starting the query")
-    # t1 = time.perf_counter()
-    r = graph.query(query)
-    # t2 = time.perf_counter()
-    # print("Query completed in %d !" % (t2 - t1))
-
-    data = r.serialize(format="n3").decode()
-    # data = graph.serialize(format="n3")
-
-    G = rdflib.Graph()
-    G.parse(data=data, format="n3")
-    G.bind("oda", "http://odahub.io/ontology#")
-    G.bind("odas", "https://odahub.io/ontology#")  # the same
-    G.bind("local-renku", f"file://{renku_path}/")
-
-    serial = G.serialize(format="n3")
-
-    with open('full_graph.ttl', 'w') as gfn:
-        gfn.write(serial)
-
-    html_fn = 'graph.html'
-    default_graph_graphical_config_fn = 'graph_graphical_config.json'
-    graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
-    graph_reduction_config_fn = 'graph_reduction_config.json'
-
-    graph_ttl_str = serial
-    nodes_graph_config_obj = {}
-    edges_graph_config_obj = {}
-
-    graph_config_names_list = []
-    with resources.open_text("renkuaqs", default_graph_graphical_config_fn) as graph_config_fn_f:
-        graph_config_loaded = json.load(graph_config_fn_f)
-        nodes_graph_config_obj_loaded = graph_config_loaded.get('Nodes', {})
-        edges_graph_config_obj_loaded = graph_config_loaded.get('Edges', {})
-
-    if nodes_graph_config_obj_loaded:
-        for config_type in nodes_graph_config_obj_loaded:
-            nodes_graph_config_obj_loaded[config_type]['config_file'] = default_graph_graphical_config_fn
-        nodes_graph_config_obj.update(nodes_graph_config_obj_loaded)
-    if edges_graph_config_obj_loaded:
-        for config_type in edges_graph_config_obj_loaded:
-            edges_graph_config_obj_loaded[config_type]['config_file'] = default_graph_graphical_config_fn
-        edges_graph_config_obj.update(edges_graph_config_obj_loaded)
-    graph_config_names_list.append(default_graph_graphical_config_fn)
-    # for compatibility with Javascript
-    nodes_graph_config_obj_str = json.dumps(nodes_graph_config_obj)
-    edges_graph_config_obj_str = json.dumps(edges_graph_config_obj)
-
-    with resources.open_text("renkuaqs", graph_reduction_config_fn) as graph_reduction_config_fn_f:
-        graph_reduction_config_obj = json.load(graph_reduction_config_fn_f)
-
-    # for compatibility with Javascript
-    graph_reductions_obj_str = json.dumps(graph_reduction_config_obj)
-
-    with resources.open_text("renkuaqs", graph_nodes_subset_config_fn) as graph_nodes_subset_config_fn_f:
-        graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
-
-    # for compatibility with Javascript
-    graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj)
-
-    net = Network(
-        height='750px', width='100%',
-    )
-    net.generate_html(html_fn)
-
-    javascript_graph_utils.set_html_head(net)
-
-    javascript_graph_utils.add_js_click_functionality(net,
-                                                      graph_ttl_stream=graph_ttl_str,
-                                                      nodes_graph_config_obj_str=nodes_graph_config_obj_str,
-                                                      edges_graph_config_obj_str=edges_graph_config_obj_str,
-                                                      graph_reductions_obj_str=graph_reductions_obj_str,
-                                                      graph_nodes_subset_config_obj_str=graph_nodes_subset_config_obj_str)
-
-    javascript_graph_utils.set_html_content(net,
-                                            graph_config_names_list=graph_config_names_list,
-                                            nodes_graph_config_obj_dict=nodes_graph_config_obj,
-                                            edges_graph_config_obj_dict=edges_graph_config_obj,
-                                            graph_reduction_config_obj_dict=graph_reduction_config_obj,
-                                            graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj)
-
-    return net, html_fn
