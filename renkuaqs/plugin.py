@@ -70,12 +70,12 @@ def activity_annotations(activity):
     """``process_run_annotations`` hook implementation."""
     aqs = AQS(activity)
 
-    #os.remove(os.path.join(aqs.renku_aqs_path, "site.py"))
+    # os.remove(os.path.join(aqs.renku_aqs_path, "site.py"))
 
     path = pathlib.Path("../sitecustomize.py")
     if path.exists():
         path.unlink()
-    
+
     annotations = []
 
     print("process_run_annotations")
@@ -86,7 +86,7 @@ def activity_annotations(activity):
             if p.match("*json"):
                 print(f"found json annotation: {p}")
                 print(open(p).read())
-        
+
             elif p.match("*jsonld"):
                 print(f"found jsonLD annotation: {p}\n", json.dumps(json.load(p.open()), sort_keys=True, indent=4))
 
@@ -109,14 +109,14 @@ def activity_annotations(activity):
 @hookimpl
 def pre_run(tool):
     # we print
-    print(f"\033[31mhere we will prepare hooks for astroquery, tool given is {tool}\033[0m")    
+    print(f"\033[31mhere we will prepare hooks for astroquery, tool given is {tool}\033[0m")
 
     # TODO: where to get renku.client and dir?
 
     # TODO: how to write provide this to `tool`?
     fn = "../sitecustomize.py"
 
-    print(f"\033[34msitecustomize.py as {fn}\033[0m")    
+    print(f"\033[34msitecustomize.py as {fn}\033[0m")
 
     open(fn, "w").write("""
 print(f"\033[31menabling hooks for astroquery\033[0m")  
@@ -126,7 +126,7 @@ import aqsconverters.aq
 aqsconverters.aq.autolog()
 """)
 
-    from astroquery.query import BaseQuery # ??
+    from astroquery.query import BaseQuery  # ??
 
 
 def _run_id(activity_id):
@@ -136,7 +136,10 @@ def _run_id(activity_id):
 def _graph(revision=None, paths=None):
     # FIXME: use (revision, paths) filter
 
-    cmd_result = export_graph_command().working_directory(project_context.path).build().execute()
+    if paths is None:
+        paths = project_context.path
+
+    cmd_result = export_graph_command().working_directory(paths).build().execute()
 
     if cmd_result.status == cmd_result.FAILURE:
         raise RenkuException("fail to export the renku graph")
@@ -185,11 +188,10 @@ def leaderboard(revision, format, metric, paths):
 
     # how to use ontology
     for r in graph.query(
-        """SELECT DISTINCT ?a_object ?aq_module WHERE {{
+            """SELECT DISTINCT ?a_object ?aq_module WHERE {{
         ?run <http://odahub.io/ontology#isRequestingAstroObject> ?a_object;
              <http://odahub.io/ontology#isUsing> ?aq_module .
         }}"""):
-
         print(r)
 
 
@@ -408,8 +410,8 @@ def params(revision, format, paths, diff):
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
     G.bind("oda", "http://odahub.io/ontology#")
-    G.bind("odas", "https://odahub.io/ontology#")   # the same
-    G.bind("local-renku", f"file://{renku_path}/") #??
+    G.bind("odas", "https://odahub.io/ontology#")  # the same
+    G.bind("local-renku", f"file://{renku_path}/")  # ??
 
 
 @aqs.command()
@@ -447,7 +449,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     G = rdflib.Graph()
     G.parse(data=r.serialize(format="n3").decode(), format="n3")
     G.bind("oda", "http://odahub.io/ontology#")
-    G.bind("odas", "https://odahub.io/ontology#") # the same
+    G.bind("odas", "https://odahub.io/ontology#")  # the same
     G.bind("local-renku", f"file://{renku_path}/")
 
     graph_utils.extract_activity_start_time(G)
@@ -496,22 +498,21 @@ def start_session():
         'https://renkulab.io/gitlab/(.*)\.git',
         'git@renkulab.io:(.*)\.git'
     ]:
-        if (r:=re.match(pattern, gitlab_url)) is not None:
+        if (r := re.match(pattern, gitlab_url)) is not None:
             new_session_urls.append(f"https://renkulab.io/projects/{r.group(1)}/sessions/new?autostart=1&branch=master")
 
-    if (n:=len(new_session_urls)) > 1:
+    if (n := len(new_session_urls)) > 1:
         click.echo(f"using first of many session URLs: {new_session_urls}")
     elif n == 0:
-        raise RuntimeError("unable to find any session URLs")        
+        raise RuntimeError("unable to find any session URLs")
 
     click.echo(f"will open new session: {new_session_urls[0]}")
-    
+
     webbrowser.open(new_session_urls[0])
-            
+
 
 @aqs.command()
 def show_graph():
-
     graph = _graph()
 
     with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
