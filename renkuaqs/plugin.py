@@ -26,28 +26,19 @@ import click
 import rdflib
 import rdflib.tools.rdf2dot
 import yaml
-import io
-import pydotplus
 
 from importlib import resources
 from pathlib import Path
 from pyvis.network import Network
-from rdflib.tools import rdf2dot
 from renku.domain_model.provenance.annotation import Annotation
 from renku.domain_model.project_context import project_context
 from renku.core.plugin import hookimpl
-from renku.command.graph import export_graph_command
-from renku.core.errors import RenkuException
-from IPython.display import display, Image, HTML
+from IPython.display import Image, HTML
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
 
 import renkuaqs.graph_utils as graph_utils
 import renkuaqs.javascript_graph_utils as javascript_graph_utils
-
-# TODO improve this
-__this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
-graph_configuration = yaml.load(open(os.path.join(__this_dir__, "graph_config.yaml")), Loader=yaml.SafeLoader)
 
 
 class AQS(object):
@@ -134,22 +125,6 @@ def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
 
 
-def _graph(revision=None, paths=None):
-    # FIXME: use (revision) filter
-
-    cmd_result = export_graph_command().working_directory(paths).build().execute()
-
-    if cmd_result.status == cmd_result.FAILURE:
-        raise RenkuException("fail to export the renku graph")
-    graph = cmd_result.output.as_rdflib_graph()
-
-    graph.bind("aqs", "http://www.w3.org/ns/aqs#")
-    graph.bind("oa", "http://www.w3.org/ns/oa#")
-    graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
-
-    return graph
-
-
 def _create_leaderboard(data, metric, format=None):
     leaderboard = PrettyTable()
     leaderboard.field_names = ["Run ID", "Module", "Query", metric]
@@ -181,7 +156,7 @@ def aqs():
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def leaderboard(revision, format, metric, paths):
     """Leaderboard based on performance of astroquery requests"""
-    graph = _graph(revision, paths)
+    graph = graph_utils._graph(revision, paths)
     leaderboard = dict()
 
     # how to use ontology
@@ -215,7 +190,7 @@ def params(revision, format, paths, diff):
         else:
             return rdf_iteral.toPython()
 
-    graph = _graph(revision, paths)
+    graph = graph_utils._graph(revision, paths)
 
     renku_path = project_context.path
 
@@ -412,74 +387,8 @@ def params(revision, format, paths, diff):
     G.bind("local-renku", f"file://{renku_path}/")  # ??
 
 
-def build_graph_image(revision, paths, filename, no_oda_info, input_notebook):
-    """Simple graph visualization """
-
-    if paths is None:
-        paths = project_context.path
-
-    graph = _graph(revision, paths)
-    renku_path = paths
-
-    query_where = graph_utils.build_query_where(input_notebook=input_notebook, no_oda_info=no_oda_info)
-    query_construct = graph_utils.build_query_construct(no_oda_info=no_oda_info)
-
-    query = f"""{query_construct}
-               {query_where}
-               """
-
-    # print("Before starting the query")
-    # t1 = time.perf_counter()
-    r = graph.query(query)
-    # t2 = time.perf_counter()
-    # print("Query completed in %d !" % (t2 - t1))
-
-    G = rdflib.Graph()
-    G.parse(data=r.serialize(format="n3").decode(), format="n3")
-    G.bind("oda", "http://odahub.io/ontology#")
-    G.bind("odas", "https://odahub.io/ontology#")  # the same
-    G.bind("local-renku", f"file://{renku_path}/")
-
-    graph_utils.extract_activity_start_time(G)
-
-    if not no_oda_info:
-        # process oda-related information (eg do the inferring)
-        graph_utils.process_oda_info(G)
-
-    action_node_dict = {}
-    type_label_values_dict = {}
-    args_default_value_dict = {}
-    out_default_value_dict = {}
-
-    graph_utils.analyze_inputs(G)
-    graph_utils.analyze_arguments(G, action_node_dict, args_default_value_dict)
-    graph_utils.analyze_outputs(G, out_default_value_dict)
-    graph_utils.analyze_types(G, type_label_values_dict)
-
-    graph_utils.clean_graph(G)
-
-    stream = io.StringIO()
-    rdf2dot.rdf2dot(G, stream, opts={display})
-    pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
-
-    for node in pydot_graph.get_nodes():
-        graph_utils.customize_node(node,
-                                   graph_configuration,
-                                   type_label_values_dict=type_label_values_dict
-                                   )
-
-    # list of edges and simple color change
-    for edge in pydot_graph.get_edge_list():
-        graph_utils.customize_edge(edge)
-
-    # final output write over the png image
-    pydot_graph.write_png(filename)
-
-    return filename
-
-
 def show_graph_image(revision, paths, filename, no_oda_info, input_notebook):
-    filename = build_graph_image(revision, paths, filename, no_oda_info, input_notebook)
+    filename = graph_utils.build_graph_image(revision, paths, filename, no_oda_info, input_notebook)
     return Image(filename=filename)
 
 
@@ -497,7 +406,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     path = paths
     if paths is not  None and isinstance(paths, click.Path):
         path = str(path)
-    output_filename = build_graph_image(revision, path, filename, no_oda_info, input_notebook)
+    output_filename = graph_utils.build_graph_image(revision, path, filename, no_oda_info, input_notebook)
     return output_filename
 
 
@@ -542,7 +451,7 @@ def display_interactive_graph():
 
 
 def build_graph_html():
-    graph = _graph()
+    graph = graph_utils._graph()
 
     with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
         graph = graph.parse(source=ttl_ontology_fn)

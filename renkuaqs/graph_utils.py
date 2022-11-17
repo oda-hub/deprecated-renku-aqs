@@ -1,12 +1,103 @@
 import os
+import io
 import typing
 import pydotplus
 import rdflib
+import yaml
 
 from rdflib.tools.rdf2dot import LABEL_PROPERTIES
+from rdflib.tools import rdf2dot
 from lxml import etree
 from dateutil import parser
 from astropy.coordinates import SkyCoord, Angle
+from IPython.display import display
+
+from renku.domain_model.project_context import project_context
+from renku.command.graph import export_graph_command
+from renku.core.errors import RenkuException
+
+# TODO improve this
+__this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
+graph_configuration = yaml.load(open(os.path.join(__this_dir__, "graph_config.yaml")), Loader=yaml.SafeLoader)
+
+
+def _graph(revision=None, paths=None):
+    # FIXME: use (revision) filter
+
+    cmd_result = export_graph_command().working_directory(paths).build().execute()
+
+    if cmd_result.status == cmd_result.FAILURE:
+        raise RenkuException("fail to export the renku graph")
+    graph = cmd_result.output.as_rdflib_graph()
+
+    graph.bind("aqs", "http://www.w3.org/ns/aqs#")
+    graph.bind("oa", "http://www.w3.org/ns/oa#")
+    graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
+
+    return graph
+
+
+def build_graph_image(revision, paths, filename, no_oda_info, input_notebook):
+    """Simple graph visualization """
+
+    if paths is None:
+        paths = project_context.path
+
+    graph = _graph(revision, paths)
+    renku_path = paths
+
+    query_where = build_query_where(input_notebook=input_notebook, no_oda_info=no_oda_info)
+    query_construct = build_query_construct(no_oda_info=no_oda_info)
+
+    query = f"""{query_construct}
+               {query_where}
+               """
+
+    r = graph.query(query)
+
+    G = rdflib.Graph()
+    G.parse(data=r.serialize(format="n3").decode(), format="n3")
+    G.bind("oda", "http://odahub.io/ontology#")
+    G.bind("odas", "https://odahub.io/ontology#")  # the same
+    G.bind("local-renku", f"file://{renku_path}/")
+
+    extract_activity_start_time(G)
+
+    if not no_oda_info:
+        # process oda-related information (eg do the inferring)
+        process_oda_info(G)
+
+    action_node_dict = {}
+    type_label_values_dict = {}
+    args_default_value_dict = {}
+    out_default_value_dict = {}
+
+    analyze_inputs(G)
+    analyze_arguments(G, action_node_dict, args_default_value_dict)
+    analyze_outputs(G, out_default_value_dict)
+    analyze_types(G, type_label_values_dict)
+
+    clean_graph(G)
+
+    stream = io.StringIO()
+    rdf2dot.rdf2dot(G, stream, opts={display})
+    pydot_graph = pydotplus.graph_from_dot_data(stream.getvalue())
+
+    for node in pydot_graph.get_nodes():
+        customize_node(node,
+                       graph_configuration,
+                       type_label_values_dict=type_label_values_dict
+                       )
+
+    # list of edges and simple color change
+    for edge in pydot_graph.get_edge_list():
+        customize_edge(edge)
+
+    # final output write over the png image
+    pydot_graph.write_png(filename)
+
+    return filename
+
 
 
 def customize_edge(edge: typing.Union[pydotplus.Edge]):
