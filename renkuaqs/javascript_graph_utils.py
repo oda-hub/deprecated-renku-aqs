@@ -1,11 +1,9 @@
 import bs4
-import webbrowser
 
 
 def write_modified_html_content(net, html_fn):
     with open(html_fn, "w") as out:
         out.write(net.html)
-        webbrowser.open(html_fn)
 
 
 def set_html_content(net,

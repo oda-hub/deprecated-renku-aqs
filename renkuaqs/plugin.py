@@ -25,8 +25,9 @@ import webbrowser
 import click
 import rdflib
 import rdflib.tools.rdf2dot
-import time
 import yaml
+import io
+import pydotplus
 
 from importlib import resources
 from pathlib import Path
@@ -37,7 +38,7 @@ from renku.domain_model.project_context import project_context
 from renku.core.plugin import hookimpl
 from renku.command.graph import export_graph_command
 from renku.core.errors import RenkuException
-
+from IPython.display import display, Image, HTML
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
 
@@ -411,11 +412,8 @@ def params(revision, format, paths, diff):
     G.bind("local-renku", f"file://{renku_path}/")  # ??
 
 
-def show_graph_image(revision, paths, filename, no_oda_info, input_notebook):
+def build_graph_image(revision, paths, filename, no_oda_info, input_notebook):
     """Simple graph visualization """
-    import io
-    from IPython.display import display, Image
-    import pydotplus
 
     if paths is None:
         paths = project_context.path
@@ -427,13 +425,13 @@ def show_graph_image(revision, paths, filename, no_oda_info, input_notebook):
     query_construct = graph_utils.build_query_construct(no_oda_info=no_oda_info)
 
     query = f"""{query_construct}
-            {query_where}
-            """
+               {query_where}
+               """
 
     # print("Before starting the query")
-    t1 = time.perf_counter()
+    # t1 = time.perf_counter()
     r = graph.query(query)
-    t2 = time.perf_counter()
+    # t2 = time.perf_counter()
     # print("Query completed in %d !" % (t2 - t1))
 
     G = rdflib.Graph()
@@ -477,9 +475,12 @@ def show_graph_image(revision, paths, filename, no_oda_info, input_notebook):
     # final output write over the png image
     pydot_graph.write_png(filename)
 
-    Image(filename=filename)
-
     return filename
+
+
+def show_graph_image(revision, paths, filename, no_oda_info, input_notebook):
+    filename = build_graph_image(revision, paths, filename, no_oda_info, input_notebook)
+    return Image(filename=filename)
 
 
 @aqs.command()
@@ -496,7 +497,7 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     path = paths
     if paths is not  None and isinstance(paths, click.Path):
         path = str(path)
-    output_filename = show_graph_image(revision, path, filename, no_oda_info, input_notebook)
+    output_filename = build_graph_image(revision, path, filename, no_oda_info, input_notebook)
     return output_filename
 
 
@@ -525,6 +526,22 @@ def start_session():
 
 @aqs.command()
 def show_graph():
+    net, html_fn = build_graph_html()
+
+    javascript_graph_utils.write_modified_html_content(net, html_fn)
+    webbrowser.open(html_fn)
+
+
+def display_interactive_graph():
+    net, html_fn = build_graph_html()
+    javascript_graph_utils.write_modified_html_content(net, html_fn)
+
+    return HTML(f"""
+    <iframe width="100%" height="700px" frameBorder="0" scrolling="no"></iframe>
+    """)
+
+
+def build_graph_html():
     graph = _graph()
 
     with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
@@ -536,13 +553,13 @@ def show_graph():
     query_where = graph_utils.build_query_where()
 
     query = f"""{query_construct}
-            {query_where}
-            """
+                {query_where}
+                """
 
     # print("Before starting the query")
-    t1 = time.perf_counter()
+    # t1 = time.perf_counter()
     r = graph.query(query)
-    t2 = time.perf_counter()
+    # t2 = time.perf_counter()
     # print("Query completed in %d !" % (t2 - t1))
 
     data = r.serialize(format="n3").decode()
@@ -620,4 +637,4 @@ def show_graph():
                                             graph_reduction_config_obj_dict=graph_reduction_config_obj,
                                             graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj)
 
-    javascript_graph_utils.write_modified_html_content(net, html_fn)
+    return net, html_fn
