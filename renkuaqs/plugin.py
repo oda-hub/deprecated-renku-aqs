@@ -442,7 +442,7 @@ def display_interactive_graph(revision="HEAD", paths=os.getcwd()):
     net, html_fn = graph_utils.build_graph_html(revision, paths)
     javascript_graph_utils.write_modified_html_content(net, html_fn)
 
-    HTML(f"""
+    return HTML(f"""
         <iframe width="100%" height="1150px", src="{html_fn}" frameBorder="0" scrolling="no">
         </iframe>"""
-         )
+                )
