@@ -415,21 +415,6 @@ def params(revision, format, paths, diff):
 
 
 def generate_graph_image(revision, paths, filename, no_oda_info, input_notebook):
-    output_filename = display(revision, paths, filename, no_oda_info, input_notebook)
-    return output_filename
-
-
-@aqs.command()
-@click.option(
-    "--revision",
-    default="HEAD",
-    help="The git revision to generate the log for, default: HEAD",
-)
-@click.option("--filename", default="graph.png", help="The filename of the output file image")
-@click.option("--input-notebook", default=None, help="Input notebook to process")
-@click.option("--no-oda-info", is_flag=True, help="Exclude oda related information in the output graph")
-@click.argument("paths", type=click.Path(exists=False), nargs=-1)
-def display(revision, paths, filename, no_oda_info, input_notebook):
     """Simple graph visualization """
     import io
     from IPython.display import display
@@ -442,8 +427,8 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     query_construct = graph_utils.build_query_construct(no_oda_info=no_oda_info)
 
     query = f"""{query_construct}
-        {query_where}
-        """
+            {query_where}
+            """
 
     print("Before starting the query")
     t1 = time.perf_counter()
@@ -493,6 +478,24 @@ def display(revision, paths, filename, no_oda_info, input_notebook):
     pydot_graph.write_png(filename)
 
     return filename
+
+
+@aqs.command()
+@click.option(
+    "--revision",
+    default="HEAD",
+    help="The git revision to generate the log for, default: HEAD",
+)
+@click.option("--filename", default="graph.png", help="The filename of the output file image")
+@click.option("--input-notebook", default=None, help="Input notebook to process")
+@click.option("--no-oda-info", is_flag=True, help="Exclude oda related information in the output graph")
+@click.argument("paths", type=click.Path(exists=False), nargs=-1)
+def display(revision, paths, filename, no_oda_info, input_notebook):
+    path = paths
+    if isinstance(paths, click.Path):
+        path = str(path)
+    output_filename = generate_graph_image(revision, path, filename, no_oda_info, input_notebook)
+    return output_filename
 
 
 @aqs.command()
