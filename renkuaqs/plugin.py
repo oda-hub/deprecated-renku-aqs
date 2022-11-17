@@ -384,7 +384,7 @@ def params(revision, format, paths, diff):
     G.bind("local-renku", f"file://{renku_path}/")  # ??
 
 
-def show_graph_image(revision, paths, filename, no_oda_info, input_notebook):
+def show_graph_image(revision="HEAD", paths=os.getcwd(), filename="graph.png", no_oda_info=True, input_notebook=None):
     filename = graph_utils.build_graph_image(revision, paths, filename, no_oda_info, input_notebook)
     return Image(filename=filename)
 
@@ -438,7 +438,7 @@ def show_graph():
     webbrowser.open(html_fn)
 
 
-def display_interactive_graph():
+def display_interactive_graph(revision="HEAD", paths=os.getcwd()):
     net, html_fn = graph_utils.build_graph_html()
     javascript_graph_utils.write_modified_html_content(net, html_fn)
 

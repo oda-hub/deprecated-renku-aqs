@@ -42,13 +42,17 @@ def _graph(revision=None, paths=None):
     return graph
 
 
-def build_graph_html():
-    graph = _graph()
+def build_graph_html(revision, paths):
+
+    if paths is None:
+        paths = project_context.path
+
+    graph = _graph(revision, paths)
 
     with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
         graph = graph.parse(source=ttl_ontology_fn)
 
-    renku_path = project_context.path
+    renku_path = paths
 
     query_construct = build_query_construct()
     query_where = build_query_where()
