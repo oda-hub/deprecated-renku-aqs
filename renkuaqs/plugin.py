@@ -443,6 +443,7 @@ def display_interactive_graph():
     javascript_graph_utils.write_modified_html_content(net, html_fn)
 
     return HTML(f"""
-    <iframe width="100%" height="700px" frameBorder="0" scrolling="no"></iframe>
+    <iframe width="100%" height="700px" frameBorder="0" scrolling="no">
+    {net.html}
+    </iframe>
     """)
-
