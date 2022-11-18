@@ -205,8 +205,7 @@ def set_html_head(net):
     soup = bs4.BeautifulSoup(net.html, "html.parser")
 
     css_tag = soup.head.find('style', type="text/css")
-    if css_tag.exists():
-        css_tag.unlink()
+    css_tag.decompose()
 
     new_script_rdflib_library = soup.new_tag("script", type="application/javascript",
                                              src="https://unpkg.com/n3/browser/n3.min.js")
