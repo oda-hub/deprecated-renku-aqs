@@ -438,8 +438,8 @@ def show_graph():
     webbrowser.open(html_fn)
 
 
-def display_interactive_graph(revision="HEAD", paths=os.getcwd()):
-    net, html_fn = graph_utils.build_graph_html(revision, paths)
+def display_interactive_graph(revision="HEAD", paths=os.getcwd(), include_title=False):
+    net, html_fn = graph_utils.build_graph_html(revision, paths, include_title=include_title)
     javascript_graph_utils.write_modified_html_content(net, html_fn)
 
     return HTML(f"""

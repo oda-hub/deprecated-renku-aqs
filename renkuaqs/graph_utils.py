@@ -42,7 +42,7 @@ def _graph(revision=None, paths=None):
     return graph
 
 
-def build_graph_html(revision, paths):
+def build_graph_html(revision, paths, include_title=True):
 
     if paths is None:
         paths = project_context.path
@@ -136,7 +136,8 @@ def build_graph_html(revision, paths):
                                             nodes_graph_config_obj_dict=nodes_graph_config_obj,
                                             edges_graph_config_obj_dict=edges_graph_config_obj,
                                             graph_reduction_config_obj_dict=graph_reduction_config_obj,
-                                            graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj)
+                                            graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj,
+                                            include_title=include_title)
 
     return net, html_fn
 

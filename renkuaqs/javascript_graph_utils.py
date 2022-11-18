@@ -11,7 +11,8 @@ def set_html_content(net,
                      nodes_graph_config_obj_dict=None,
                      edges_graph_config_obj_dict=None,
                      graph_reduction_config_obj_dict=None,
-                     graph_nodes_subset_config_obj_dict=None):
+                     graph_nodes_subset_config_obj_dict=None,
+                     include_title=True):
 
     html_code = '''
         <div style="margin: 5px 0px 15px 5px">
@@ -115,9 +116,10 @@ def set_html_content(net,
 
     mynetwork_tag = soup.body.find('div', id="mynetwork")
     html_code_bs4 = bs4.BeautifulSoup(html_code, 'html.parser')
-    newh1_str = '<h1>ODA Graph Export Quick-Look</h1>'
-    newh1_tag = bs4.BeautifulSoup(newh1_str, 'html.parser')
-    mynetwork_tag.insert_before(newh1_tag)
+    if include_title:
+        newh1_str = '<h1>ODA Graph Export Quick-Look</h1>'
+        newh1_tag = bs4.BeautifulSoup(newh1_str, 'html.parser')
+        mynetwork_tag.insert_before(newh1_tag)
     mynetwork_tag.insert_before(html_code_bs4)
     mynetwork_tag.decompose()
 
