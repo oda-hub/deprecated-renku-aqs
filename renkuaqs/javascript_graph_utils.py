@@ -209,14 +209,6 @@ def set_html_head(net):
 
     soup = bs4.BeautifulSoup(net.html, "html.parser")
 
-    css_tag = soup.head.find('style', type="text/css")
-    css_tag.string += ('h1 {\n'
-                       '  font-family: \"Source Sans Pro\", sans-serif;\n'
-                       '  font-weight: 700;\n'
-                       '  color: rgb(49, 51, 63);\n'
-                       '  line-height: 1.2;\n'
-                       '}')
-
     new_script_rdflib_library = soup.new_tag("script", type="application/javascript",
                                              src="https://unpkg.com/n3/browser/n3.min.js")
     soup.head.append(new_script_rdflib_library)
@@ -233,6 +225,10 @@ def set_html_head(net):
     graph_helper_library = soup.new_tag("script", type="application/javascript",
                                         src="https://odahub.io/renku-aqs-graph-library/graph_helper.js")
     soup.head.append(graph_helper_library)
+
+    graph_helper_css = soup.new_tag("link", rel="stylesheet",  type="text/css",
+                                    href="https://odahub.io/renku-aqs-graph-library/style.css")
+    soup.head.append(graph_helper_css)
 
     title_tag = soup.new_tag("title")
     title_tag.string = "Graph visualization"
