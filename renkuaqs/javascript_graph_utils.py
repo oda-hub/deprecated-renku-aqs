@@ -202,11 +202,6 @@ def add_js_click_functionality(net, graph_ttl_stream=None,
 
 
 def set_html_head(net):
-    # let's patch the template
-    # load the file
-    # with open(html_fn) as template:
-    #     html_code = template.read()
-
     soup = bs4.BeautifulSoup(net.html, "html.parser")
 
     css_tag = soup.head.find('style', type="text/css")
@@ -238,7 +233,4 @@ def set_html_head(net):
     title_tag.string = "Graph visualization"
     soup.head.append(title_tag)
 
-    # save the file again
-    # with open(html_fn, "w") as outf:
-    #     outf.write(str(soup.prettify()))
     net.html = str(soup.prettify())
