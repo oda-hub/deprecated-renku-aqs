@@ -119,7 +119,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
 
     net = Network(
         height='750px', width='100%',
-        cdn_resources=cdn_resource
+        cdn_resources=template_location
     )
     net.generate_html(html_fn)
 
