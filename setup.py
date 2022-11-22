@@ -26,7 +26,7 @@ install_requires = [
     'renku==1.9.0',
     'astroquery @ git+https://github.com/oda-hub/astroquery.git#egg=astroquery',
     'aqsconverters @ git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters',
-    'pyvis',
+    'pyvis==0.3.0',
     'pydotplus'
 ]
 
