@@ -139,6 +139,8 @@ def build_graph_html(revision, paths, include_title=True):
                                             graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj,
                                             include_title=include_title)
 
+    javascript_graph_utils.write_modified_html_content(net, html_fn)
+
     return net, html_fn
 
 
