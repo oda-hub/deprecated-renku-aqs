@@ -437,8 +437,8 @@ def show_graph():
     webbrowser.open(html_fn)
 
 
-def build_graph(template_location="local"):
-    graph_utils.build_graph_html(None, None, template_location=template_location)
+def build_graph(paths=os.getcwd(), template_location="local"):
+    graph_utils.build_graph_html(None, paths, template_location=template_location)
 
 
 def display_interactive_graph(revision="HEAD", paths=os.getcwd(), include_title=False):
