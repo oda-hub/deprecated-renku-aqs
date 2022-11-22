@@ -438,6 +438,10 @@ def show_graph():
     webbrowser.open(html_fn)
 
 
+def build_graph(template_location="local"):
+    graph_utils.build_graph_html(None, None, template_location=template_location)
+
+
 def display_interactive_graph(revision="HEAD", paths=os.getcwd(), include_title=False):
     net, html_fn = graph_utils.build_graph_html(revision, paths, include_title=include_title)
     # javascript_graph_utils.write_modified_html_content(net, html_fn)

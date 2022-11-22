@@ -42,7 +42,7 @@ def _graph(revision=None, paths=None):
     return graph
 
 
-def build_graph_html(revision, paths, include_title=True, cdn_resource="local"):
+def build_graph_html(revision, paths, include_title=True, template_location="local"):
 
     if paths is None:
         paths = project_context.path
