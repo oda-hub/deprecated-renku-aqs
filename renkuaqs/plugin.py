@@ -434,7 +434,6 @@ def start_session():
 def show_graph():
     net, html_fn = graph_utils.build_graph_html(None, None)
 
-    # javascript_graph_utils.write_modified_html_content(net, html_fn)
     webbrowser.open(html_fn)
 
 
@@ -444,7 +443,6 @@ def build_graph(template_location="local"):
 
 def display_interactive_graph(revision="HEAD", paths=os.getcwd(), include_title=False):
     net, html_fn = graph_utils.build_graph_html(revision, paths, include_title=include_title)
-    # javascript_graph_utils.write_modified_html_content(net, html_fn)
 
     return HTML(f"""
         <iframe width="100%" height="1150px", src="{html_fn}" frameBorder="0" scrolling="no">
