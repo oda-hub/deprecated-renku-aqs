@@ -42,7 +42,7 @@ def _graph(revision=None, paths=None):
     return graph
 
 
-def build_graph_html(revision, paths, include_title=True):
+def build_graph_html(revision, paths, include_title=True, cdn_resource="local"):
 
     if paths is None:
         paths = project_context.path
@@ -119,6 +119,7 @@ def build_graph_html(revision, paths, include_title=True):
 
     net = Network(
         height='750px', width='100%',
+        cdn_resources=cdn_resource
     )
     net.generate_html(html_fn)
 
