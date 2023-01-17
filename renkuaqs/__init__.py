@@ -57,13 +57,13 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
-def _start_graph_http_server(**kwargs):
-    logging.info(kwargs)
+def _start_graph_http_server(*args):
+    logging.info(args)
 
     ap = argparse.ArgumentParser()
     ap.add_argument('wwwroot')
     ap.add_argument('port')
-    args = ap.parse_args(kwargs)
+    args = ap.parse_args(args)
 
     logging.info(args)
 
@@ -92,7 +92,7 @@ def setup_graph_visualizer():
         'command': [
             'bash',
             '-c',
-            f'python -c \'import renkuaqs; renkuaqs._start_graph_http_server(wwwroot="{mount_dir}", port={{port}})\''
+            f'python -c \'import renkuaqs; renkuaqs._start_graph_http_server("{mount_dir}", {{port}})\''
         ],
         'new_browser_tab': True,
         'launcher_entry': {
