@@ -57,11 +57,13 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
-def _start_graph_http_server():
+def _start_graph_http_server(**kwargs):
+    logging.info(kwargs)
+
     ap = argparse.ArgumentParser()
     ap.add_argument('wwwroot')
     ap.add_argument('port')
-    args = ap.parse_args(sys.argv[1:])
+    args = ap.parse_args(kwargs)
 
     from http.server import HTTPServer
     server = HTTPServer(
@@ -80,7 +82,6 @@ def _start_graph_http_server():
 
 def setup_graph_visualizer():
 
-
     mount_dir = '/home/jovyan'
     if 'MOUNT_PATH' in os.environ:
         mount_dir = os.path.join(mount_dir, os.environ['MOUNT_PATH'][1:])
@@ -89,7 +90,7 @@ def setup_graph_visualizer():
         'command': [
             'bash',
             '-c',
-            f'python renkuaqs._start_graph_http_server {mount_dir} {{port}}'
+            f'python \'import renkuaqs; renkuaqs._start_graph_http_server(wwwroot={mount_dir}, port={{port}})\''
         ],
         'new_browser_tab': True,
         'launcher_entry': {
