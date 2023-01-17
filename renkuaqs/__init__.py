@@ -92,7 +92,7 @@ def setup_graph_visualizer():
         'command': [
             'bash',
             '-c',
-            f'python -c \'import renkuaqs; renkuaqs._start_graph_http_server(wwwroot={mount_dir}, port={{port}})\''
+            f'python -c \'import renkuaqs; renkuaqs._start_graph_http_server(wwwroot="{mount_dir}", port={{port}})\''
         ],
         'new_browser_tab': True,
         'launcher_entry': {
