@@ -85,11 +85,9 @@ def setup_graph_visualizer():
 
     return {
         'command': [
-            'echo $PWD',
-            '&&',
             'bash',
             '-c',
-            f'cd {mount_dir} && python _start_graph_http_server {mount_dir} {{port}}'
+            f'echo $PWD && cd {mount_dir} && python _start_graph_http_server {mount_dir} {{port}}'
         ],
         'new_browser_tab': True,
         'launcher_entry': {
