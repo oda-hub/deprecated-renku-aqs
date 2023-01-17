@@ -19,7 +19,6 @@
 from __future__ import absolute_import, print_function
 
 import argparse
-import sys
 import logging
 import pyvis
 import shutil
@@ -92,7 +91,7 @@ def setup_graph_visualizer():
         'command': [
             'bash',
             '-c',
-            f'python -c \'import renkuaqs; renkuaqs._start_graph_http_server("{mount_dir}", {{port}})\''
+            f'python -c \'import renkuaqs; renkuaqs._start_graph_http_server("{mount_dir}", "{{port}}")\''
         ],
         'new_browser_tab': True,
         'launcher_entry': {
