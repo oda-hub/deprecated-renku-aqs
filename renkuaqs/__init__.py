@@ -65,6 +65,8 @@ def _start_graph_http_server(**kwargs):
     ap.add_argument('port')
     args = ap.parse_args(kwargs)
 
+    logging.info(args)
+
     from http.server import HTTPServer
     server = HTTPServer(
         ('localhost', int(args.port)),
@@ -90,7 +92,7 @@ def setup_graph_visualizer():
         'command': [
             'bash',
             '-c',
-            f'python \'import renkuaqs; renkuaqs._start_graph_http_server(wwwroot={mount_dir}, port={{port}})\''
+            f'python -c \'import renkuaqs; renkuaqs._start_graph_http_server(wwwroot={mount_dir}, port={{port}})\''
         ],
         'new_browser_tab': True,
         'launcher_entry': {
