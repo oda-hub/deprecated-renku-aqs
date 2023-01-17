@@ -96,7 +96,7 @@ def setup_graph_visualizer():
         'new_browser_tab': True,
         'launcher_entry': {
                 'enabled': True,
-                'icon_path': '/tmp/graph_icon.svg',
+                'icon_path': os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "graph_icon.svg"),
                 'title': 'Graph'
             }
         }
