@@ -56,28 +56,30 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
         logging.info(f'Graph http server GET pointing at : {self.path}')
         super().do_GET()
 
+
+def _start_graph_http_server():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('wwwroot')
+    ap.add_argument('port')
+    args = ap.parse_args(sys.argv[1:])
+
+    from http.server import HTTPServer
+    server = HTTPServer(
+        ('localhost', int(args.port)),
+        partial(GetGraphHandler, directory=args.wwwroot),
+        )
+    logging.info(f'Starting graph server with args {args}, use <Ctrl-C> to stop')
+
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+
+    server.server_close()
+    logging.info("Graph server stopped.")
+
 def setup_graph_visualizer():
 
-    def _start_graph_http_server():
-        ap = argparse.ArgumentParser()
-        ap.add_argument('wwwroot')
-        ap.add_argument('port')
-        args = ap.parse_args(sys.argv[1:])
-
-        from http.server import HTTPServer
-        server = HTTPServer(
-            ('localhost', int(args.port)),
-            partial(GetGraphHandler, directory=args.wwwroot),
-            )
-        logging.info(f'Starting graph server with args {args}, use <Ctrl-C> to stop')
-
-        try:
-            server.serve_forever()
-        except KeyboardInterrupt:
-            pass
-
-        server.server_close()
-        logging.info("Graph server stopped.")
 
     mount_dir = '/home/jovyan'
     if 'MOUNT_PATH' in os.environ:
@@ -87,7 +89,7 @@ def setup_graph_visualizer():
         'command': [
             'bash',
             '-c',
-            f'echo $PWD && cd {mount_dir} && python _start_graph_http_server {mount_dir} {{port}}'
+            f'python renkuaqs._start_graph_http_server {mount_dir} {{port}}'
         ],
         'new_browser_tab': True,
         'launcher_entry': {
