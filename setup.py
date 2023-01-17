@@ -44,7 +44,8 @@ setup(
     packages=packages,
     entry_points={
         "renku": ["name_of_plugin = renkuaqs.plugin"],
-        "renku.cli_plugins": ["aqs = renkuaqs.plugin:aqs"]
+        "renku.cli_plugins": ["aqs = renkuaqs.plugin:aqs"],
+        "jupyter_serverproxy_servers": ["interactive_graph = renkuaqs:setup_graph_visualizer"]
     },
     zip_safe=False,
     include_package_data=True,
