@@ -49,6 +49,9 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
 
     graph = _graph(revision, paths)
 
+    with open('full_graph.ttl', 'w') as gfn:
+        gfn.write(graph.serialize(format="n3"))
+
     with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
         graph = graph.parse(source=ttl_ontology_fn)
 
@@ -66,6 +69,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
     data = r.serialize(format="n3").decode()
     # data = graph.serialize(format="n3")
 
+
     G = rdflib.Graph()
     G.parse(data=data, format="n3")
     G.bind("oda", "http://odahub.io/ontology#")
@@ -74,7 +78,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
 
     serial = G.serialize(format="n3")
 
-    with open('full_graph.ttl', 'w') as gfn:
+    with open('graph.ttl', 'w') as gfn:
         gfn.write(serial)
 
     html_fn = 'graph.html'
@@ -379,61 +383,30 @@ def customize_node(node: typing.Union[pydotplus.Node],
             # serialize back the table html
             node.obj_dict['attributes']['label'] = '< ' + etree.tostring(table_html, encoding='unicode') + ' >'
 
-
 def build_query_where(input_notebook: str = None, no_oda_info=False):
     if input_notebook is not None:
         query_where = f"""WHERE {{
             {{
-            ?entity a <http://www.w3.org/ns/prov#Entity> ;
-                    <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
+                ?entityInput a <http://www.w3.org/ns/prov#Entity> ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityInputLocation .
+                        
+                ?entityOutput a <http://www.w3.org/ns/prov#Entity> ; 
+                    <http://www.w3.org/ns/prov#qualifiedGeneration>/<http://www.w3.org/ns/prov#activity> ?activity ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityOutputLocation . 
+                        
+                FILTER ( ?entityInputLocation = '{input_notebook}' ) .
                     
-            ?action a <http://schema.org/Action> ; 
-                <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?actionParamInput ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-                ?has ?actionParam .
-
-            ?actionParamInput a <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput> ;
-                <http://schema.org/defaultValue> '{input_notebook}' .
-                
-            FILTER ( ?entityLocation = '{input_notebook}' ) .
-
-            FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>, 
-                <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>
-                ))
-
-            ?actionParam a ?actionParamType ;
-                <http://schema.org/defaultValue> ?actionParamValue .
-
-            FILTER ( ?actionParamType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput>,
-                                        <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>)
-                                        ) .
         """
     else:
         query_where = """WHERE {
             {
-                ?entity a <http://www.w3.org/ns/prov#Entity> ;
-                    <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
+                ?entityInput a <http://www.w3.org/ns/prov#Entity> ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityInputLocation .
                     
-                ?action a <http://schema.org/Action> ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?actionParamInput ;
-                    ?has ?actionParam .
+                ?entityOutput a <http://www.w3.org/ns/prov#Entity> ; 
+                    <http://www.w3.org/ns/prov#qualifiedGeneration>/<http://www.w3.org/ns/prov#activity> ?activity ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityOutputLocation . 
                     
-                ?actionParamInput a <https://swissdatasciencecenter.github.io/renku-ontology#CommandInput> ;
-                    <http://schema.org/defaultValue> $actionParamInputDefaultValue .
-                
-                FILTER ( ?entityLocation = ?actionParamInputDefaultValue ) .
-                    
-                FILTER (?has IN (<https://swissdatasciencecenter.github.io/renku-ontology#hasArguments>,
-                    <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs>
-                    ))
-
-                ?actionParam a ?actionParamType ;
-                    <http://schema.org/defaultValue> ?actionParamValue .
-
-                FILTER ( ?actionParamType IN (<https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput>,
-                                        <https://swissdatasciencecenter.github.io/renku-ontology#CommandParameter>)
-                                        ) .
         """
 
     query_where += """
@@ -443,9 +416,11 @@ def build_query_where(input_notebook: str = None, no_oda_info=False):
                 ?activity a ?activityType ;
                     <https://swissdatasciencecenter.github.io/renku-ontology#parameter> ?parameter_value ;
                     <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                    <http://www.w3.org/ns/prov#qualifiedAssociation>/<http://www.w3.org/ns/prov#hadPlan> ?action ;
-                    <http://www.w3.org/ns/prov#qualifiedUsage>/<http://www.w3.org/ns/prov#entity> ?entity .
+                    <http://www.w3.org/ns/prov#qualifiedAssociation>/<http://www.w3.org/ns/prov#hadPlan>/<https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
+                    <http://www.w3.org/ns/prov#qualifiedUsage>/<http://www.w3.org/ns/prov#entity> ?entityInput .
+                    
             """
+                    # <http://www.w3.org/ns/prov#qualifiedAssociation>/<http://www.w3.org/ns/prov#hadPlan> ?action ;
     if not no_oda_info:
         query_where += """
             OPTIONAL {
@@ -546,21 +521,18 @@ def build_query_where(input_notebook: str = None, no_oda_info=False):
 def build_query_construct(no_oda_info=False):
     # add time activity information
     query_construct_action = """
-            ?action a <http://schema.org/Action> ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?entity ;
-                ?has ?actionParam .
-                    
-            ?actionParam a ?actionParamType ;
-                <https://swissdatasciencecenter.github.io/renku-ontology#position> ?actionPosition ;
-                <http://schema.org/defaultValue> ?actionParamValue .
                 
-            ?entity a <http://www.w3.org/ns/prov#Entity> ;
-                <http://www.w3.org/ns/prov#atLocation> ?entityLocation .
-                    
+            ?entityOutput a <https://swissdatasciencecenter.github.io/renku-ontology#CommandOutput> ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityOutputLocation .
+                
+            ?entityInput a <http://www.w3.org/ns/prov#Entity> ;
+                <http://www.w3.org/ns/prov#atLocation> ?entityInputLocation .
+            
             ?activity a ?activityType ;
                 <http://www.w3.org/ns/prov#startedAtTime> ?activityTime ;
-                <http://www.w3.org/ns/prov#hadPlan> ?action .
+                <https://swissdatasciencecenter.github.io/renku-ontology#hasInputs> ?entityInput ;
+                <https://swissdatasciencecenter.github.io/renku-ontology#command> ?actionCommand ;
+                <https://swissdatasciencecenter.github.io/renku-ontology#hasOutputs> ?entityOutput .
     """
 
     query_construct_oda_info = ""
@@ -767,43 +739,43 @@ def extract_activity_start_time(g):
 def process_oda_info(g):
     run_target_list = g[:rdflib.URIRef('http://www.w3.org/ns/oa#hasTarget')]
     for run_node, activity_node in run_target_list:
-        # or plan_node list
-        for action_node in g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]:
-            # we inferred a connection from the run to an action
-            # and we can now infer the request of a certain astroObject and the usage of a certain module
-            used_module_list = list(g[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')])
-            # one module in use per annotation and one requested AstroObject/AstroRegion
-            module_node = used_module_list[0]
-            # query_object
-            process_query_object_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
-            # query_region
-            process_query_region_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
-            # get_images
-            process_get_images_info(g, run_node=run_node, module_node=module_node, action_node=action_node)
+        # # or plan_node list
+        # for action_node in g[activity_node:rdflib.URIRef('http://www.w3.org/ns/prov#hadPlan')]:
+        # we inferred a connection from the run to an action
+        # and we can now infer the request of a certain astroObject and the usage of a certain module
+        used_module_list = list(g[run_node:rdflib.URIRef('http://odahub.io/ontology#isUsing')])
+        # one module in use per annotation and one requested AstroObject/AstroRegion
+        module_node = used_module_list[0]
+        # query_object
+        process_query_object_info(g, run_node=run_node, module_node=module_node, activity_node=activity_node)
+        # query_region
+        process_query_region_info(g, run_node=run_node, module_node=module_node, activity_node=activity_node)
+        # get_images
+        process_get_images_info(g, run_node=run_node, module_node=module_node, activity_node=activity_node)
 
 
-def process_query_object_info(g, run_node=None, module_node=None, action_node=None):
+def process_query_object_info(g, run_node=None, module_node=None, activity_node=None):
     requested_astroObject_list = list(
         g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroObject')])
     if len(requested_astroObject_list) > 0:
         # if run_node is of the type query_object
         # for module_node in used_module_list:
         g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
-               action_node))
+               activity_node))
         # for astroObject_node in requested_astroObject_list:
         astroObject_node = requested_astroObject_list[0]
         g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroObject'),
                astroObject_node))
 
 
-def process_query_region_info(g, run_node=None, module_node=None, action_node=None):
+def process_query_region_info(g, run_node=None, module_node=None, activity_node=None):
     requested_astroRegion_list = list(
         g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroRegion')])
     if len(requested_astroRegion_list) > 0:
         # if run_node is of the type query_region
         # for module_node in used_module_list:
         g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
-               action_node))
+               activity_node))
         # for astroObject_node in requested_astroObject_list:
         astroRegion_node = requested_astroRegion_list[0]
         g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroRegion'),
@@ -829,14 +801,14 @@ def process_query_region_info(g, run_node=None, module_node=None, action_node=No
                 process_angle_obj(g, radius_node, radius_node_title[0].value)
 
 
-def process_get_images_info(g, run_node=None, module_node=None, action_node=None):
+def process_get_images_info(g, run_node=None, module_node=None, activity_node=None):
     requested_astroImage_list = list(
         g[run_node:rdflib.URIRef('http://odahub.io/ontology#isRequestingAstroImage')])
     if len(requested_astroImage_list) > 0:
         # if run_node is of the type get_images
         # for module_node in used_module_list:
         g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#isUsedDuring'),
-               action_node))
+               activity_node))
         # for astroObject_node in requested_astroObject_list:
         astroImage_node = requested_astroImage_list[0]
         g.add((module_node, rdflib.URIRef('http://odahub.io/ontology#requestsAstroImage'),
