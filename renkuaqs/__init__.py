@@ -93,7 +93,7 @@ def setup_graph_visualizer():
             '-c',
             f'python -c \'import renkuaqs; renkuaqs._start_graph_http_server("{mount_dir}", "{{port}}")\''
         ],
-        'new_browser_tab': True,
+        'new_browser_tab': False,
         'launcher_entry': {
                 'enabled': True,
                 'icon_path': os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "graph_icon.svg"),
