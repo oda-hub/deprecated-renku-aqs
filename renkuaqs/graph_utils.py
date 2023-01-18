@@ -52,6 +52,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
     with open('full_graph.ttl', 'w') as gfn:
         gfn.write(graph.serialize(format="n3"))
 
+    # TODO to be tested
     with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
         graph = graph.parse(source=ttl_ontology_fn)
 
