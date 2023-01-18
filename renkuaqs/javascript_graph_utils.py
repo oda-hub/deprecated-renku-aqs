@@ -191,7 +191,7 @@ def add_js_click_functionality(net, graph_ttl_stream=None,
     }};
     
     window.onload = function () {{
-        load_graph(nodes_graph_config_obj, edges_graph_config_obj, subset_nodes_config_obj, graph_reductions_obj);
+        load_graph();
     }};
     '''
     javascript_tag = soup.new_tag("script", type="application/javascript")
