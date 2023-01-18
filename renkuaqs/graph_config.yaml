@@ -47,6 +47,7 @@ CommandOutput:
     shape: box
     color: '#FFFF00'
     style: filled
+    display_type_title: False
     value: 25
     level: 5
 
@@ -97,8 +98,8 @@ Entity:
     value: 20
     level: 3
 
-Action:
-    shape: circle
+Activity:
+    shape: box
     color: '#D5C15D'
     style: filled
     display_type_title: False
