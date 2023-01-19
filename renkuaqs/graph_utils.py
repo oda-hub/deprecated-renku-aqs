@@ -38,6 +38,9 @@ def _graph(revision=None, paths=None):
     graph.bind("aqs", "http://www.w3.org/ns/aqs#")
     graph.bind("oa", "http://www.w3.org/ns/oa#")
     graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
+    graph.bind("oda", "http://odahub.io/ontology#")
+    graph.bind("odas", "https://odahub.io/ontology#")
+    graph.bind("local-renku", f"file://{paths}/")
 
     return graph
 
@@ -52,10 +55,9 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
     with open('full_graph.ttl', 'w') as gfn:
         gfn.write(graph.serialize(format="n3"))
 
+    # TODO to be tested
     with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
         graph = graph.parse(source=ttl_ontology_fn)
-
-    renku_path = paths
 
     query_construct = build_query_construct()
     query_where = build_query_where()
@@ -69,12 +71,12 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
     data = r.serialize(format="n3").decode()
     # data = graph.serialize(format="n3")
 
-
     G = rdflib.Graph()
     G.parse(data=data, format="n3")
+    # we need this otherwise are removed
     G.bind("oda", "http://odahub.io/ontology#")
-    G.bind("odas", "https://odahub.io/ontology#")  # the same
-    G.bind("local-renku", f"file://{renku_path}/")
+    G.bind("odas", "https://odahub.io/ontology#")
+    G.bind("local-renku", f"file://{paths}/")
 
     serial = G.serialize(format="n3")
 
