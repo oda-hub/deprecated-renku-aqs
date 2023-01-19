@@ -1,25 +1,27 @@
+## Two `cli` commands
+
+- `display` to generate a representation of the graph over an output image file: still supported but not the main focus
+- `show-graph` to start an interactive visualization of the graph over the browser: currently the main focus, parses the graph extracted from the current working folder, queries it and  outputs an html file opened then in the browser
+
 ### Main steps for the creation of the html file
 
-These are the main steps for the building of the html output file, generated with the command `renku aqs show-graph` (similar approach used for the `display` 
-command, but the focus is now on the html-based one).
-
-1. Extracting the graph from the working directory using the provided dedicated command, that returns a `Graph` object froom `rdflib` and apply various namespaces
+1. Extracting the graph from the working directory using the provided dedicated command, that returns a `Graph` object froom `rdflib` and apply the binding to various namespaces
 2. Building the `CONSTRUCT` query, this includes two main parts:
-    - _renku related_: information of inputs and outputs, time and commands for each run 
-    - _astro related_: astroquery information intercepted by the plugin, specific to certain calls performed within our notebooks
-3. Query the graph and re-apply the oda-specific prefixes to the namespace of the graph
-4. Parsing the various configurations:
+    - _renku related_: information of inputs and outputs, time and commands for each run/activity
+    - _astro related_: astroquery information intercepted by the plugin, specific to certain calls performed within our notebooks and annoted using the plugin
+3. Query the graph and build another `Graph` object that parses the data of the result of the query (and re-apply the oda-specific prefixes to the namespace of the graph, since those are nor preserved from the query result)
+4. Parsing the various configurations, provided as json files within the plugin:
     - graphical ([link](https://github.com/oda-hub/renku-aqs/blob/cli-display-graph/renkuaqs/graph_graphical_config.json)): 
     Nodes and Edges json file(s) graphical customization
     - reduction ([link](https://github.com/oda-hub/renku-aqs/blob/cli-display-graph/renkuaqs/graph_reduction_config.json)): 
-    certain nodes can "abosrb" child ones [example](https://github.com/oda-hub/renku-aqs/blob/cli-display-graph/readme_imgs/reduced_plan.png)
+    certain nodes can "absorb" child ones [example](https://github.com/oda-hub/renku-aqs/blob/cli-display-graph/readme_imgs/reduced_plan.png), we specify a node and the relative edges it can absorb
     - nodes subsets ([link](https://github.com/oda-hub/renku-aqs/blob/cli-display-graph/renkuaqs/graph_nodes_subset_config.json))
-    to filter defined subset of nodes (eg astroquery-related nodes), uses the prefix 
-5. Starting `Network` obj built using the pyvis library an html output is , and then a number of customizations are applied:
-    - _head_ of the html file for the various javascript libraries:
-      - Vis netowrk: draw nodes and edges, animations and various graphical customization
+    to show or hide certain defined subset of nodes (eg astroquery-related nodes), uses the related prefixes
+5. Using the `pyvis` library (a wrapper of javascript `vis.js` library), a `Network` obj is defined and the html template object is then generated, and then a number of customizations are applied:
+    - _head_ of the html content for the various javascript libraries:
       - N3: parsing, writing and storing triples in several various formats
       - Comunica: for querying the graph
+      - renku-aqs-graph-library: javascript for the graph drawing and interaction and css for some minor graphical customization
     - _javascript_: 
       - physics options for the graph
       - javascripts object for the various configurations are defined
@@ -28,6 +30,7 @@ command, but the focus is now on the html-based one).
       - checkboxes
       - legend
       - title
+6. Write the modified over the final output html file
     
 ### Main functionalities provided by the javascript library
 
