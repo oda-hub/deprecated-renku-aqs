@@ -42,3 +42,16 @@
 - Functions to apply the changes of the various checkboxes and radio buttons
 
 An example set of json files, html output and `ttl` exporo are also present, and are used by the github pages
+
+### Actions
+
+- SDSC developer team will check the rest of the js library
+- Have a more generic part for the generaiton of the graph
+- Read from the `ttl` file in the javascript library
+- Document the configurations
+- Extra information regarding a node visualized with hover or click -> UI expert to provide some insight
+- make PR from Renku CLI
+
+
+
+
