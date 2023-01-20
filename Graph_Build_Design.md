@@ -19,9 +19,9 @@
     to show or hide certain defined subset of nodes (eg astroquery-related nodes), uses the related prefixes
 5. Using the `pyvis` library (a wrapper of javascript `vis.js` library), a `Network` obj is defined and the html template object is then generated, and then a number of customizations are applied:
     - _head_ of the html content for the various javascript libraries:
-      - N3: parsing, writing and storing triples in several various formats
-      - Comunica: for querying the graph
-      - renku-aqs-graph-library: javascript for the graph drawing and interaction and css for some minor graphical customization
+      - [N3](https://github.com/rdfjs/N3.js/): parsing, writing and storing triples in several various formats
+      - [Comunica](https://github.com/rdfjs/comunica-browser): for querying the graph
+      - [renku-aqs-graph-library](https://github.com/oda-hub/renku-aqs-graph-library/): javascript for the graph drawing and interaction and css for some minor graphical customization
     - _javascript_: 
       - physics options for the graph
       - javascripts object for the various configurations are defined
