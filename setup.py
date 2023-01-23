@@ -16,11 +16,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from setuptools import find_packages, setup
 
-install_requires = ['deepdiff', 'astroquery']
-#install_requires = ['aqsmodel-converters', 'deepdiff']
+install_requires = [
+    'deepdiff',
+    'pydotplus',
+    'rdflib',
+    'bs4',
+    'renku==1.9.0',
+    'astroquery @ git+https://github.com/oda-hub/astroquery.git#egg=astroquery',
+    'aqsconverters @ git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters',
+    'pyvis==0.3.0',
+    'pydotplus'
+]
+
 packages = find_packages()
 version_file = open('VERSION')
 
@@ -35,7 +44,8 @@ setup(
     packages=packages,
     entry_points={
         "renku": ["name_of_plugin = renkuaqs.plugin"],
-        "renku.cli_plugins": ["aqs = renkuaqs.plugin:aqs"]
+        "renku.cli_plugins": ["aqs = renkuaqs.plugin:aqs"],
+        "jupyter_serverproxy_servers": ["interactive_graph = renkuaqs:setup_graph_visualizer"]
     },
     zip_safe=False,
     include_package_data=True,

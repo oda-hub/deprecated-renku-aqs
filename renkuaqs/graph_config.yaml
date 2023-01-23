@@ -1,0 +1,142 @@
+Default:
+    shape: box
+    color: '#FFFFFF'
+    style: filled
+    border: 0
+    cellborder: 0
+    display_type_title: True
+    value: 20
+    level: 0
+
+AstroqueryModule:
+    shape: ellipse
+    color: '#00CC00'
+    style: filled
+    value: 35
+    level: 0
+
+AstrophysicalObject:
+    shape: ellipse
+    color: '#6262be'
+    style: filled
+    value: 35
+    level: 1
+
+AstrophysicalRegion:
+    shape: ellipse
+    color: '#6262bf'
+    style: filled
+    value: 35
+    level: 1
+
+AstrophysicalImage:
+    shape: ellipse
+    color: '#027F45'
+    style: filled
+    value: 35
+    level: 1
+
+CommandParameter:
+    shape: box
+    color: '#6262be'
+    style: filled
+    value: 15
+    level: 3
+
+CommandOutput:
+    shape: box
+    color: '#FFFF00'
+    style: filled
+    display_type_title: False
+    value: 25
+    level: 5
+
+CommandOutputNotebook:
+    shape: box
+    color: '#DBA3BC'
+    style: filled
+    value: 25
+    level: 5
+
+CommandOutputImage:
+    shape: box
+    color: '#FFFFFF'
+    style: filled
+    border: 1
+    value: 25
+    level: 5
+
+CommandOutputFitsFile:
+    shape: box
+    color: '#FFFFFF'
+    style: filled
+    border: 1
+    value: 25
+    level: 5
+
+CommandOutputEcsvFile:
+    shape: box
+    color: '#FFFFFF'
+    style: filled
+    border: 1
+    value: 25
+    level: 5
+
+CommandInput:
+    shape: box
+    color: '#DBA3BC'
+    style: filled
+    display_type_title: False
+    value: 20
+    level: 3
+
+Entity:
+    shape: box
+    color: '#DBA3BC'
+    style: filled
+    display_type_title: False
+    value: 20
+    level: 3
+
+Activity:
+    shape: box
+    color: '#D5C15D'
+    style: filled
+    display_type_title: False
+    value: 35
+    level: 4
+
+Angle:
+    shape: box
+    color: '#1B81FB'
+    style: filled
+    value: 35
+    level: 2
+
+SkyCoordinates:
+    shape: box
+    color: '#1B81FB'
+    style: filled
+    value: 35
+    level: 2
+
+Coordinates:
+    shape: box
+    color: '#1B81FB'
+    style: filled
+    value: 35
+    level: 2
+
+Position:
+    shape: box
+    color: '#1B81FB'
+    style: filled
+    value: 35
+    level: 2
+
+Pixels:
+    shape: box
+    color: '#1B81FB'
+    style: filled
+    value: 35
+    level: 2

@@ -17,4 +17,86 @@
 # limitations under the License.
 
 from __future__ import absolute_import, print_function
+
+import argparse
+import logging
+import pyvis
+import shutil
+import os
+
 from . import config
+from functools import partial
+import renkuaqs.plugin as aqsPlugin
+
+logging.basicConfig(level="DEBUG")
+
+from http.server import SimpleHTTPRequestHandler
+
+class GetGraphHandler(SimpleHTTPRequestHandler):
+    def __init__(self, request, client_address, *args, **kwargs) -> None:
+        super().__init__(request, client_address, *args, **kwargs)
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    def do_GET(self) -> None:
+        if self.path == '/':
+            aqsPlugin.build_graph(paths=os.getcwd(), template_location="remote")
+            if os.path.exists(os.path.join(os.getcwd(), 'graph.html')):
+                if 'MOUNT_PATH' in os.environ:
+                    self.path = os.path.join(os.environ['MOUNT_PATH'], 'graph.html')
+                else:
+                    self.path = 'graph.html'
+
+        if self.path == '/lib/bindings/utils.js':
+            pyvis_path = pyvis_package_path = pyvis.__path__[0]
+            shutil.copy(pyvis_package_path, )
+            # self.path = os.path.join(pyvis_package_path, 'lib/bindings/utils.js')
+            logging.info(f'lib bindings utils js path {self.path}')
+
+        logging.info(f'Graph http server GET pointing at : {self.path}')
+        super().do_GET()
+
+
+def _start_graph_http_server(*args):
+    logging.info(args)
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument('wwwroot')
+    ap.add_argument('port')
+    args = ap.parse_args(args)
+
+    logging.info(args)
+
+    from http.server import HTTPServer
+    server = HTTPServer(
+        ('localhost', int(args.port)),
+        partial(GetGraphHandler, directory=args.wwwroot),
+        )
+    logging.info(f'Starting graph server with args {args}, use <Ctrl-C> to stop')
+
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+
+    server.server_close()
+    logging.info("Graph server stopped.")
+
+def setup_graph_visualizer():
+
+    mount_dir = '/home/jovyan'
+    if 'MOUNT_PATH' in os.environ:
+        mount_dir = os.path.join(mount_dir, os.environ['MOUNT_PATH'][1:])
+
+    return {
+        'command': [
+            'bash',
+            '-c',
+            f'python -c \'import renkuaqs; renkuaqs._start_graph_http_server("{mount_dir}", "{{port}}")\''
+        ],
+        'new_browser_tab': False,
+        'launcher_entry': {
+                'enabled': True,
+                'icon_path': os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "graph_icon.svg"),
+                'title': 'Graph'
+            }
+        }
