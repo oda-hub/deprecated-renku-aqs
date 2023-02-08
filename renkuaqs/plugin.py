@@ -35,7 +35,6 @@ from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
 
 import renkuaqs.graph_utils as graph_utils
-import renkuaqs.javascript_graph_utils as javascript_graph_utils
 
 
 class AQS(object):
