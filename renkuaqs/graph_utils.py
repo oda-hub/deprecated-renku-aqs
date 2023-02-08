@@ -52,15 +52,12 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
 
     graph = _graph(revision, paths)
 
-    # graph.remove((None, rdflib.URIRef('ns3#templateMetadata'), None))
-    graph.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#templateMetadata'), None))
-
     graph_str = graph.serialize(format="n3")
 
     with open('full_graph.ttl', 'w') as gfn:
         gfn.write(graph_str)
 
-    full_graph_ttl_str = graph_str
+    full_graph_ttl_str = graph_str.replace("\\\"", '\\\\"')
 
     # # TODO to be tested
     # with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
