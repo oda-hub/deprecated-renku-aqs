@@ -52,43 +52,24 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
 
     graph = _graph(revision, paths)
 
+    # graph.remove((None, rdflib.URIRef('ns3#templateMetadata'), None))
+    graph.remove((None, rdflib.URIRef('https://swissdatasciencecenter.github.io/renku-ontology#templateMetadata'), None))
+
+    graph_str = graph.serialize(format="n3")
+
     with open('full_graph.ttl', 'w') as gfn:
-        gfn.write(graph.serialize(format="n3"))
+        gfn.write(graph_str)
 
-    # TODO to be tested
-    with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
-        graph = graph.parse(source=ttl_ontology_fn)
+    full_graph_ttl_str = graph_str
 
-    query_construct = build_query_construct()
-    query_where = build_query_where()
-
-    query = f"""{query_construct}
-                {query_where}
-                """
-
-    r = graph.query(query)
-
-    data = r.serialize(format="n3").decode()
-    # data = graph.serialize(format="n3")
-
-    G = rdflib.Graph()
-    G.parse(data=data, format="n3")
-    # we need this otherwise are removed
-    G.bind("oda", "http://odahub.io/ontology#")
-    G.bind("odas", "https://odahub.io/ontology#")
-    G.bind("local-renku", f"file://{paths}/")
-
-    serial = G.serialize(format="n3")
-
-    with open('graph.ttl', 'w') as gfn:
-        gfn.write(serial)
+    # # TODO to be tested
+    # with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
+    #     graph = graph.parse(source=ttl_ontology_fn)
 
     html_fn = 'graph.html'
     default_graph_graphical_config_fn = 'graph_graphical_config.json'
     graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
     graph_reduction_config_fn = 'graph_reduction_config.json'
-
-    graph_ttl_str = serial
     nodes_graph_config_obj = {}
     edges_graph_config_obj = {}
 
@@ -121,7 +102,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
         graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
 
     # for compatibility with Javascript
-    graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj)
+    graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj).replace("\\\"", '\\\\"').replace("\\n", '\\\\n')
 
     net = Network(
         height='750px', width='100%',
@@ -132,7 +113,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
     javascript_graph_utils.set_html_head(net)
 
     javascript_graph_utils.add_js_click_functionality(net,
-                                                      graph_ttl_stream=graph_ttl_str,
+                                                      graph_ttl_stream=full_graph_ttl_str,
                                                       nodes_graph_config_obj_str=nodes_graph_config_obj_str,
                                                       edges_graph_config_obj_str=edges_graph_config_obj_str,
                                                       graph_reductions_obj_str=graph_reductions_obj_str,
