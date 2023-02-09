@@ -125,4 +125,4 @@ The functionalities for the graph drawing and its behavior are developed in java
 at the following [repository](https://github.com/oda-hub/renku-aqs-graph-library/).
 
 
-# Installation of the plugin as a jupyter server proxy process
+# Installation of the plugin
