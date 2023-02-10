@@ -133,7 +133,7 @@ Currently, the plugin is developed using the version `2.1.0` of [renku-python](h
 renku --version
 ```
 
-Despite the dependency is guaranteed during the installation if the plugin, and additional check will be performed during the import.
+The versioning of the dependency is guaranteed during the installation of the plugin, and in addition a dedicated check will be performed during the import.
 
 For the installation of the plugin via `pip`:
 <!---
