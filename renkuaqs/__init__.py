@@ -24,13 +24,28 @@ import pyvis
 import shutil
 import os
 
+import renkuaqs.plugin as aqsPlugin
+
 from . import config
 from functools import partial
-import renkuaqs.plugin as aqsPlugin
+from pip._vendor import pkg_resources
+from renku.version import __version__
+from http.server import SimpleHTTPRequestHandler
 
 logging.basicConfig(level="DEBUG")
 
-from http.server import SimpleHTTPRequestHandler
+
+def _check_renku_version():
+    """Check renku version."""
+
+    _package = pkg_resources.working_set.by_key["renku"]
+    required_version = _package.parsed_version.public
+
+    if required_version != __version__:
+        logging.info(f"You are using renku version {__version__}, however version {required_version} "
+                     f"is required for the renku-aqs plugin.\n"
+                     "You should consider install the suggested version.",)
+
 
 class GetGraphHandler(SimpleHTTPRequestHandler):
     def __init__(self, request, client_address, *args, **kwargs) -> None:
@@ -100,3 +115,6 @@ def setup_graph_visualizer():
                 'title': 'Graph'
             }
         }
+
+
+_check_renku_version()

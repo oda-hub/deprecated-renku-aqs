@@ -123,3 +123,22 @@ two json files have been loaded, and the related checkbox will enable/disable th
 
 The functionalities for the graph drawing and its behavior are developed in javascript and are avaialble
 at the following [repository](https://github.com/oda-hub/renku-aqs-graph-library/).
+
+
+# Installation of the plugin
+
+Currently, the plugin is developed using the version `2.1.0` of [renku-python](https://github.com/SwissDataScienceCenter/renku-python). Please make sure such version is installed by running:
+
+```bash
+renku --version
+```
+
+The versioning of the dependency is guaranteed during the installation of the plugin, and in addition a dedicated check will be performed during the import.
+
+For the installation of the plugin via `pip`:
+<!---
+TODO installation from the github repo, will be distributed ?
+--->
+```bash
+pip install -e git+https://github.com/oda-hub/renku-aqs.git#egg=renku_aqs
+```

@@ -1,5 +1,5 @@
 {
-  "Action": {
+  "Activity": {
     "name": "Inputs and outputs",
     "predicates_to_absorb": "hasOutputs,hasInputs"
   },
