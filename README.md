@@ -126,3 +126,17 @@ at the following [repository](https://github.com/oda-hub/renku-aqs-graph-library
 
 
 # Installation of the plugin
+
+Currently, the plugin is developed using the version `2.1.0` of [renku-python](https://github.com/SwissDataScienceCenter/renku-python). Please make sure such version is installed by running:
+
+```bash
+renku --version
+```
+
+For the installation of the plugin via `pip`:
+<!---
+TODO installation from the github repo, will be distributed ?
+--->
+```bash
+pip install -e git+https://github.com/oda-hub/renku-aqs.git#egg=renku_aqs
+```
