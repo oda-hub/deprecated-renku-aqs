@@ -27,7 +27,8 @@ install_requires = [
     'astroquery @ git+https://github.com/oda-hub/astroquery.git#egg=astroquery',
     'aqsconverters @ git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters',
     'pyvis==0.3.0',
-    'pydotplus'
+    'pydotplus',
+    'lockfile'
 ]
 
 packages = find_packages()
