@@ -230,6 +230,9 @@ def set_html_head(net):
                                     href="https://odahub.io/renku-aqs-graph-library/style.css")
     soup.head.append(graph_helper_css)
 
+    bindings_lib_tag = soup.find('script', {"src": "lib/bindings/utils.js"})
+    bindings_lib_tag["src"] = "https://odahub.io/renku-aqs-graph-library/lib/bindings/utils.js"
+
     title_tag = soup.new_tag("title")
     title_tag.string = "Graph visualization"
     soup.head.append(title_tag)
