@@ -62,9 +62,8 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
                     self.path = 'graph.html'
 
         if self.path == '/lib/bindings/utils.js':
-            pyvis_path = pyvis_package_path = pyvis.__path__[0]
-            shutil.copy(pyvis_package_path, )
-            # self.path = os.path.join(pyvis_package_path, 'lib/bindings/utils.js')
+            pyvis_package_path = pyvis.__path__[0]
+            shutil.copy(pyvis_package_path)
             logging.info(f'lib bindings utils js path {self.path}')
 
         logging.info(f'Graph http server GET pointing at : {self.path}')
