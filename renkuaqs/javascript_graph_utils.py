@@ -233,10 +233,10 @@ def set_html_head(net):
     bindings_lib_tag = soup.find('script', {"src": "lib/bindings/utils.js"})
     if bindings_lib_tag is not None:
         bindings_lib_tag["src"] = "https://odahub.io/renku-aqs-graph-library/lib/bindings/utils.js"
-    else:
-        bindings_lib_tag = soup.new_tag("script", type="application/javascript",
-                                            src="https://odahub.io/renku-aqs-graph-library/lib/bindings/utils.js")
-        soup.head.append(bindings_lib_tag)
+    # else:
+    #     bindings_lib_tag = soup.new_tag("script", type="application/javascript",
+    #                                         src="https://odahub.io/renku-aqs-graph-library/lib/bindings/utils.js")
+    #     soup.head.append(bindings_lib_tag)
 
     title_tag = soup.new_tag("title")
     title_tag.string = "Graph visualization"
