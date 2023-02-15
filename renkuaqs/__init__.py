@@ -53,7 +53,7 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def do_GET(self) -> None:
-        mount_path_env = os.environ['MOUNT_PATH']
+        mount_path_env = os.environ.get('MOUNT_PATH', None)
         logging.info(f'self.path = {self.path}, os.cwd = {os.getcwd()}, mount_path = {mount_path_env}')
         if self.path == '/':
             aqsPlugin.build_graph(paths=os.getcwd(), template_location="remote")
