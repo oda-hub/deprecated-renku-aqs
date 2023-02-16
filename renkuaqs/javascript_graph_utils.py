@@ -227,7 +227,7 @@ def set_html_head(net):
     css_tag.decompose()
 
     new_script_rdflib_library = soup.new_tag("script", type="application/javascript",
-                                             src="https://unpkg.com/n3@1.16.3/browser/n3.min.js")
+                                             src="https://unpkg.com/n3/browser/n3.min.js")
     soup.head.append(new_script_rdflib_library)
 
     new_script_query_sparql_library = soup.new_tag("script", type="application/javascript",
