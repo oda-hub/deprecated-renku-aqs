@@ -99,7 +99,9 @@ def pre_run(tool):
     # we print
     print(f"\033[31mhere we will prepare hooks for astroquery, tool given is {tool}\033[0m")
 
-    # TODO: where to get renku.client and dir?
+    pwd_env_var = os.environ.get("$PWD", os.getcwd())
+
+    os.environ["PYTHONPATH"] = f"{pwd_env_var}/..:" + os.environ.get('PYTHONPATH', "")
 
     # TODO: how to write provide this to `tool`?
     fn = "../sitecustomize.py"
