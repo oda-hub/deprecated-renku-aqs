@@ -59,7 +59,7 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
             try:
                 aqsPlugin.build_graph(paths=os.getcwd(), template_location="remote")
             except Exception as e:
-                logging.warning(f"Error whiel generating the output graph: {e}")
+                logging.warning(f"Error while generating the output graph: {e}")
             if os.path.exists('graph.html'):
                 self.path = 'graph.html'
 
