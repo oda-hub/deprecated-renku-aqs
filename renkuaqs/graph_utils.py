@@ -44,6 +44,20 @@ def _graph(revision=None, paths=None):
 
     return graph
 
+def write_graph_files(graph_html_content, ttl_content):
+    html_fn = 'graph.html'
+    ttl_fn = 'full_graph.ttl'
+
+    with open(ttl_fn, 'w') as gfn:
+        gfn.write(ttl_content)
+
+    javascript_graph_utils.gitignore_file(ttl_fn)
+
+    javascript_graph_utils.write_modified_html_content(graph_html_content, html_fn)
+    javascript_graph_utils.gitignore_file(html_fn)
+
+    return html_fn, ttl_fn
+
 
 def build_graph_html(revision, paths, include_title=True, template_location="local"):
 
@@ -54,16 +68,10 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
 
     graph_str = graph.serialize(format="n3")
 
-    html_fn = 'graph.html'
-    ttl_fn = 'full_graph.ttl'
     default_graph_graphical_config_fn = 'graph_graphical_config.json'
     graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
     graph_reduction_config_fn = 'graph_reduction_config.json'
 
-    with open(ttl_fn, 'w') as gfn:
-        gfn.write(graph_str)
-
-    javascript_graph_utils.gitignore_file(ttl_fn)
 
     full_graph_ttl_str = graph_str.replace("\\\"", '\\\\"')
 
@@ -109,7 +117,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
         height='750px', width='100%',
         cdn_resources=template_location
     )
-    net.generate_html(html_fn)
+    net.generate_html()
 
     javascript_graph_utils.set_html_head(net)
 
@@ -128,10 +136,8 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
                                             graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj,
                                             include_title=include_title)
 
-    javascript_graph_utils.write_modified_html_content(net, html_fn)
-    javascript_graph_utils.gitignore_file(html_fn)
-
-    return net, html_fn
+    # return net, html_fn
+    return net.html, graph_str
 
 
 def build_graph_image(revision, paths, filename, no_oda_info, input_notebook):

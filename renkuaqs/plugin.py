@@ -433,17 +433,20 @@ def start_session():
 
 @aqs.command()
 def show_graph():
-    net, html_fn = graph_utils.build_graph_html(None, None)
+    graph_html_content, ttl_content = graph_utils.build_graph_html(None, None)
+    html_fn, ttl_fn = graph_utils.write_graph_files(graph_html_content, ttl_content)
 
     webbrowser.open(html_fn)
 
 
 def build_graph(paths=os.getcwd(), template_location="local"):
-    graph_utils.build_graph_html(None, paths, template_location=template_location)
+    graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths, template_location=template_location)
+    graph_utils.write_graph_files(graph_html_content, ttl_content)
 
 
 def display_interactive_graph(revision="HEAD", paths=os.getcwd(), include_title=False):
-    net, html_fn = graph_utils.build_graph_html(revision, paths, include_title=include_title)
+    graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths, include_title=include_title)
+    html_fn, ttl_fn = graph_utils.write_graph_files(graph_html_content, ttl_content)
 
     return HTML(f"""
         <iframe width="100%" height="1150px", src="{html_fn}" frameBorder="0" scrolling="no">
