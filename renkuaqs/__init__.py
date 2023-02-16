@@ -57,11 +57,13 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
         logging.info(f'self.path = {self.path}, os.cwd = {os.getcwd()}, mount_path = {mount_path_env}')
         if self.path == '/':
             try:
-                aqsPlugin.build_graph(paths=os.getcwd(), template_location="remote")
-            except Exception as e:
+                graph_html_content, ttl_content = aqsPlugin.build_graph_html(None, paths=os.getcwd(),
+                                                                               template_location="remote")
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
+                self.wfile.write(graph_html_content)
+            except Exception as e:
                 output_html = f'''
                 <html><p>Error while generating the output graph:</p>
                 <p>{e}</p>
@@ -69,10 +71,11 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
                 '''
                 self.wfile.write(output_html.encode())
                 logging.warning(f"Error while generating the output graph: {e}")
-            if os.path.exists('graph.html'):
-                self.path = 'graph.html'
-                logging.info(f'Graph http server GET pointing at : {self.path}')
-                super().do_GET()
+
+            # if os.path.exists('graph.html'):
+            #     self.path = 'graph.html'
+            #     logging.info(f'Graph http server GET pointing at : {self.path}')
+            #     super().do_GET()
 
         if self.path == '/lib/bindings/utils.js':
             pyvis_package_path = pyvis.__path__[0]
