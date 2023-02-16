@@ -24,7 +24,7 @@ import pyvis
 import shutil
 import os
 
-import renkuaqs.plugin as aqsPlugin
+import renkuaqs.graph_utils as graph_utils
 
 from . import config
 from functools import partial
@@ -57,11 +57,11 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
         logging.info(f'self.path = {self.path}, os.cwd = {os.getcwd()}, mount_path = {mount_path_env}')
         if self.path == '/':
             try:
-                graph_html_content, ttl_content = aqsPlugin.build_graph_html(None, paths=os.getcwd(),
-                                                                               template_location="remote")
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
+                graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths=os.getcwd(),
+                                                                               template_location="remote")
                 self.wfile.write(graph_html_content)
             except Exception as e:
                 output_html = f'''
