@@ -68,7 +68,7 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
                 <p>{e}</p>
                 </html>
                 '''
-                self.wfile.write(output_html)
+                self.wfile.write(output_html.encode())
                 logging.warning(f"Error while generating the output graph: {e}")
             if os.path.exists('graph.html'):
                 self.path = 'graph.html'
