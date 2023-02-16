@@ -32,6 +32,7 @@ def set_html_content(net,
 
     html_code = '''
         <div style="margin: 5px 0px 15px 5px">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="refresh_graph()">Refresh graph!</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="reset_graph()">Reset graph!</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="fit_graph()">Fit graph!</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation!</button>
