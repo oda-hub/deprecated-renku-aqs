@@ -61,7 +61,6 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
             except Exception as e:
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
-                # self.send_header("Content-length", str(len(custom_ds9.encode())))
                 self.end_headers()
                 output_html = f'''
                 <html><p>Error while generating the output graph:</p>
