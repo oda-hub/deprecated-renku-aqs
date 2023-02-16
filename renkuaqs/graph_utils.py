@@ -54,8 +54,16 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
 
     graph_str = graph.serialize(format="n3")
 
-    with open('full_graph.ttl', 'w') as gfn:
+    html_fn = 'graph.html'
+    ttl_fn = 'full_graph.ttl'
+    default_graph_graphical_config_fn = 'graph_graphical_config.json'
+    graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
+    graph_reduction_config_fn = 'graph_reduction_config.json'
+
+    with open(ttl_fn, 'w') as gfn:
         gfn.write(graph_str)
+
+    javascript_graph_utils.gitignore_file(ttl_fn)
 
     full_graph_ttl_str = graph_str.replace("\\\"", '\\\\"')
 
@@ -63,10 +71,6 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
     # with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
     #     graph = graph.parse(source=ttl_ontology_fn)
 
-    html_fn = 'graph.html'
-    default_graph_graphical_config_fn = 'graph_graphical_config.json'
-    graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
-    graph_reduction_config_fn = 'graph_reduction_config.json'
     nodes_graph_config_obj = {}
     edges_graph_config_obj = {}
 
@@ -125,6 +129,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
                                             include_title=include_title)
 
     javascript_graph_utils.write_modified_html_content(net, html_fn)
+    javascript_graph_utils.gitignore_file(html_fn)
 
     return net, html_fn
 

@@ -1,4 +1,16 @@
 import bs4
+import os
+
+
+def gitignore_file(file_name):
+    if os.path.exists('.gitignore'):
+        with open('.gitignore') as gitignore_file_lines:
+            lines = gitignore_file_lines.readlines()
+        print(f"lines: {lines}")
+        if file_name not in lines:
+            lines.append(file_name + "\n")
+            with open(".gitignore", "w") as gitignore_file_write:
+                gitignore_file_write.writelines(lines)
 
 
 def write_modified_html_content(net, html_fn):
