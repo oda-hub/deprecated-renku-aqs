@@ -72,14 +72,16 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
                 logging.warning(f"Error while generating the output graph: {e}")
             if os.path.exists('graph.html'):
                 self.path = 'graph.html'
+                logging.info(f'Graph http server GET pointing at : {self.path}')
+                super().do_GET()
 
         if self.path == '/lib/bindings/utils.js':
             pyvis_package_path = pyvis.__path__[0]
             shutil.copy(pyvis_package_path)
             logging.info(f'lib bindings utils js path {self.path}')
+            logging.info(f'Graph http server GET pointing at : {self.path}')
+            super().do_GET()
 
-        logging.info(f'Graph http server GET pointing at : {self.path}')
-        super().do_GET()
 
 
 def _start_graph_http_server(*args):
