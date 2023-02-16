@@ -62,7 +62,7 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths=os.getcwd(),
                                                                                template_location="remote")
-                self.wfile.write(graph_html_content)
+                self.wfile.write(graph_html_content.encode())
             except Exception as e:
                 output_html = f'''
                 <html><p>Error while generating the output graph:</p>
