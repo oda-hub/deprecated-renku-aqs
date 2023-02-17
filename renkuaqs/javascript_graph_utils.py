@@ -39,7 +39,9 @@ def set_html_content(net,
             <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation!</button>
         '''
     if include_ttl_display_button:
-        html_code += '\n<button type="button" class="btn btn-secondary btn-sm" onclick="open_ttl_content()">Display ttl content!</button>'
+        html_code += '''\n<button type="button" class="btn btn-secondary btn-sm collapsible" onclick="open_ttl_content()">Display ttl content!</button> \
+                 \n<div id="ttl_content"></div>
+        '''
 
     html_code += '''
         </div>
