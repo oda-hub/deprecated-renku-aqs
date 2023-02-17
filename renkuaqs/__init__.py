@@ -126,10 +126,10 @@ def _start_graph_http_server(*args):
         )
     logging.info(f'Starting graph server with args {args}, use <Ctrl-C> to stop')
 
-    event_handler = RenkuFilesWatcher(server)
-    observer = Observer()
-    observer.schedule(event_handler, ".renku/aq/latest", recursive=True)
-    observer.start()
+    # event_handler = RenkuFilesWatcher(server)
+    # observer = Observer()
+    # observer.schedule(event_handler, ".renku/aq/latest", recursive=True)
+    # observer.start()
 
     try:
         server.serve_forever()
