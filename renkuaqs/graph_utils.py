@@ -135,7 +135,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
                                             graph_reduction_config_obj_dict=graph_reduction_config_obj,
                                             graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj,
                                             include_title=include_title,
-                                            include_ttl_display_button=False)
+                                            include_ttl_display_button=include_ttl_display_button)
 
     # return net, html_fn
     return net.html, graph_str

@@ -137,8 +137,8 @@ def _start_graph_http_server(*args):
         pass
 
     server.server_close()
-    observer.stop()
-    observer.join()
+    # observer.stop()
+    # observer.join()
     logging.info("Graph server stopped.")
 
 def setup_graph_visualizer():
