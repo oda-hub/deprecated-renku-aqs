@@ -31,6 +31,10 @@ from functools import partial
 from pip._vendor import pkg_resources
 from renku.version import __version__
 from http.server import SimpleHTTPRequestHandler
+# from watchdog.observers import Observer
+# from watchdog.events import LoggingEventHandler
+from urllib import parse
+
 
 logging.basicConfig(level="DEBUG")
 
@@ -47,7 +51,20 @@ def _check_renku_version():
                      "You should consider install the suggested version.",)
 
 
-class GetGraphHandler(SimpleHTTPRequestHandler):
+# class RenkuFilesWatcher(LoggingEventHandler):
+#
+#     def on_modified(self, event):
+#         super().on_deleted(event)
+#
+#         if event.is_directory:
+#             content_dir = os.listdir(event.src_path)
+#             if len(content_dir) == 0:
+#                 logging.info(f"Directory {event.src_path} is now empty... graph can be refreshed")
+#             else:
+#                 logging.info(f"Directory {event.src_path} contains: {content_dir}")
+
+
+class HTTPGraphHandler(SimpleHTTPRequestHandler):
     def __init__(self, request, client_address, *args, **kwargs) -> None:
         super().__init__(request, client_address, *args, **kwargs)
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -61,7 +78,8 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths=os.getcwd(),
-                                                                               template_location="remote")
+                                                                               template_location="remote",
+                                                                               include_ttl_display_button=True)
                 self.wfile.write(graph_html_content.encode())
             except Exception as e:
                 output_html = f'''
@@ -72,6 +90,15 @@ class GetGraphHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(output_html.encode())
                 logging.warning(f"Error while generating the output graph: {e}")
 
+        # if self.path.startswith('/ttl_graph'):
+        #     parsed_path = parse.urlparse(self.path)
+        #     query_components = dict(qc.split("=") for qc in parsed_path.query.split("&"))
+        #     ttl_content = query_components["ttl_content"]
+        #     logging.info(f"ttl graph = {ttl_content}")
+        #     self.send_response(200)
+        #     self.send_header("Content-type", "text/html")
+        #     self.end_headers()
+        #     self.wfile.write(ttl_content.encode())
 
         if self.path == '/lib/bindings/utils.js':
             pyvis_package_path = pyvis.__path__[0]
@@ -95,9 +122,14 @@ def _start_graph_http_server(*args):
     from http.server import HTTPServer
     server = HTTPServer(
         ('localhost', int(args.port)),
-        partial(GetGraphHandler, directory=args.wwwroot),
+        partial(HTTPGraphHandler, directory=args.wwwroot),
         )
     logging.info(f'Starting graph server with args {args}, use <Ctrl-C> to stop')
+
+    event_handler = RenkuFilesWatcher(server)
+    observer = Observer()
+    observer.schedule(event_handler, ".renku/aq/latest", recursive=True)
+    observer.start()
 
     try:
         server.serve_forever()
@@ -105,6 +137,8 @@ def _start_graph_http_server(*args):
         pass
 
     server.server_close()
+    observer.stop()
+    observer.join()
     logging.info("Graph server stopped.")
 
 def setup_graph_visualizer():

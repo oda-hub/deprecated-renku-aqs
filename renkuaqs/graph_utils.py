@@ -59,7 +59,7 @@ def write_graph_files(graph_html_content, ttl_content):
     return html_fn, ttl_fn
 
 
-def build_graph_html(revision, paths, include_title=True, template_location="local"):
+def build_graph_html(revision, paths, include_title=True, template_location="local", include_ttl_display_button=False):
 
     if paths is None:
         paths = project_context.path
@@ -134,7 +134,8 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
                                             edges_graph_config_obj_dict=edges_graph_config_obj,
                                             graph_reduction_config_obj_dict=graph_reduction_config_obj,
                                             graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj,
-                                            include_title=include_title)
+                                            include_title=include_title,
+                                            include_ttl_display_button=False)
 
     # return net, html_fn
     return net.html, graph_str

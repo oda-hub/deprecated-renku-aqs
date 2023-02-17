@@ -28,7 +28,8 @@ def set_html_content(net,
                      edges_graph_config_obj_dict=None,
                      graph_reduction_config_obj_dict=None,
                      graph_nodes_subset_config_obj_dict=None,
-                     include_title=True):
+                     include_title=True,
+                     include_ttl_display_button=False):
 
     html_code = '''
         <div style="margin: 5px 0px 15px 5px">
@@ -36,6 +37,11 @@ def set_html_content(net,
             <button type="button" class="btn btn-secondary btn-sm" onclick="reset_graph()">Reset graph!</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="fit_graph()">Fit graph!</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation!</button>
+        '''
+    if include_ttl_display_button:
+        html_code += '\n<button type="button" class="btn btn-secondary btn-sm" onclick="open_ttl_content()">Display ttl content!</button>'
+
+    html_code += '''
         </div>
         <div style="display:flex;">
             <div style="background-color: #F7F7F7; border-left: 1px double; border-right: 1px double; padding: 5px; margin: 5px 0px 10px 5px">
