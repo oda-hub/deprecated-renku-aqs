@@ -78,8 +78,7 @@ class HTTPGraphHandler(SimpleHTTPRequestHandler):
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths=os.getcwd(),
-                                                                               template_location="remote",
-                                                                               include_ttl_display_button=True)
+                                                                               template_location="remote")
                 self.wfile.write(graph_html_content.encode())
             except Exception as e:
                 output_html = f'''
@@ -90,15 +89,13 @@ class HTTPGraphHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(output_html.encode())
                 logging.warning(f"Error while generating the output graph: {e}")
 
-        # if self.path.startswith('/ttl_graph'):
-        #     parsed_path = parse.urlparse(self.path)
-        #     query_components = dict(qc.split("=") for qc in parsed_path.query.split("&"))
-        #     ttl_content = query_components["ttl_content"]
-        #     logging.info(f"ttl graph = {ttl_content}")
-        #     self.send_response(200)
-        #     self.send_header("Content-type", "text/html")
-        #     self.end_headers()
-        #     self.wfile.write(ttl_content.encode())
+        if self.path.startswith('/ttl_graph'):
+            graph_str = graph_utils.extract_graph(None, paths=os.getcwd())
+            logging.info(f"ttl graph = {graph_str[0:100]}")
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(graph_str.encode())
 
         if self.path == '/lib/bindings/utils.js':
             pyvis_package_path = pyvis.__path__[0]

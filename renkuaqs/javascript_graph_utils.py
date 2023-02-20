@@ -28,8 +28,7 @@ def set_html_content(net,
                      edges_graph_config_obj_dict=None,
                      graph_reduction_config_obj_dict=None,
                      graph_nodes_subset_config_obj_dict=None,
-                     include_title=True,
-                     include_ttl_display_button=False):
+                     include_title=True):
 
     html_code = '''
         <div style="margin: 5px 0px 15px 5px">
@@ -37,13 +36,8 @@ def set_html_content(net,
             <button type="button" class="btn btn-secondary btn-sm" onclick="reset_graph()">Reset graph!</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="fit_graph()">Fit graph!</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation!</button>
-        '''
-    if include_ttl_display_button:
-        html_code += '''\n<button type="button" class="btn btn-secondary btn-sm collapsible" onclick="open_ttl_content()">Display ttl content!</button> \
+            <button type="button" class="btn btn-secondary btn-sm collapsible" onclick="open_ttl_content()">Display ttl content!</button> \
                  \n<div id="ttl_content"></div>
-        '''
-
-    html_code += '''
         </div>
         <div style="display:flex;">
             <div style="background-color: #F7F7F7; border-left: 1px double; border-right: 1px double; padding: 5px; margin: 5px 0px 10px 5px">
@@ -160,7 +154,8 @@ def add_js_click_functionality(net, graph_ttl_stream=None,
                                nodes_graph_config_obj_str=None,
                                edges_graph_config_obj_str=None,
                                graph_reductions_obj_str=None,
-                               graph_nodes_subset_config_obj_str=None):
+                               graph_nodes_subset_config_obj_str=None,
+                               include_ttl_content_within_html=True):
 
     # with open(html_fn) as template:
     #     html_code = template.read()
@@ -175,49 +170,54 @@ def add_js_click_functionality(net, graph_ttl_stream=None,
     var edges_graph_config_obj = JSON.parse('{edges_graph_config_obj_str}');
     var subset_nodes_config_obj = JSON.parse('{graph_nodes_subset_config_obj_str}');
     var graph_reductions_obj = JSON.parse('{graph_reductions_obj_str}');
-    var graph_ttl_content = `{graph_ttl_stream}`;
+    '''
+    if include_ttl_content_within_html:
+        javascript_content += f'\nvar graph_ttl_content = `{graph_ttl_stream}`;'
+    else:
+        javascript_content += f'\nvar graph_ttl_content = ``;'
+
+    javascript_content += '''
     
     var edges;
     var nodes;
     var network; 
     var container;
     var data;
-    var options = {{
+    var options = {
         autoResize: true,
-        nodes: {{
-            scaling: {{
+        nodes: {
+            scaling: {
                 min: 10,
                 max: 30
-            }},
-            font: {{
+            },
+            font: {
                 size: 14,
                 face: "Tahoma",
-            }},
-        }},
-        edges: {{
+            },
+        },
+        edges: {
             smooth: false,
-            arrows: {{
-              to: {{
+            arrows: {
+              to: {
                 enabled: true,
                 scaleFactor: 1.2
-                }}
-            }},
+                }
+            },
             width: 4
-
-        }},
-        layout: {{
-            hierarchical: {{
+        },
+        layout: {
+            hierarchical: {
                 enabled: false
-            }}
-        }},
-        interaction: {{
+            }
+        },
+        interaction: {
 
-        }},
-    }};
+        },
+    };
     
-    window.onload = function () {{
+    window.onload = function () {
         load_graph();
-    }};
+    };
     '''
     javascript_tag = soup.new_tag("script", type="application/javascript")
     javascript_tag.append(javascript_content)

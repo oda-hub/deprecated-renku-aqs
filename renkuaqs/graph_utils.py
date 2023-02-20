@@ -59,8 +59,7 @@ def write_graph_files(graph_html_content, ttl_content):
     return html_fn, ttl_fn
 
 
-def build_graph_html(revision, paths, include_title=True, template_location="local", include_ttl_display_button=False):
-
+def extract_graph(revision, paths):
     if paths is None:
         paths = project_context.path
 
@@ -68,10 +67,18 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
 
     graph_str = graph.serialize(format="n3")
 
+    return graph_str
+
+def build_graph_html(revision, paths,
+                     include_title=True,
+                     template_location="local",
+                     include_ttl_content_within_html=True):
+
     default_graph_graphical_config_fn = 'graph_graphical_config.json'
     graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
     graph_reduction_config_fn = 'graph_reduction_config.json'
 
+    graph_str = extract_graph(revision, paths)
 
     full_graph_ttl_str = graph_str.replace("\\\"", '\\\\"')
 
@@ -126,7 +133,8 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
                                                       nodes_graph_config_obj_str=nodes_graph_config_obj_str,
                                                       edges_graph_config_obj_str=edges_graph_config_obj_str,
                                                       graph_reductions_obj_str=graph_reductions_obj_str,
-                                                      graph_nodes_subset_config_obj_str=graph_nodes_subset_config_obj_str)
+                                                      graph_nodes_subset_config_obj_str=graph_nodes_subset_config_obj_str,
+                                                      include_ttl_content_within_html=include_ttl_content_within_html)
 
     javascript_graph_utils.set_html_content(net,
                                             graph_config_names_list=graph_config_names_list,
@@ -134,8 +142,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
                                             edges_graph_config_obj_dict=edges_graph_config_obj,
                                             graph_reduction_config_obj_dict=graph_reduction_config_obj,
                                             graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj,
-                                            include_title=include_title,
-                                            include_ttl_display_button=include_ttl_display_button)
+                                            include_title=include_title)
 
     # return net, html_fn
     return net.html, graph_str
