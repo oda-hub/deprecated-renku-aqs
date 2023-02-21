@@ -67,7 +67,6 @@ class HTTPGraphHandler(SimpleHTTPRequestHandler):
                 graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths=os.getcwd(),
                                                                                template_location="remote",
                                                                                include_ttl_content_within_html=False)
-                logging.info(f'graph_html_content\n: {graph_html_content}')
                 self.wfile.write(graph_html_content.encode())
             except Exception as e:
                 output_html = f'''
@@ -94,7 +93,7 @@ class HTTPGraphHandler(SimpleHTTPRequestHandler):
             logging.info(f"ttl graph = {graph_ttl_content[0:100]}")
             repo = Repo('.')
             sha = repo.head.commit.hexsha
-            short_sha = repo.git.rev_parse(sha)
+            short_sha = repo.git.rev_parse(sha, short=8)
             logging.info(f"Graph version, git revision is: {short_sha}")
 
             output_obj = {
