@@ -58,11 +58,9 @@ def activity_annotations(activity):
     """``process_run_annotations`` hook implementation."""
     aqs = AQS(activity)
 
-    # os.remove(os.path.join(aqs.renku_aqs_path, "site.py"))
-
-    path = pathlib.Path("../sitecustomize.py")
-    if path.exists():
-        path.unlink()
+    sitecustomize_path = pathlib.Path(os.path.join(project_context.metadata_path, AQS_DIR, "sitecustomize.py"))
+    if sitecustomize_path.exists():
+        sitecustomize_path.unlink()
 
     annotations = []
 
@@ -96,27 +94,23 @@ def activity_annotations(activity):
 
 @hookimpl
 def pre_run(tool):
-    # we print
     print(f"\033[31mhere we will prepare hooks for astroquery, tool given is {tool}\033[0m")
 
-    pwd_env_var = os.environ.get("$PWD", os.getcwd())
+    sitecustomize_dir = Path(project_context.metadata_path, AQS_DIR)
 
-    os.environ["PYTHONPATH"] = f"{pwd_env_var}/..:" + os.environ.get('PYTHONPATH', "")
+    os.environ["PYTHONPATH"] = f"{sitecustomize_dir}:" + os.environ.get('PYTHONPATH', "")
 
-    # TODO: how to write provide this to `tool`?
-    fn = "../sitecustomize.py"
+    sitecustomize_path = os.path.join(sitecustomize_dir, "sitecustomize.py")
 
-    print(f"\033[34msitecustomize.py as {fn}\033[0m")
+    print(f"\033[34msitecustomize.py as {sitecustomize_path}\033[0m")
 
-    open(fn, "w").write("""
+    open(sitecustomize_path, "w").write("""
 print(f"\033[31menabling hooks for astroquery\033[0m")  
 
 import aqsconverters.aq
 
 aqsconverters.aq.autolog()
 """)
-
-    from astroquery.query import BaseQuery  # ??
 
 
 def _run_id(activity_id):
