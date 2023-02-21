@@ -98,6 +98,9 @@ def pre_run(tool):
 
     sitecustomize_dir = Path(project_context.metadata_path, AQS_DIR)
 
+    if not sitecustomize_dir.exists():
+        sitecustomize_dir.mkdir(parents=True)
+
     os.environ["PYTHONPATH"] = f"{sitecustomize_dir}:" + os.environ.get('PYTHONPATH', "")
 
     sitecustomize_path = os.path.join(sitecustomize_dir, "sitecustomize.py")
