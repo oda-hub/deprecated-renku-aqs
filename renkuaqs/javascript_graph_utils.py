@@ -157,10 +157,6 @@ def add_js_click_functionality(net, graph_ttl_stream=None,
                                graph_nodes_subset_config_obj_str=None,
                                include_ttl_content_within_html=True):
 
-    # with open(html_fn) as template:
-    #     html_code = template.read()
-    #     html_code = html_code.replace('drawGraph();', '')
-    #     soup = bs4.BeautifulSoup(html_code, "html.parser")
     net.html = net.html.replace('drawGraph();', '')
     soup = bs4.BeautifulSoup(net.html, "html.parser")
 
@@ -170,6 +166,7 @@ def add_js_click_functionality(net, graph_ttl_stream=None,
     var edges_graph_config_obj = JSON.parse('{edges_graph_config_obj_str}');
     var subset_nodes_config_obj = JSON.parse('{graph_nodes_subset_config_obj_str}');
     var graph_reductions_obj = JSON.parse('{graph_reductions_obj_str}');
+    var graph_version = ``;
     '''
     if include_ttl_content_within_html:
         javascript_content += f'\nvar graph_ttl_content = `{graph_ttl_stream}`;'

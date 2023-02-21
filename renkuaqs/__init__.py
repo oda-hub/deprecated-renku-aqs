@@ -23,6 +23,7 @@ import logging
 import pyvis
 import shutil
 import os
+import json
 
 import renkuaqs.graph_utils as graph_utils
 
@@ -31,9 +32,7 @@ from functools import partial
 from pip._vendor import pkg_resources
 from renku.version import __version__
 from http.server import SimpleHTTPRequestHandler
-# from watchdog.observers import Observer
-# from watchdog.events import LoggingEventHandler
-from urllib import parse
+from git import Repo
 
 
 logging.basicConfig(level="DEBUG")
@@ -51,23 +50,11 @@ def _check_renku_version():
                      "You should consider install the suggested version.",)
 
 
-# class RenkuFilesWatcher(LoggingEventHandler):
-#
-#     def on_modified(self, event):
-#         super().on_deleted(event)
-#
-#         if event.is_directory:
-#             content_dir = os.listdir(event.src_path)
-#             if len(content_dir) == 0:
-#                 logging.info(f"Directory {event.src_path} is now empty... graph can be refreshed")
-#             else:
-#                 logging.info(f"Directory {event.src_path} contains: {content_dir}")
-
-
 class HTTPGraphHandler(SimpleHTTPRequestHandler):
     def __init__(self, request, client_address, *args, **kwargs) -> None:
         super().__init__(request, client_address, *args, **kwargs)
         self.logger = logging.getLogger(self.__class__.__name__)
+
 
     def do_GET(self) -> None:
         mount_path_env = os.environ.get('MOUNT_PATH', None)
@@ -78,7 +65,9 @@ class HTTPGraphHandler(SimpleHTTPRequestHandler):
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths=os.getcwd(),
-                                                                               template_location="remote")
+                                                                               template_location="remote",
+                                                                               include_ttl_content_within_html=False)
+                logging.info(f'graph_html_content\n: {graph_html_content}')
                 self.wfile.write(graph_html_content.encode())
             except Exception as e:
                 output_html = f'''
@@ -90,13 +79,32 @@ class HTTPGraphHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(output_html.encode())
                 logging.warning(f"Error while generating the output graph: {e}")
 
-        if self.path.startswith('/ttl_graph'):
-            graph_str = graph_utils.extract_graph(None, paths=os.getcwd())
-            logging.info(f"ttl graph = {graph_str[0:100]}")
+        if self.path == '/graph_version':
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
-            self.wfile.write(graph_str.encode())
+            repo = Repo('.')
+            sha = repo.head.commit.hexsha
+            short_sha = repo.git.rev_parse(sha, short=8)
+            logging.info(f"Graph version, git revision is: {short_sha}")
+            self.wfile.write(short_sha.encode())
+
+        if self.path.startswith('/ttl_graph'):
+            graph_ttl_content = graph_utils.extract_graph(None, paths=os.getcwd())
+            logging.info(f"ttl graph = {graph_ttl_content[0:100]}")
+            repo = Repo('.')
+            sha = repo.head.commit.hexsha
+            short_sha = repo.git.rev_parse(sha)
+            logging.info(f"Graph version, git revision is: {short_sha}")
+
+            output_obj = {
+                'graph_ttl_content': graph_ttl_content,
+                'graph_version': short_sha
+            }
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(json.dumps(output_obj).encode())
 
         if self.path == '/lib/bindings/utils.js':
             pyvis_package_path = pyvis.__path__[0]
@@ -124,19 +132,12 @@ def _start_graph_http_server(*args):
         )
     logging.info(f'Starting graph server with args {args}, use <Ctrl-C> to stop')
 
-    # event_handler = RenkuFilesWatcher(server)
-    # observer = Observer()
-    # observer.schedule(event_handler, ".renku/aq/latest", recursive=True)
-    # observer.start()
-
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
 
     server.server_close()
-    # observer.stop()
-    # observer.join()
     logging.info("Graph server stopped.")
 
 def setup_graph_visualizer():
