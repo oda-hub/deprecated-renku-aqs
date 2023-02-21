@@ -82,8 +82,9 @@ class HTTPGraphHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(graph_html_content.encode())
             except Exception as e:
                 output_html = f'''
-                <html><p>Error while generating the output graph:</p>
+                <html><head></head><body><h1>Error while generating the output graph:</h1>
                 <p>{e}</p>
+                </body>
                 </html>
                 '''
                 self.wfile.write(output_html.encode())
