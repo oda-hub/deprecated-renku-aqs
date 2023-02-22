@@ -44,9 +44,22 @@ def _graph(revision=None, paths=None):
 
     return graph
 
+def write_graph_files(graph_html_content, ttl_content):
+    html_fn = 'graph.html'
+    ttl_fn = 'full_graph.ttl'
 
-def build_graph_html(revision, paths, include_title=True, template_location="local"):
+    with open(ttl_fn, 'w') as gfn:
+        gfn.write(ttl_content)
 
+    javascript_graph_utils.gitignore_file(ttl_fn)
+
+    javascript_graph_utils.write_modified_html_content(graph_html_content, html_fn)
+    javascript_graph_utils.gitignore_file(html_fn)
+
+    return html_fn, ttl_fn
+
+
+def extract_graph(revision, paths):
     if paths is None:
         paths = project_context.path
 
@@ -54,8 +67,18 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
 
     graph_str = graph.serialize(format="n3")
 
-    with open('full_graph.ttl', 'w') as gfn:
-        gfn.write(graph_str)
+    return graph_str
+
+def build_graph_html(revision, paths,
+                     include_title=True,
+                     template_location="local",
+                     include_ttl_content_within_html=True):
+
+    default_graph_graphical_config_fn = 'graph_graphical_config.json'
+    graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
+    graph_reduction_config_fn = 'graph_reduction_config.json'
+
+    graph_str = extract_graph(revision, paths)
 
     full_graph_ttl_str = graph_str.replace("\\\"", '\\\\"')
 
@@ -63,10 +86,6 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
     # with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
     #     graph = graph.parse(source=ttl_ontology_fn)
 
-    html_fn = 'graph.html'
-    default_graph_graphical_config_fn = 'graph_graphical_config.json'
-    graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
-    graph_reduction_config_fn = 'graph_reduction_config.json'
     nodes_graph_config_obj = {}
     edges_graph_config_obj = {}
 
@@ -105,7 +124,7 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
         height='750px', width='100%',
         cdn_resources=template_location
     )
-    net.generate_html(html_fn)
+    net.generate_html()
 
     javascript_graph_utils.set_html_head(net)
 
@@ -114,7 +133,8 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
                                                       nodes_graph_config_obj_str=nodes_graph_config_obj_str,
                                                       edges_graph_config_obj_str=edges_graph_config_obj_str,
                                                       graph_reductions_obj_str=graph_reductions_obj_str,
-                                                      graph_nodes_subset_config_obj_str=graph_nodes_subset_config_obj_str)
+                                                      graph_nodes_subset_config_obj_str=graph_nodes_subset_config_obj_str,
+                                                      include_ttl_content_within_html=include_ttl_content_within_html)
 
     javascript_graph_utils.set_html_content(net,
                                             graph_config_names_list=graph_config_names_list,
@@ -124,9 +144,8 @@ def build_graph_html(revision, paths, include_title=True, template_location="loc
                                             graph_nodes_subset_config_obj_dict=graph_nodes_subset_config_obj,
                                             include_title=include_title)
 
-    javascript_graph_utils.write_modified_html_content(net, html_fn)
-
-    return net, html_fn
+    # return net, html_fn
+    return net.html, graph_str
 
 
 def build_graph_image(revision, paths, filename, no_oda_info, input_notebook):

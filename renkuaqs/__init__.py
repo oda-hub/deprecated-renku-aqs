@@ -23,14 +23,17 @@ import logging
 import pyvis
 import shutil
 import os
+import json
 
-import renkuaqs.plugin as aqsPlugin
+import renkuaqs.graph_utils as graph_utils
 
 from . import config
 from functools import partial
 from pip._vendor import pkg_resources
 from renku.version import __version__
 from http.server import SimpleHTTPRequestHandler
+from git import Repo
+
 
 logging.basicConfig(level="DEBUG")
 
@@ -47,28 +50,68 @@ def _check_renku_version():
                      "You should consider install the suggested version.",)
 
 
-class GetGraphHandler(SimpleHTTPRequestHandler):
+class HTTPGraphHandler(SimpleHTTPRequestHandler):
     def __init__(self, request, client_address, *args, **kwargs) -> None:
         super().__init__(request, client_address, *args, **kwargs)
         self.logger = logging.getLogger(self.__class__.__name__)
 
+
     def do_GET(self) -> None:
+        mount_path_env = os.environ.get('MOUNT_PATH', None)
+        logging.info(f'self.path = {self.path}, os.cwd = {os.getcwd()}, mount_path = {mount_path_env}')
         if self.path == '/':
-            aqsPlugin.build_graph(paths=os.getcwd(), template_location="remote")
-            if os.path.exists(os.path.join(os.getcwd(), 'graph.html')):
-                if 'MOUNT_PATH' in os.environ:
-                    self.path = os.path.join(os.environ['MOUNT_PATH'], 'graph.html')
-                else:
-                    self.path = 'graph.html'
+            try:
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths=os.getcwd(),
+                                                                               template_location="remote",
+                                                                               include_ttl_content_within_html=False)
+                self.wfile.write(graph_html_content.encode())
+            except Exception as e:
+                output_html = f'''
+                <html><head></head><body><h1>Error while generating the output graph:</h1>
+                <p>{e}</p>
+                </body>
+                </html>
+                '''
+                self.wfile.write(output_html.encode())
+                logging.warning(f"Error while generating the output graph: {e}")
+
+        if self.path == '/graph_version':
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            repo = Repo('.')
+            sha = repo.head.commit.hexsha
+            short_sha = repo.git.rev_parse(sha, short=8)
+            logging.info(f"Graph version, git revision is: {short_sha}")
+            self.wfile.write(short_sha.encode())
+
+        if self.path.startswith('/ttl_graph'):
+            graph_ttl_content = graph_utils.extract_graph(None, paths=os.getcwd())
+            logging.info(f"ttl graph = {graph_ttl_content[0:100]}")
+            repo = Repo('.')
+            sha = repo.head.commit.hexsha
+            short_sha = repo.git.rev_parse(sha, short=8)
+            logging.info(f"Graph version, git revision is: {short_sha}")
+
+            output_obj = {
+                'graph_ttl_content': graph_ttl_content,
+                'graph_version': short_sha
+            }
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(json.dumps(output_obj).encode())
 
         if self.path == '/lib/bindings/utils.js':
-            pyvis_path = pyvis_package_path = pyvis.__path__[0]
-            shutil.copy(pyvis_package_path, )
-            # self.path = os.path.join(pyvis_package_path, 'lib/bindings/utils.js')
+            pyvis_package_path = pyvis.__path__[0]
+            shutil.copy(pyvis_package_path)
             logging.info(f'lib bindings utils js path {self.path}')
+            logging.info(f'Graph http server GET pointing at : {self.path}')
+            super().do_GET()
 
-        logging.info(f'Graph http server GET pointing at : {self.path}')
-        super().do_GET()
 
 
 def _start_graph_http_server(*args):
@@ -84,7 +127,7 @@ def _start_graph_http_server(*args):
     from http.server import HTTPServer
     server = HTTPServer(
         ('localhost', int(args.port)),
-        partial(GetGraphHandler, directory=args.wwwroot),
+        partial(HTTPGraphHandler, directory=args.wwwroot),
         )
     logging.info(f'Starting graph server with args {args}, use <Ctrl-C> to stop')
 

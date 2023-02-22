@@ -58,11 +58,9 @@ def activity_annotations(activity):
     """``process_run_annotations`` hook implementation."""
     aqs = AQS(activity)
 
-    # os.remove(os.path.join(aqs.renku_aqs_path, "site.py"))
-
-    path = pathlib.Path("../sitecustomize.py")
-    if path.exists():
-        path.unlink()
+    sitecustomize_path = pathlib.Path(os.path.join(project_context.metadata_path, AQS_DIR, "sitecustomize.py"))
+    if sitecustomize_path.exists():
+        sitecustomize_path.unlink()
 
     annotations = []
 
@@ -96,25 +94,26 @@ def activity_annotations(activity):
 
 @hookimpl
 def pre_run(tool):
-    # we print
     print(f"\033[31mhere we will prepare hooks for astroquery, tool given is {tool}\033[0m")
 
-    # TODO: where to get renku.client and dir?
+    sitecustomize_dir = Path(project_context.metadata_path, AQS_DIR)
 
-    # TODO: how to write provide this to `tool`?
-    fn = "../sitecustomize.py"
+    if not sitecustomize_dir.exists():
+        sitecustomize_dir.mkdir(parents=True)
 
-    print(f"\033[34msitecustomize.py as {fn}\033[0m")
+    os.environ["PYTHONPATH"] = f"{sitecustomize_dir}:" + os.environ.get('PYTHONPATH', "")
 
-    open(fn, "w").write("""
+    sitecustomize_path = os.path.join(sitecustomize_dir, "sitecustomize.py")
+
+    print(f"\033[34msitecustomize.py as {sitecustomize_path}\033[0m")
+
+    open(sitecustomize_path, "w").write("""
 print(f"\033[31menabling hooks for astroquery\033[0m")  
 
 import aqsconverters.aq
 
 aqsconverters.aq.autolog()
 """)
-
-    from astroquery.query import BaseQuery  # ??
 
 
 def _run_id(activity_id):
@@ -431,17 +430,20 @@ def start_session():
 
 @aqs.command()
 def show_graph():
-    net, html_fn = graph_utils.build_graph_html(None, None)
+    graph_html_content, ttl_content = graph_utils.build_graph_html(None, None)
+    html_fn, ttl_fn = graph_utils.write_graph_files(graph_html_content, ttl_content)
 
     webbrowser.open(html_fn)
 
 
 def build_graph(paths=os.getcwd(), template_location="local"):
-    graph_utils.build_graph_html(None, paths, template_location=template_location)
+    graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths, template_location=template_location)
+    graph_utils.write_graph_files(graph_html_content, ttl_content)
 
 
 def display_interactive_graph(revision="HEAD", paths=os.getcwd(), include_title=False):
-    net, html_fn = graph_utils.build_graph_html(revision, paths, include_title=include_title)
+    graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths, include_title=include_title)
+    html_fn, ttl_fn = graph_utils.write_graph_files(graph_html_content, ttl_content)
 
     return HTML(f"""
         <iframe width="100%" height="1150px", src="{html_fn}" frameBorder="0" scrolling="no">

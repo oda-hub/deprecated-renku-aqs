@@ -140,5 +140,5 @@ For the installation of the plugin via `pip`:
 TODO installation from the github repo, will be distributed ?
 --->
 ```bash
-pip install -e git+https://github.com/oda-hub/renku-aqs.git#egg=renku_aqs
+pip install renku_aqs
 ```

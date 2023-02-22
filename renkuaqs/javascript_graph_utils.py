@@ -1,9 +1,25 @@
 import bs4
+import os
+from git import Repo
 
 
-def write_modified_html_content(net, html_fn):
+def gitignore_file(file_name):
+    if os.path.exists('.gitignore'):
+        with open('.gitignore') as gitignore_file_lines:
+            lines = gitignore_file_lines.readlines()
+        if file_name + "\n" not in lines:
+            lines.append(file_name + "\n")
+            with open(".gitignore", "w") as gitignore_file_write:
+                gitignore_file_write.writelines(lines)
+            commit_msg = f"{file_name} added to the .gitignore file"
+            repo = Repo('.')
+            repo.index.add(".gitignore")
+            repo.index.commit(commit_msg)
+
+
+def write_modified_html_content(graph_html_content, html_fn):
     with open(html_fn, "w") as out:
-        out.write(net.html)
+        out.write(graph_html_content)
 
 
 def set_html_content(net,
@@ -16,9 +32,12 @@ def set_html_content(net,
 
     html_code = '''
         <div style="margin: 5px 0px 15px 5px">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="refresh_graph()">Refresh graph!</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="reset_graph()">Reset graph!</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="fit_graph()">Fit graph!</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation!</button>
+            <button type="button" class="btn btn-secondary btn-sm collapsible" onclick="open_ttl_content()">Display ttl content!</button> \
+                 \n<div id="ttl_content"></div>
         </div>
         <div style="display:flex;">
             <div style="background-color: #F7F7F7; border-left: 1px double; border-right: 1px double; padding: 5px; margin: 5px 0px 10px 5px">
@@ -135,12 +154,9 @@ def add_js_click_functionality(net, graph_ttl_stream=None,
                                nodes_graph_config_obj_str=None,
                                edges_graph_config_obj_str=None,
                                graph_reductions_obj_str=None,
-                               graph_nodes_subset_config_obj_str=None):
+                               graph_nodes_subset_config_obj_str=None,
+                               include_ttl_content_within_html=True):
 
-    # with open(html_fn) as template:
-    #     html_code = template.read()
-    #     html_code = html_code.replace('drawGraph();', '')
-    #     soup = bs4.BeautifulSoup(html_code, "html.parser")
     net.html = net.html.replace('drawGraph();', '')
     soup = bs4.BeautifulSoup(net.html, "html.parser")
 
@@ -150,49 +166,55 @@ def add_js_click_functionality(net, graph_ttl_stream=None,
     var edges_graph_config_obj = JSON.parse('{edges_graph_config_obj_str}');
     var subset_nodes_config_obj = JSON.parse('{graph_nodes_subset_config_obj_str}');
     var graph_reductions_obj = JSON.parse('{graph_reductions_obj_str}');
-    var graph_ttl_content = `{graph_ttl_stream}`;
+    var graph_version = ``;
+    '''
+    if include_ttl_content_within_html:
+        javascript_content += f'\nvar graph_ttl_content = `{graph_ttl_stream}`;'
+    else:
+        javascript_content += f'\nvar graph_ttl_content = ``;'
+
+    javascript_content += '''
     
     var edges;
     var nodes;
     var network; 
     var container;
     var data;
-    var options = {{
+    var options = {
         autoResize: true,
-        nodes: {{
-            scaling: {{
+        nodes: {
+            scaling: {
                 min: 10,
                 max: 30
-            }},
-            font: {{
+            },
+            font: {
                 size: 14,
                 face: "Tahoma",
-            }},
-        }},
-        edges: {{
+            },
+        },
+        edges: {
             smooth: false,
-            arrows: {{
-              to: {{
+            arrows: {
+              to: {
                 enabled: true,
                 scaleFactor: 1.2
-                }}
-            }},
+                }
+            },
             width: 4
-
-        }},
-        layout: {{
-            hierarchical: {{
+        },
+        layout: {
+            hierarchical: {
                 enabled: false
-            }}
-        }},
-        interaction: {{
+            }
+        },
+        interaction: {
 
-        }},
-    }};
+        },
+    };
     
-    window.onload = function () {{
+    window.onload = function () {
         load_graph();
-    }};
+    };
     '''
     javascript_tag = soup.new_tag("script", type="application/javascript")
     javascript_tag.append(javascript_content)
@@ -231,7 +253,8 @@ def set_html_head(net):
     soup.head.append(graph_helper_css)
 
     bindings_lib_tag = soup.find('script', {"src": "lib/bindings/utils.js"})
-    bindings_lib_tag["src"] = "https://odahub.io/renku-aqs-graph-library/lib/bindings/utils.js"
+    if bindings_lib_tag is not None:
+        bindings_lib_tag["src"] = "https://odahub.io/renku-aqs-graph-library/lib/bindings/utils.js"
 
     title_tag = soup.new_tag("title")
     title_tag.string = "Graph visualization"

@@ -24,7 +24,7 @@ install_requires = [
     'rdflib',
     'bs4',
     'renku==2.2.0',
-    'astroquery @ git+https://github.com/oda-hub/astroquery.git#egg=astroquery',
+    'astroquery @ git+https://github.com/oda-hub/astroquery#egg=astroquery',
     'aqsconverters @ git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters',
     'pyvis==0.3.0',
     'pydotplus',
