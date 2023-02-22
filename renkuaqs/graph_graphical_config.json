@@ -70,7 +70,7 @@
          "value": 15,
          "level": 3
       },
-      "Entity": {
+      "EntityInput": {
          "shape": "box",
          "color": "#DBA3BC",
          "style": "filled",
