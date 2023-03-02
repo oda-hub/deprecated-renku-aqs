@@ -1,8 +1,6 @@
 {
    "Edges": {
-      "hasTarget": {
-         "displayed_type_name": "query"
-      }
+
    },
    "Nodes": {
       "Run": {
