@@ -49,7 +49,7 @@ def set_html_content(net,
             <div style="margin:10px">
                 <button type="button" class="btn btn-secondary btn-sm collapsible_vertical" onclick="">Menu</button>
                 <div style="display: flex;" id="menu_container">
-                    <div style="background-color: #F7F7F7; border-left: 1px double; border-right: 1px double; margin: 5px 0px 10px 5px">
+                    <div class="menu_item_first_left menu_item">
                         <h3 style="margin: 15px 0px 10px 5px;">Change graph layout</h3>
         
                         <div style="margin: 5px">
@@ -65,7 +65,7 @@ def set_html_content(net,
 
     if graph_nodes_subset_config_obj_dict is not None:
         html_code += (
-            '<div style="background-color: #F7F7F7; border-right: 1px double; margin: 5px 0px 10px 5px">'
+            '<div class="menu_item">'
             '<h3 style="margin: 15px 0px 10px 5px;">Enable/disable selections</h3>')
         for nodes_subset_obj in graph_nodes_subset_config_obj_dict:
             prefixes_values = graph_nodes_subset_config_obj_dict[nodes_subset_obj]['prefixes']
@@ -81,7 +81,7 @@ def set_html_content(net,
 
     if graph_reduction_config_obj_dict is not None:
         html_code += (
-            '<div style="background-color: #F7F7F7; border-right: 1px double; margin: 5px 0px 10px 5px">'
+            '<div class="menu_item">'
             '<h3 style="margin: 15px 0px 10px 5px;">Apply reductions</h3>')
         for reduction_obj_id in graph_reduction_config_obj_dict:
             html_code += (f'''
@@ -95,7 +95,7 @@ def set_html_content(net,
     checkboxes_config_added = []
     if graph_config_names_list is not None:
         html_code += (
-            '<div style="border-right: 1px double; background-color: #F7F7F7; margin: 5px 0px 15px 5px">'
+            '<div class="menu_item">'
             '<h3 style="margin: 15px 0px 10px 5px;">Enable/disable graphical configurations</h3>')
         for config_node_type in nodes_graph_config_obj_dict:
             if 'config_file' in nodes_graph_config_obj_dict[config_node_type]:
@@ -267,7 +267,7 @@ def set_html_head(net):
 
     bindings_lib_tag = soup.find('script', {"src": "lib/bindings/utils.js"})
     if bindings_lib_tag is not None:
-        bindings_lib_tag["src"] = "https://odahub.io/renku-aqs-graph-library/lib/bindings/utils.js"
+        bindings_lib_tag["src"] = "../renku-aqs-graph-library/lib/bindings/utils.js"
 
     title_tag = soup.new_tag("title")
     title_tag.string = "Graph visualization"
