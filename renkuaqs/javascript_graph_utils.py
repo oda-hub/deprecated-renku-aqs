@@ -44,24 +44,28 @@ def set_html_content(net,
             <button type="button" class="btn btn-secondary btn-sm collapsible_vertical" onclick="open_ttl_content()">Display ttl content</button> \
                  \n<div id="ttl_content"></div>
         </div>
+        
         <div style="display:flex;">
-            <div style="background-color: #F7F7F7; border-left: 1px double; border-right: 1px double; padding: 5px; margin: 5px 0px 10px 5px">
-                <h3 style="margin: 15px 0px 10px 5px;">Change graph layout</h3>
-
-                <div style="margin: 5px">
-                    <label><input type="radio" id="repulsion_layout" name="graph_layout" value="repulsion" onchange="toggle_layout(this)" checked>
-                    Random</label>
-                </div>
-                <div style="margin: 5px">
-                    <label><input type="radio" id="hierarchical_layout" name="graph_layout" value="hierarchicalRepulsion" onchange="toggle_layout(this)" unchecked>
-                    Hierarchical</label>
-                </div>
-            </div>
+            <div style="margin:10px">
+                <button type="button" class="btn btn-secondary btn-sm collapsible_vertical" onclick="">Menu</button>
+                <div style="display: flex;" id="menu_container">
+                    <div style="background-color: #F7F7F7; border-left: 1px double; border-right: 1px double; margin: 5px 0px 10px 5px">
+                        <h3 style="margin: 15px 0px 10px 5px;">Change graph layout</h3>
+        
+                        <div style="margin: 5px">
+                            <label><input type="radio" id="repulsion_layout" name="graph_layout" value="repulsion" onchange="toggle_layout(this)" checked>
+                            Random</label>
+                        </div>
+                        <div style="margin: 5px">
+                            <label><input type="radio" id="hierarchical_layout" name="graph_layout" value="hierarchicalRepulsion" onchange="toggle_layout(this)" unchecked>
+                            Hierarchical</label>
+                        </div>
+                    </div>
         '''
 
     if graph_nodes_subset_config_obj_dict is not None:
         html_code += (
-            '<div style="background-color: #F7F7F7; border-right: 1px double; padding: 5px; margin: 5px 0px 10px 5px">'
+            '<div style="background-color: #F7F7F7; border-right: 1px double; margin: 5px 0px 10px 5px">'
             '<h3 style="margin: 15px 0px 10px 5px;">Enable/disable selections</h3>')
         for nodes_subset_obj in graph_nodes_subset_config_obj_dict:
             prefixes_values = graph_nodes_subset_config_obj_dict[nodes_subset_obj]['prefixes']
@@ -71,13 +75,13 @@ def set_html_content(net,
                         value="{prefixes_values}" 
                         onchange="enable_filter(this)" checked>
                         oda astroquery-related nodes</label>
-                    </div>
                 </div>
             ''')
+        html_code += '</div>'
 
     if graph_reduction_config_obj_dict is not None:
         html_code += (
-            '<div style="background-color: #F7F7F7; border-right: 1px double; padding: 5px; margin: 5px 0px 10px 5px">'
+            '<div style="background-color: #F7F7F7; border-right: 1px double; margin: 5px 0px 10px 5px">'
             '<h3 style="margin: 15px 0px 10px 5px;">Apply reductions</h3>')
         for reduction_obj_id in graph_reduction_config_obj_dict:
             html_code += (f'''
@@ -91,7 +95,7 @@ def set_html_content(net,
     checkboxes_config_added = []
     if graph_config_names_list is not None:
         html_code += (
-            '<div style="border-right: 1px double; padding: 5px; background-color: #F7F7F7; margin: 5px 0px 15px 5px">'
+            '<div style="border-right: 1px double; background-color: #F7F7F7; margin: 5px 0px 15px 5px">'
             '<h3 style="margin: 15px 0px 10px 5px;">Enable/disable graphical configurations</h3>')
         for config_node_type in nodes_graph_config_obj_dict:
             if 'config_file' in nodes_graph_config_obj_dict[config_node_type]:
@@ -119,9 +123,13 @@ def set_html_content(net,
                     '''
                     checkboxes_config_added.append(graph_config_name)
 
+        html_code += '</div>'
+
     html_code += '''
+                    </div>      
                 </div>
             </div>
+            
             <div style="display: flex;">
                 <div style="margin:10px">
                     <button type="button" class="btn btn-secondary btn-sm collapsible_horizontal" onclick="open_legend_content()">Legend</button>
