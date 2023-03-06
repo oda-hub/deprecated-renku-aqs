@@ -41,7 +41,7 @@ def set_html_content(net,
             <button type="button" class="btn btn-secondary btn-sm" onclick="reset_graph()">Reset graph</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="fit_graph()">Fit graph</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation</button>
-            <button type="button" class="btn btn-secondary btn-sm collapsible" onclick="open_ttl_content()">Display ttl content</button> \
+            <button type="button" class="btn btn-secondary btn-sm collapsible_vertical" onclick="open_ttl_content()">Display ttl content</button> \
                  \n<div id="ttl_content"></div>
         </div>
         <div style="display:flex;">
@@ -123,9 +123,9 @@ def set_html_content(net,
                 </div>
             </div>
             <div style="display: flex;">
-                <div style="margin:10px;">
-                    <div style="margin: 0px 0px 5px 5px; font-weight: bold; ">Legend</div>
-                    <ul id="legend_container" style="overflow: scroll; padding-right:15px; overflow-x:hidden; background-color: #F7F7F7"></ul>
+                <div style="margin:10px">
+                    <button type="button" class="btn btn-secondary btn-sm collapsible_horizontal" onclick="open_legend_content()">Legend</button>
+                    <div id="legend_container"></div>
                 </div>
                 <div id="mynetwork"></div>
             </div>
