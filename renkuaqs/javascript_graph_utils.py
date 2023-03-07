@@ -41,7 +41,7 @@ def set_html_content(net,
             <button type="button" class="btn btn-secondary btn-sm" onclick="reset_graph()">Reset graph</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="fit_graph()">Fit graph</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation</button>
-            <button type="button" class="btn btn-secondary btn-sm collapsible_vertical" onclick="open_ttl_content()">Display ttl content</button> \
+            <button type="button" class="btn btn-secondary btn-sm collapsible_vertical">Display ttl content</button> \
                  \n<div id="ttl_content"></div>
         </div>
         
