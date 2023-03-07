@@ -47,7 +47,7 @@ def set_html_content(net,
         
         <div style="display:flex;">
             <div style="margin:10px">
-                <button type="button" class="btn btn-secondary btn-sm collapsible_vertical" onclick="">Menu</button>
+                <button type="button" class="btn btn-secondary btn-sm collapsible_vertical">Menu</button>
                 <div style="display: flex;" id="menu_container">
                     <div class="menu_item_first_left menu_item">
                         <h3 style="margin: 15px 0px 10px 5px;">Change graph layout</h3>
@@ -132,7 +132,7 @@ def set_html_content(net,
             
             <div style="display: flex;">
                 <div style="margin:10px">
-                    <button type="button" class="btn btn-secondary btn-sm collapsible_horizontal" onclick="open_legend_content()">Legend</button>
+                    <button type="button" class="btn btn-secondary btn-sm collapsible_horizontal">Legend</button>
                     <div id="legend_container"></div>
                 </div>
                 <div id="mynetwork"></div>
