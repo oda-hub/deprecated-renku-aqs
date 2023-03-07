@@ -41,14 +41,16 @@ def set_html_content(net,
             <button type="button" class="btn btn-secondary btn-sm" onclick="reset_graph()">Reset graph</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="fit_graph()">Fit graph</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation</button>
-            <button type="button" class="btn btn-secondary btn-sm collapsible_vertical">Display ttl content</button> \
-                 \n<div id="ttl_content"></div>
+            <button type="button" class="btn btn-secondary btn-sm collapsible_vertical_ttl">Display ttl content</button>
+            <button type="button" class="btn btn-secondary btn-sm collapsible_vertical_menu">Menu</button>
+            <button type="button" class="btn btn-secondary btn-sm collapsible_horizontal_legend">Legend</button>
+            
+            <div id="ttl_content" class="content_collapsible_vertical_ttl"></div>
         </div>
         
         <div style="display:flex;">
             <div style="margin:10px">
-                <button type="button" class="btn btn-secondary btn-sm collapsible_vertical">Menu</button>
-                <div style="display: flex;" id="menu_container">
+                <div style="display: flex;" id="menu_container" class="content_collapsible_vertical_menu">
                     <div class="menu_item_first_left menu_item">
                         <h3 style="margin: 15px 0px 10px 5px;">Change graph layout</h3>
         
@@ -131,10 +133,7 @@ def set_html_content(net,
             </div>
             
             <div style="display: flex;">
-                <div style="margin:10px">
-                    <button type="button" class="btn btn-secondary btn-sm collapsible_horizontal">Legend</button>
-                    <div id="legend_container"></div>
-                </div>
+                    <div id="legend_container" class="content_collapsible_horizontal_legend"></div>
                 <div id="mynetwork"></div>
             </div>
     '''
