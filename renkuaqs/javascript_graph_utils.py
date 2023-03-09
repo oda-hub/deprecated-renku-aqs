@@ -31,7 +31,7 @@ def set_html_content(net,
                      include_title=True):
 
     html_code = '''
-        <div style="margin: 5px 0px 15px 5px">
+        <div style="margin-left: 5px">
             <button class="btn btn-secondary btn-sm" onclick="refresh_graph()" type="button">
              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
                  <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
