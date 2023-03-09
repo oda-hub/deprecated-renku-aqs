@@ -49,20 +49,19 @@ def set_html_content(net,
         </div>
         
         <div style="display:flex;">
-            <div style="margin:10px">
-                <div style="display: flex;" id="menu_container" class="content_collapsible_vertical_menu">
-                    <div class="menu_item_first_left menu_item">
-                        <h3 style="margin: 15px 0px 10px 5px;">Change graph layout</h3>
-        
-                        <div style="margin: 5px">
-                            <label><input type="radio" id="repulsion_layout" name="graph_layout" value="repulsion" onchange="toggle_layout(this)" checked>
-                            Random</label>
-                        </div>
-                        <div style="margin: 5px">
-                            <label><input type="radio" id="hierarchical_layout" name="graph_layout" value="hierarchicalRepulsion" onchange="toggle_layout(this)" unchecked>
-                            Hierarchical</label>
-                        </div>
+            <div style="display: flex;" id="menu_container" class="content_collapsible_vertical_menu">
+                <div class="menu_item_first_left menu_item">
+                    <h3 style="margin: 15px 0px 10px 5px;">Change graph layout</h3>
+    
+                    <div style="margin: 5px">
+                        <label><input type="radio" id="repulsion_layout" name="graph_layout" value="repulsion" onchange="toggle_layout(this)" checked>
+                        Random</label>
                     </div>
+                    <div style="margin: 5px">
+                        <label><input type="radio" id="hierarchical_layout" name="graph_layout" value="hierarchicalRepulsion" onchange="toggle_layout(this)" unchecked>
+                        Hierarchical</label>
+                    </div>
+                </div>
         '''
 
     if graph_nodes_subset_config_obj_dict is not None:
@@ -128,7 +127,6 @@ def set_html_content(net,
         html_code += '</div>'
 
     html_code += '''
-                    </div>      
                 </div>
             </div>
             
