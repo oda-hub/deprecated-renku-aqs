@@ -31,7 +31,7 @@ def set_html_content(net,
                      include_title=True):
 
     html_code = '''
-        <div style="margin: 5px 0px 15px 5px">
+        <div style="margin-left: 5px">
             <button class="btn btn-secondary btn-sm" onclick="refresh_graph()" type="button">
              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
                  <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
@@ -42,27 +42,33 @@ def set_html_content(net,
             <button type="button" class="btn btn-secondary btn-sm" onclick="fit_graph()">Fit graph</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation</button>
             <button type="button" class="btn btn-secondary btn-sm" id="right-click-hide-button" onclick="show_right_clicked_hidden_nodes()">Show hidden nodes</button>
-            <button type="button" class="btn btn-secondary btn-sm collapsible" onclick="open_ttl_content()">Display ttl content</button> \
-                 \n<div id="ttl_content"></div>
-        </div>
-        <div style="display:flex;">
-            <div style="background-color: #F7F7F7; border-left: 1px double; border-right: 1px double; padding: 5px; margin: 5px 0px 10px 5px">
-                <h3 style="margin: 15px 0px 10px 5px;">Change graph layout</h3>
+            <button type="button" class="btn btn-secondary btn-sm collapsible_vertical_ttl">Display ttl content</button>
+            <button type="button" class="btn btn-secondary btn-sm collapsible_vertical_menu">Menu</button>
+            <button type="button" class="btn btn-secondary btn-sm collapsible_horizontal_legend">Legend</button>
+            
+            <div id="ttl_content" class="content_collapsible_vertical_ttl"></div>
 
-                <div style="margin: 5px">
-                    <label><input type="radio" id="repulsion_layout" name="graph_layout" value="repulsion" onchange="toggle_layout(this)" checked>
-                    Random</label>
+        </div>
+        
+        <div style="display:flex;">
+            <div style="display: flex;" id="menu_container" class="content_collapsible_vertical_menu">
+                <div class="menu_item_first_left menu_item">
+                    <h3 style="margin: 15px 0px 10px 5px;">Change graph layout</h3>
+    
+                    <div style="margin: 5px">
+                        <label><input type="radio" id="repulsion_layout" name="graph_layout" value="repulsion" onchange="toggle_layout(this)" checked>
+                        Random</label>
+                    </div>
+                    <div style="margin: 5px">
+                        <label><input type="radio" id="hierarchical_layout" name="graph_layout" value="hierarchicalRepulsion" onchange="toggle_layout(this)" unchecked>
+                        Hierarchical</label>
+                    </div>
                 </div>
-                <div style="margin: 5px">
-                    <label><input type="radio" id="hierarchical_layout" name="graph_layout" value="hierarchicalRepulsion" onchange="toggle_layout(this)" unchecked>
-                    Hierarchical</label>
-                </div>
-            </div>
         '''
 
     if graph_nodes_subset_config_obj_dict is not None:
         html_code += (
-            '<div style="background-color: #F7F7F7; border-right: 1px double; padding: 5px; margin: 5px 0px 10px 5px">'
+            '<div class="menu_item">'
             '<h3 style="margin: 15px 0px 10px 5px;">Enable/disable selections</h3>')
         for nodes_subset_obj in graph_nodes_subset_config_obj_dict:
             prefixes_values = graph_nodes_subset_config_obj_dict[nodes_subset_obj]['prefixes']
@@ -72,13 +78,13 @@ def set_html_content(net,
                         value="{prefixes_values}" 
                         onchange="enable_filter(this)" checked>
                         oda astroquery-related nodes</label>
-                    </div>
                 </div>
             ''')
+        html_code += '</div>'
 
     if graph_reduction_config_obj_dict is not None:
         html_code += (
-            '<div style="background-color: #F7F7F7; border-right: 1px double; padding: 5px; margin: 5px 0px 10px 5px">'
+            '<div class="menu_item">'
             '<h3 style="margin: 15px 0px 10px 5px;">Apply reductions</h3>')
         for reduction_obj_id in graph_reduction_config_obj_dict:
             html_code += (f'''
@@ -92,7 +98,7 @@ def set_html_content(net,
     checkboxes_config_added = []
     if graph_config_names_list is not None:
         html_code += (
-            '<div style="border-right: 1px double; padding: 5px; background-color: #F7F7F7; margin: 5px 0px 15px 5px">'
+            '<div class="menu_item">'
             '<h3 style="margin: 15px 0px 10px 5px;">Enable/disable graphical configurations</h3>')
         for config_node_type in nodes_graph_config_obj_dict:
             if 'config_file' in nodes_graph_config_obj_dict[config_node_type]:
@@ -120,14 +126,14 @@ def set_html_content(net,
                     '''
                     checkboxes_config_added.append(graph_config_name)
 
+        html_code += '</div>'
+
     html_code += '''
                 </div>
             </div>
+            
             <div style="display: flex;">
-                <div style="margin:10px;">
-                    <div style="margin: 0px 0px 5px 5px; font-weight: bold; ">Legend</div>
-                    <ul id="legend_container" style="overflow: scroll; padding-right:15px; overflow-x:hidden; background-color: #F7F7F7"></ul>
-                </div>
+                    <div id="legend_container" class="content_collapsible_horizontal_legend"></div>
                 <div id="mynetwork"></div>
             </div>
     '''
@@ -260,7 +266,7 @@ def set_html_head(net):
 
     bindings_lib_tag = soup.find('script', {"src": "lib/bindings/utils.js"})
     if bindings_lib_tag is not None:
-        bindings_lib_tag["src"] = "https://odahub.io/renku-aqs-graph-library/lib/bindings/utils.js"
+        bindings_lib_tag["src"] = "../renku-aqs-graph-library/lib/bindings/utils.js"
 
     title_tag = soup.new_tag("title")
     title_tag.string = "Graph visualization"
