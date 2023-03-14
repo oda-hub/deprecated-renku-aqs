@@ -33,19 +33,18 @@ def set_html_content(net,
     html_code = '''
         <div style="margin-left: 5px">
             <button class="btn btn-secondary btn-sm" onclick="refresh_graph()" type="button">
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
-                 <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                 <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-               </svg>
+             <i class="bi bi-arrow-clockwise"></i>
             </button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="reset_graph()">Reset graph</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="fit_graph()">Fit graph</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="stop_animation()">Stop animation</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="right-click-hide-button" onclick="show_right_clicked_hidden_nodes()">Show hidden nodes</button>
             <button type="button" class="btn btn-secondary btn-sm collapsible_vertical_ttl">Display ttl content</button>
             <button type="button" class="btn btn-secondary btn-sm collapsible_vertical_menu">Menu</button>
             <button type="button" class="btn btn-secondary btn-sm collapsible_horizontal_legend">Legend</button>
             
             <div id="ttl_content" class="content_collapsible_vertical_ttl"></div>
+
         </div>
         
         <div style="display:flex;">
@@ -249,6 +248,10 @@ def set_html_head(net):
                                                    src="https://rdf.js.org/comunica-browser/versions/latest"
                                                        "/engines/query-sparql-rdfjs/comunica-browser.js")
     soup.head.append(new_script_query_sparql_library)
+
+    new_script_bootstrap_icons_css = soup.new_tag("link", rel="stylesheet",  type="text/css",
+                                                   href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css")
+    soup.head.append(new_script_bootstrap_icons_css)
 
     new_script_jquery_library = soup.new_tag("script", type="application/javascript",
                                              src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js")
