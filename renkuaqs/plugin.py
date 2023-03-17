@@ -33,6 +33,7 @@ from renku.core.plugin import hookimpl
 from IPython.display import Image, HTML
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
+from nb2workflow import ontology
 
 import renkuaqs.graph_utils as graph_utils
 
@@ -66,6 +67,26 @@ def activity_annotations(activity):
 
     print("process_run_annotations")
     print(aqs.renku_aqs_path)
+
+    if activity.generations is not None and len(activity.generations) == 1:
+        entity_path = activity.generations[0].entity.path
+        print(f"\033[31mExtracting metadata from the output notebook: {entity_path}\033[0m")
+        rdf_nb = ontology.nb2rdf(entity_path)
+        # TODO should this be stored as an annotation?
+        G = rdflib.Graph()
+        G.parse(data=rdf_nb)
+        rdf_jsonld_str = G.serialize(format="json-ld")
+        rdf_jsonld = json.loads(rdf_jsonld_str)
+        for nb2annotation in rdf_jsonld:
+            print(f"found jsonLD annotation: \n", json.dumps(nb2annotation, sort_keys=True, indent=4))
+            annotations.append(nb2annotation)
+            model_id = nb2annotation["@id"]
+            annotation_id = "{activity}/annotations/aqs/{id}".format(
+                activity=activity.id, id=model_id
+            )
+            annotations.append(
+                Annotation(id=annotation_id, source="AQS plugin", body=nb2annotation)
+            )
 
     if os.path.exists(aqs.renku_aqs_path):
         for p in aqs.renku_aqs_path.iterdir():

@@ -69,6 +69,7 @@ def extract_graph(revision, paths):
 
     return graph_str
 
+
 def build_graph_html(revision, paths,
                      include_title=True,
                      template_location="local",
@@ -81,10 +82,6 @@ def build_graph_html(revision, paths,
     graph_str = extract_graph(revision, paths)
 
     full_graph_ttl_str = graph_str.replace("\\\"", '\\\\"')
-
-    # # TODO to be tested
-    # with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
-    #     graph = graph.parse(source=ttl_ontology_fn)
 
     nodes_graph_config_obj = {}
     edges_graph_config_obj = {}
