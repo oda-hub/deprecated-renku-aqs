@@ -78,8 +78,7 @@ def activity_annotations(activity):
         rdf_jsonld_str = G.serialize(format="json-ld")
         rdf_jsonld = json.loads(rdf_jsonld_str)
         for nb2annotation in rdf_jsonld:
-            print(f"found jsonLD annotation: \n", json.dumps(nb2annotation, sort_keys=True, indent=4))
-            annotations.append(nb2annotation)
+            print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
             model_id = nb2annotation["@id"]
             annotation_id = "{activity}/annotations/aqs/{id}".format(
                 activity=activity.id, id=model_id
@@ -95,10 +94,10 @@ def activity_annotations(activity):
                 print(open(p).read())
 
             elif p.match("*jsonld"):
-                print(f"found jsonLD annotation: {p}\n", json.dumps(json.load(p.open()), sort_keys=True, indent=4))
+                aqs_annotation = aqs.load_model(p)
+                print(f"found jsonLD annotation: {p}\n", json.dumps(aqs_annotation, sort_keys=True, indent=4))
 
                 # this will make annotations according to https://odahub.io/ontology/
-                aqs_annotation = aqs.load_model(p)
                 model_id = aqs_annotation["@id"]
                 annotation_id = "{activity}/annotations/aqs/{id}".format(
                     activity=activity.id, id=model_id
