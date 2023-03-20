@@ -115,7 +115,10 @@ def build_graph_html(revision, paths,
         graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
 
     # for compatibility with Javascript
-    graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj).replace("\\\"", '\\\\"').replace("\\n", '\\\\n')
+    graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj)\
+        .replace("\\\"", '\\\\"')\
+        .replace("\\n", '\\\\n')\
+        .replace("\\t", '\\\\t')
 
     net = Network(
         height='750px', width='100%',
