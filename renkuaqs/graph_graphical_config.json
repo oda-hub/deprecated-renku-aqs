@@ -42,7 +42,7 @@
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "AstroObject:no"
+         "displayed_literals_format": "AstroObject:no,arg_name:yes"
       },
       "AstrophysicalRegion": {
          "shape": "box",
