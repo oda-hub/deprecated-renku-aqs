@@ -55,6 +55,34 @@ class AQS(object):
 
 
 @hookimpl
+def plan_annotations(plan):
+    print(f"plan_annotations, plan \033[31m{plan.name}\033[0m")
+
+    annotations = []
+    #
+    # if plan.inputs is not None and len(plan.inputs) == 1:
+    #     notebook_name = plan.inputs[0].default_value
+    #     print(f"\033[31mExtracting metadata from the input notebook: {notebook_name}\033[0m")
+    #     rdf_nb = ontology.nb2rdf(notebook_name)
+    #     G = rdflib.Graph()
+    #     G.parse(data=rdf_nb)
+    #     rdf_jsonld_str = G.serialize(format="json-ld")
+    #     rdf_jsonld = json.loads(rdf_jsonld_str)
+    #     for nb2annotation in rdf_jsonld:
+    #         # nb2annotation['http://odahub.io/ontology#input'] = [notebook_name]
+    #         print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
+    #         model_id = nb2annotation["@id"]
+    #         annotation_id = "{activity}/annotations/aqs/{id}".format(
+    #             activity=plan.id, id=model_id
+    #         )
+    #         annotations.append(
+    #             Annotation(id=annotation_id, source="AQS plugin", body=nb2annotation)
+    #         )
+
+    return annotations
+
+
+@hookimpl
 def activity_annotations(activity):
     """``process_run_annotations`` hook implementation."""
     aqs = AQS(activity)
@@ -67,10 +95,16 @@ def activity_annotations(activity):
 
     print("process_run_annotations")
     print(aqs.renku_aqs_path)
+    # apply nb2rdf also to input nb and also add the name of the notebook
+    # should be related to the input/output notebook
+    # add the annotations to the plan
 
-    if activity.generations is not None and len(activity.generations) == 1:
-        entity_path = activity.generations[0].entity.path
-        print(f"\033[31mExtracting metadata from the output notebook: {entity_path}\033[0m")
+    if activity.usages is not None and len(activity.usages) == 1:
+        entity = activity.usages[0].entity
+        if isinstance(entity, list):
+            entity = activity.usages[0].entity[0]
+        entity_path = entity.path
+        print(f"\033[31mExtracting metadata from the input notebook: {entity_path}, id: {entity.id}\033[0m")
         rdf_nb = ontology.nb2rdf(entity_path)
         # TODO should this be stored as an annotation?
         G = rdflib.Graph()
@@ -78,6 +112,31 @@ def activity_annotations(activity):
         rdf_jsonld_str = G.serialize(format="json-ld")
         rdf_jsonld = json.loads(rdf_jsonld_str)
         for nb2annotation in rdf_jsonld:
+            # to comply with the terminology
+            nb2annotation["http://odahub.io/ontology#entity_id"] = {'@id': "https://renkulab.io" + entity.id}
+            print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
+            model_id = nb2annotation["@id"]
+            annotation_id = "{activity}/annotations/aqs/{id}".format(
+                activity=activity.id, id=model_id
+            )
+            annotations.append(
+                Annotation(id=annotation_id, source="AQS plugin", body=nb2annotation)
+            )
+
+    if activity.generations is not None and len(activity.generations) == 1:
+        entity = activity.generations[0].entity
+        if isinstance(entity, list):
+            entity = activity.generations[0].entity[0]
+        entity_path = entity.path
+        print(f"\033[31mExtracting metadata from the output notebook: {entity_path}, id: {entity.id}\033[0m")
+        rdf_nb = ontology.nb2rdf(entity_path)
+        G = rdflib.Graph()
+        G.parse(data=rdf_nb)
+        rdf_jsonld_str = G.serialize(format="json-ld")
+        rdf_jsonld = json.loads(rdf_jsonld_str)
+        for nb2annotation in rdf_jsonld:
+            # to comply with the terminology
+            nb2annotation["http://odahub.io/ontology#entity_id"] = {'@id': "https://renkulab.io" + entity.id}
             print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
             model_id = nb2annotation["@id"]
             annotation_id = "{activity}/annotations/aqs/{id}".format(
