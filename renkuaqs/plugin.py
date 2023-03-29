@@ -59,25 +59,6 @@ def plan_annotations(plan):
     print(f"plan_annotations, plan \033[31m{plan.name}\033[0m")
 
     annotations = []
-    #
-    # if plan.inputs is not None and len(plan.inputs) == 1:
-    #     notebook_name = plan.inputs[0].default_value
-    #     print(f"\033[31mExtracting metadata from the input notebook: {notebook_name}\033[0m")
-    #     rdf_nb = ontology.nb2rdf(notebook_name)
-    #     G = rdflib.Graph()
-    #     G.parse(data=rdf_nb)
-    #     rdf_jsonld_str = G.serialize(format="json-ld")
-    #     rdf_jsonld = json.loads(rdf_jsonld_str)
-    #     for nb2annotation in rdf_jsonld:
-    #         # nb2annotation['http://odahub.io/ontology#input'] = [notebook_name]
-    #         print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
-    #         model_id = nb2annotation["@id"]
-    #         annotation_id = "{activity}/annotations/aqs/{id}".format(
-    #             activity=plan.id, id=model_id
-    #         )
-    #         annotations.append(
-    #             Annotation(id=annotation_id, source="AQS plugin", body=nb2annotation)
-    #         )
 
     return annotations
 
