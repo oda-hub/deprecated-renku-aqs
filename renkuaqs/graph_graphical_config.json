@@ -18,6 +18,15 @@
          "displayed_literals_format": "title:no",
          "literals_keyword_to_substitute": "title:get_images,query_object,query_region"
       },
+      "ParameterBinding": {
+         "shape": "box",
+         "font": {
+              "size": 16,
+              "face": "courier"
+          },
+         "displayed_information": "both",
+         "displayed_literals_format": "parameter_name:no"
+      },
       "Activity": {
          "shape": "box",
          "color": "#00FC10",
