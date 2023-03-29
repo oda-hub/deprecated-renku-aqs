@@ -99,7 +99,7 @@ def activity_annotations(activity):
     # should be related to the input/output notebook
     # add the annotations to the plan
 
-    if activity.usages is not None and len(activity.usages) == 1:
+    if activity.usages is not None:
         entity = activity.usages[0].entity
         if isinstance(entity, list):
             entity = activity.usages[0].entity[0]
