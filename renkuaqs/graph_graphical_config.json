@@ -20,6 +20,8 @@
       },
       "ParameterBinding": {
          "shape": "box",
+         "color": "#DFF0D8",
+         "style": "filled",
          "font": {
               "size": 16,
               "face": "courier"
