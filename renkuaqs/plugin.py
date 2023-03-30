@@ -96,7 +96,7 @@ def activity_annotations(activity):
             rdf_jsonld = json.loads(rdf_jsonld_str)
             for nb2annotation in rdf_jsonld:
                 # TODO properly assign the entity
-                nb2annotation["http://odahub.io/ontology#entity_id"] = {'@id': "https://renkulab.io" + entity.id}
+                nb2annotation["http://odahub.io/ontology#entity_checksum"] = entity.checksum
                 print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
                 model_id = nb2annotation["@id"]
                 annotation_id = "{activity}/annotations/aqs/{id}".format(
@@ -121,7 +121,7 @@ def activity_annotations(activity):
                 rdf_jsonld = json.loads(rdf_jsonld_str)
                 for nb2annotation in rdf_jsonld:
                     # to comply with the terminology
-                    nb2annotation["http://odahub.io/ontology#entity_id"] = {'@id': "https://renkulab.io" + entity.id}
+                    nb2annotation["http://odahub.io/ontology#entity_checksum"] = entity.checksum
                     print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
                     model_id = nb2annotation["@id"]
                     annotation_id = "{activity}/annotations/aqs/{id}".format(
