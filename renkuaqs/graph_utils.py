@@ -69,6 +69,7 @@ def extract_graph(revision, paths):
 
     return graph_str
 
+
 def build_graph_html(revision, paths,
                      include_title=True,
                      template_location="local",
@@ -81,10 +82,6 @@ def build_graph_html(revision, paths,
     graph_str = extract_graph(revision, paths)
 
     full_graph_ttl_str = graph_str.replace("\\\"", '\\\\"')
-
-    # # TODO to be tested
-    # with resources.path("renkuaqs", 'oda_ontology.ttl') as ttl_ontology_fn:
-    #     graph = graph.parse(source=ttl_ontology_fn)
 
     nodes_graph_config_obj = {}
     edges_graph_config_obj = {}
@@ -118,7 +115,10 @@ def build_graph_html(revision, paths,
         graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
 
     # for compatibility with Javascript
-    graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj).replace("\\\"", '\\\\"').replace("\\n", '\\\\n')
+    graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj)\
+        .replace("\\\"", '\\\\"')\
+        .replace("\\n", '\\\\n')\
+        .replace("\\t", '\\\\t')
 
     net = Network(
         height='750px', width='100%',
