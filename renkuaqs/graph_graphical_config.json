@@ -29,6 +29,51 @@
          "displayed_information": "both",
          "displayed_literals_format": "parameter_name:no"
       },
+      "StartTime": {
+         "shape": "box",
+         "color": "#bcddc9",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "parameter_name:no"
+      },
+      "EndTime": {
+         "shape": "box",
+         "color": "#a7a7d6",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "parameter_name:no"
+      },
+      "PointOfInterestRA": {
+         "shape": "box",
+         "color": "#91acc1",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "parameter_name:no"
+      },
+      "PointOfInterestDEC": {
+         "shape": "box",
+         "color": "#efdacb",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "parameter_name:no"
+      },
+      "int": {
+         "shape": "box",
+         "color": "#91acbf",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "parameter_name:no"
+      },
       "Activity": {
          "shape": "box",
          "color": "#00FC10",
@@ -48,12 +93,12 @@
       },
       "AstrophysicalObject": {
          "shape": "box",
-         "color": "#6262be",
+         "color": "#d0d0e8",
          "style": "filled",
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "AstroObject:no,arg_name:yes"
+         "displayed_literals_format": "AstroObject:no,arg_name:yes,parameter_name:no"
       },
       "AstrophysicalRegion": {
          "shape": "box",
