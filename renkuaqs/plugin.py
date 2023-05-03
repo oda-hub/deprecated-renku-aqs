@@ -458,13 +458,33 @@ def show_graph_image(revision="HEAD", paths=os.getcwd(), filename="graph.png", n
     default="HEAD",
     help="The git revision to generate the log for, default: HEAD",
 )
+@click.option("--input-notebook", default=None, help="Input notebook to process")
+@click.argument("paths", type=click.Path(exists=False), nargs=-1)
+def inspect(revision, paths, input_notebook):
+    """Inspect the input entities within the graph"""
+
+    path = paths
+    if paths is not None and isinstance(paths, click.Path):
+        path = str(path)
+
+    graph_utils.inspect_oda_graph_inputs(revision, path, input_notebook)
+
+    return ""
+
+
+@aqs.command()
+@click.option(
+    "--revision",
+    default="HEAD",
+    help="The git revision to generate the log for, default: HEAD",
+)
 @click.option("--filename", default="graph.png", help="The filename of the output file image")
 @click.option("--input-notebook", default=None, help="Input notebook to process")
 @click.option("--no-oda-info", is_flag=True, help="Exclude oda related information in the output graph")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def display(revision, paths, filename, no_oda_info, input_notebook):
     path = paths
-    if paths is not  None and isinstance(paths, click.Path):
+    if paths is not None and isinstance(paths, click.Path):
         path = str(path)
     output_filename = graph_utils.build_graph_image(revision, path, filename, no_oda_info, input_notebook)
     return output_filename

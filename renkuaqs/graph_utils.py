@@ -6,6 +6,7 @@ import rdflib
 import yaml
 import json
 
+from prettytable import PrettyTable
 from rdflib.tools.rdf2dot import LABEL_PROPERTIES
 from rdflib.tools import rdf2dot
 from lxml import etree
@@ -14,6 +15,7 @@ from astropy.coordinates import SkyCoord, Angle
 from IPython.display import display
 from pyvis.network import Network
 from importlib import resources
+from nb2workflow import ontology
 
 from renku.domain_model.project_context import project_context
 from renku.command.graph import export_graph_command
@@ -148,8 +150,83 @@ def build_graph_html(revision, paths,
     return net.html, graph_str
 
 
+def inspect_oda_graph_inputs(revision, paths, input_notebook:str = None):
+    if paths is None:
+        paths = project_context.path
+
+    graph = _graph(revision, paths)
+    renku_path = paths
+
+    query_select = "SELECT ?entityInput ?entityInputLocation ?entityInputChecksum"
+
+    if input_notebook is not None:
+        query_where = f"""WHERE {{
+                ?entityInput a <http://www.w3.org/ns/prov#Entity> ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityInputLocation ;
+                    <https://swissdatasciencecenter.github.io/renku-ontology#checksum> ?entityInputChecksum .
+
+                FILTER ( ?entityInputLocation = '{input_notebook}' ) .
+
+        """
+    else:
+        query_where = """WHERE {
+                ?entityInput a <http://www.w3.org/ns/prov#Entity> ;
+                    <http://www.w3.org/ns/prov#atLocation> ?entityInputLocation ;
+                    <https://swissdatasciencecenter.github.io/renku-ontology#checksum> ?entityInputChecksum .
+
+        """
+
+    query_where += """
+            ?activity a ?activityType ;
+                <http://www.w3.org/ns/prov#qualifiedUsage>/<http://www.w3.org/ns/prov#entity> ?entityInput .        
+    }
+    """
+
+    query = f"""{query_select}
+               {query_where}
+            """
+
+    r = graph.query(query)
+
+    G = rdflib.Graph()
+    # G.parse(data=r.serialize(format="n3").decode(), format="n3")
+
+    output = PrettyTable()
+    output.field_names = ["Entity ID", "Entity checksum", "Entity input location"]
+    output.align["Entity ID"] = "l"
+    output.align["Entity checksum"] = "l"
+    output.align["Entity input location"] = "l"
+    for row in r:
+        entity_path = row.entityInputLocation
+        entity_checksum = row.entityInputChecksum
+        entity_id = row.entityInput
+        output.add_row([
+            entity_id,
+            entity_checksum,
+            entity_path
+        ])
+        entity_file_name, entity_file_extension = os.path.splitext(entity_path)
+        if entity_file_extension == '.ipynb':
+            print(f"\033[31mExtracting metadata from the input notebook: {entity_path}, id: {entity_id}\033[0m")
+            rdf_nb = ontology.nb2rdf(entity_path)
+            G.parse(data=rdf_nb)
+            rdf_jsonld_str = G.serialize(format="json-ld")
+            rdf_jsonld = json.loads(rdf_jsonld_str)
+            for nb2annotation in rdf_jsonld:
+                nb2annotation["http://odahub.io/ontology#entity_checksum"] = entity_checksum
+                print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
+                model_id = nb2annotation["@id"]
+                # annotation_id = "{activity}/annotations/aqs/{id}".format(
+                #     activity=activity.id, id=model_id
+                # )
+                # annotations.append(
+                #     Annotation(id=annotation_id, source="AQS plugin", body=nb2annotation)
+                # )
+
+    print(output, "\n")
+
+
 def build_graph_image(revision, paths, filename, no_oda_info, input_notebook):
-    """Simple graph visualization """
 
     if paths is None:
         paths = project_context.path
