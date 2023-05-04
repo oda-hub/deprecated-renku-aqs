@@ -22,6 +22,7 @@ from pathlib import Path
 from renku.domain_model.project_context import project_context
 from renku.command.graph import export_graph_command
 from renku.core.errors import RenkuException
+from renku.core.util.git import get_entity_from_revision
 
 import renkuaqs.javascript_graph_utils as javascript_graph_utils
 from renkuaqs.plugin import AQS
@@ -212,27 +213,34 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook:str = None):
         entity_file_name, entity_file_extension = os.path.splitext(entity_path)
         if entity_file_extension == '.ipynb':
             print(f"\033[31mExtracting metadata from the input notebook: {entity_path}, id: {entity_id}\033[0m")
-            rdf_nb = ontology.nb2rdf(entity_path)
-            aqs_obj = AQS(entity_path)
-            G.parse(data=rdf_nb)
-            rdf_jsonld_str = G.serialize(format="json-ld")
-            rdf_jsonld = json.loads(rdf_jsonld_str)
-            for nb2annotation in rdf_jsonld:
-                nb2annotation["http://odahub.io/ontology#entity_checksum"] = entity_checksum
-                print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
-                nb2annotation_id_hash = hashlib.sha256(nb2annotation["@id"].encode()).hexdigest()[:8]
+            # get checksum from the path
+            repository = project_context.repository
+            revision = repository.head.commit.hexsha
+            entity_obj = get_entity_from_revision(repository=repository, path=entity_path, revision=revision, bypass_cache=True)
+            print(f"\033[31mEntity object extracted from entity_path: {entity_obj.path}, checksum: {entity_obj.checksum}\033[0m")
+            print(f"\033[31mEntity checksum from the graph: {entity_checksum}\033[0m")
+            if str(entity_obj.checksum) == str(entity_checksum):
+                # file present on disk based on a checksum check
+                rdf_nb = ontology.nb2rdf(entity_path)
+                aqs_obj = AQS(entity_path)
+                G.parse(data=rdf_nb)
+                rdf_jsonld_str = G.serialize(format="json-ld")
+                rdf_jsonld = json.loads(rdf_jsonld_str)
+                for nb2annotation in rdf_jsonld:
+                    nb2annotation["http://odahub.io/ontology#entity_checksum"] = entity_checksum
+                    print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
+                    nb2annotation_id_hash = hashlib.sha256(nb2annotation["@id"].encode()).hexdigest()[:8]
 
-                print(f"\033[32mlog_aqs_annotation\033[0m")
+                    print(f"\033[32mlog_aqs_annotation\033[0m")
 
-                annotation_folder_path = Path(os.path.join(aqs_obj.aqs_annotation_path, entity_file_name))
-                if not annotation_folder_path.exists():
-                    annotation_folder_path.mkdir(parents=True)
+                    annotation_folder_path = Path(os.path.join(aqs_obj.aqs_annotation_path, entity_file_name, entity_checksum))
+                    if not annotation_folder_path.exists():
+                        annotation_folder_path.mkdir(parents=True)
 
-                # this is the way
-                jsonld_path = os.path.join(annotation_folder_path, nb2annotation_id_hash + ".jsonld")
-                with open(jsonld_path, mode="w") as f:
-                    print("writing", jsonld_path)
-                    f.write(json.dumps(nb2annotation, sort_keys=True, indent=4))
+                    jsonld_path = os.path.join(annotation_folder_path, nb2annotation_id_hash + ".jsonld")
+                    with open(jsonld_path, mode="w") as f:
+                        print("writing", jsonld_path)
+                        f.write(json.dumps(nb2annotation, sort_keys=True, indent=4))
 
     print(output, "\n")
 
