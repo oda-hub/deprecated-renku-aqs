@@ -5,6 +5,7 @@ import pydotplus
 import rdflib
 import yaml
 import json
+import hashlib
 
 from prettytable import PrettyTable
 from rdflib.tools.rdf2dot import LABEL_PROPERTIES
@@ -16,15 +17,19 @@ from IPython.display import display
 from pyvis.network import Network
 from importlib import resources
 from nb2workflow import ontology
+from pathlib import Path
 
 from renku.domain_model.project_context import project_context
 from renku.command.graph import export_graph_command
 from renku.core.errors import RenkuException
 
 import renkuaqs.javascript_graph_utils as javascript_graph_utils
+from renkuaqs.plugin import AQS
 
 # TODO improve this
 __this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
+
+
 graph_configuration = yaml.load(open(os.path.join(__this_dir__, "graph_config.yaml")), Loader=yaml.SafeLoader)
 
 
@@ -209,13 +214,27 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook:str = None):
         if entity_file_extension == '.ipynb':
             print(f"\033[31mExtracting metadata from the input notebook: {entity_path}, id: {entity_id}\033[0m")
             rdf_nb = ontology.nb2rdf(entity_path)
+            aqs_obj = AQS(entity_path)
             G.parse(data=rdf_nb)
             rdf_jsonld_str = G.serialize(format="json-ld")
             rdf_jsonld = json.loads(rdf_jsonld_str)
             for nb2annotation in rdf_jsonld:
                 nb2annotation["http://odahub.io/ontology#entity_checksum"] = entity_checksum
                 print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
-                model_id = nb2annotation["@id"]
+                nb2annotation_id_hash = hashlib.sha256(nb2annotation["@id"].encode()).hexdigest()[:8]
+
+                print(f"\033[32mlog_aqs_annotation\033[0m")
+
+                annotation_folder_path = Path(os.path.join(aqs_obj.aqs_annotation_path, entity_file_name))
+                if not annotation_folder_path.exists():
+                    annotation_folder_path.mkdir(parents=True)
+
+                # this is the way
+                jsonld_path = os.path.join(annotation_folder_path, nb2annotation_id_hash + ".jsonld")
+                with open(jsonld_path, mode="w") as f:
+                    print("writing", jsonld_path)
+                    f.write(json.dumps(nb2annotation, sort_keys=True, indent=4))
+
                 # annotation_id = "{activity}/annotations/aqs/{id}".format(
                 #     activity=activity.id, id=model_id
                 # )

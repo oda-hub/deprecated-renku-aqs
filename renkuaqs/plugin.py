@@ -33,6 +33,7 @@ from renku.core.plugin import hookimpl
 from IPython.display import Image, HTML
 from prettytable import PrettyTable
 from aqsconverters.io import AQS_DIR, COMMON_DIR
+from renkuaqs.config import ENTITY_METADATA_AQS_DIR
 from nb2workflow import ontology
 
 import renkuaqs.graph_utils as graph_utils
@@ -46,6 +47,11 @@ class AQS(object):
     def renku_aqs_path(self):
         """Return a ``Path`` instance of Renku AQS metadata folder."""
         return Path(project_context.metadata_path).joinpath(AQS_DIR).joinpath(COMMON_DIR)
+
+    @property
+    def aqs_annotation_path(self):
+        """Return a ``Path`` instance of Renku AQS specific annotation."""
+        return Path(ENTITY_METADATA_AQS_DIR)
 
     def load_model(self, path):
         """Load AQS reference file."""
