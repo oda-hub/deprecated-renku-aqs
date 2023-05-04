@@ -160,7 +160,6 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook:str = None):
         paths = project_context.path
 
     graph = _graph(revision, paths)
-    renku_path = paths
 
     query_select = "SELECT DISTINCT ?entityInput ?entityInputLocation ?entityInputChecksum"
 
@@ -234,13 +233,6 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook:str = None):
                 with open(jsonld_path, mode="w") as f:
                     print("writing", jsonld_path)
                     f.write(json.dumps(nb2annotation, sort_keys=True, indent=4))
-
-                # annotation_id = "{activity}/annotations/aqs/{id}".format(
-                #     activity=activity.id, id=model_id
-                # )
-                # annotations.append(
-                #     Annotation(id=annotation_id, source="AQS plugin", body=nb2annotation)
-                # )
 
     print(output, "\n")
 
