@@ -157,7 +157,7 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook:str = None):
     graph = _graph(revision, paths)
     renku_path = paths
 
-    query_select = "SELECT ?entityInput ?entityInputLocation ?entityInputChecksum"
+    query_select = "SELECT DISTINCT ?entityInput ?entityInputLocation ?entityInputChecksum"
 
     if input_notebook is not None:
         query_where = f"""WHERE {{
