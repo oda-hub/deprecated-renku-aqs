@@ -6,6 +6,7 @@ import rdflib
 import yaml
 import json
 import hashlib
+import glob
 
 from prettytable import PrettyTable
 from rdflib.tools.rdf2dot import LABEL_PROPERTIES
@@ -25,6 +26,8 @@ from renku.core.errors import RenkuException
 from renku.core.util.git import get_entity_from_revision
 
 import renkuaqs.javascript_graph_utils as javascript_graph_utils
+
+from renkuaqs.config import ENTITY_METADATA_AQS_DIR
 from renkuaqs.plugin import AQS
 
 # TODO improve this
@@ -34,7 +37,30 @@ __this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
 graph_configuration = yaml.load(open(os.path.join(__this_dir__, "graph_config.yaml")), Loader=yaml.SafeLoader)
 
 
-def _graph(revision=None, paths=None):
+def _aqs_graph(revision=None, paths=None):
+    G = rdflib.Graph()
+    G.bind("aqs", "http://www.w3.org/ns/aqs#")
+    G.bind("oda", "http://odahub.io/ontology#")
+    G.bind("odas", "https://odahub.io/ontology#")
+    if os.path.exists(ENTITY_METADATA_AQS_DIR):
+        annotation_list = []
+        entity_folder_list = glob.glob(f"{ENTITY_METADATA_AQS_DIR}/*")
+        for entity_folder in entity_folder_list:
+            print("Scanning entity folder: ", entity_folder)
+            revision_entity_folder_list = glob.glob(f"{entity_folder}/*")
+            for revision_entity_folder in revision_entity_folder_list:
+                print("Scanning entity folder checksum: ", revision_entity_folder)
+                annotation_object_list = glob.glob(f"{revision_entity_folder}/*.jsonld")
+                for annotation_object_file in annotation_object_list:
+                    with open(annotation_object_file) as annotation_object_file_fn:
+                        annotation_object = json.load(annotation_object_file_fn)
+                    annotation_list.append(annotation_object)
+                    G.parse(data=json.dumps(annotation_object), format="json-ld")
+
+    return G
+
+
+def _renku_graph(revision=None, paths=None):
     # FIXME: use (revision) filter
 
     cmd_result = export_graph_command().working_directory(paths).build().execute()
@@ -51,6 +77,7 @@ def _graph(revision=None, paths=None):
     graph.bind("local-renku", f"file://{paths}/")
 
     return graph
+
 
 def write_graph_files(graph_html_content, ttl_content):
     html_fn = 'graph.html'
@@ -71,7 +98,9 @@ def extract_graph(revision, paths):
     if paths is None:
         paths = project_context.path
 
-    graph = _graph(revision, paths)
+    graph = _renku_graph(revision, paths)
+
+    _aqs_graph(revision, paths)
 
     graph_str = graph.serialize(format="n3")
 
@@ -156,11 +185,11 @@ def build_graph_html(revision, paths,
     return net.html, graph_str
 
 
-def inspect_oda_graph_inputs(revision, paths, input_notebook:str = None):
+def inspect_oda_graph_inputs(revision, paths, input_notebook: str = None):
     if paths is None:
         paths = project_context.path
 
-    graph = _graph(revision, paths)
+    graph = _renku_graph(revision, paths)
 
     query_select = "SELECT DISTINCT ?entityInput ?entityInputLocation ?entityInputChecksum"
 
@@ -194,7 +223,6 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook:str = None):
     r = graph.query(query)
 
     G = rdflib.Graph()
-    # G.parse(data=r.serialize(format="n3").decode(), format="n3")
 
     output = PrettyTable()
     output.field_names = ["Entity ID", "Entity checksum", "Entity input location"]
@@ -250,7 +278,7 @@ def build_graph_image(revision, paths, filename, no_oda_info, input_notebook):
     if paths is None:
         paths = project_context.path
 
-    graph = _graph(revision, paths)
+    graph = _renku_graph(revision, paths)
     renku_path = paths
 
     query_where = build_query_where(input_notebook=input_notebook, no_oda_info=no_oda_info)
