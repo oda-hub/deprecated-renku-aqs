@@ -111,8 +111,6 @@ def extract_graph(revision, paths):
 
     graph_str = overall_graph.serialize(format="n3")
 
-    print(graph_str)
-
     return graph_str
 
 
