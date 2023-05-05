@@ -105,7 +105,12 @@ def extract_graph(revision, paths):
     # not the recommended approach but works in our case https://rdflib.readthedocs.io/en/stable/merging.html
     overall_graph = aqs_graph + renku_graph
 
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "oda_ontology.ttl")) as oo_fn:
+        overall_graph.parse(oo_fn)
+
     graph_str = overall_graph.serialize(format="n3")
+
+    print(graph_str)
 
     return graph_str
 
