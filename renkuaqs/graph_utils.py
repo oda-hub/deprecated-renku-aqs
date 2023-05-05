@@ -98,11 +98,16 @@ def extract_graph(revision, paths):
     if paths is None:
         paths = project_context.path
 
-    graph = _renku_graph(revision, paths)
+    renku_graph = _renku_graph(revision, paths)
 
-    _aqs_graph(revision, paths)
+    aqs_graph = _aqs_graph(revision, paths)
 
-    graph_str = graph.serialize(format="n3")
+    # FIXME not the recommended approach but works in our case
+    overall_graph = aqs_graph + renku_graph
+
+    graph_str = overall_graph.serialize(format="n3")
+
+    print(graph_str)
 
     return graph_str
 
