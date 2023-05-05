@@ -4,3 +4,4 @@ tests/renku-aqs-test-case
 **.nb2workflow**
 **.idea**
 venv
+test-repo
