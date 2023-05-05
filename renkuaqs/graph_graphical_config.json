@@ -74,6 +74,15 @@
          "displayed_information": "literals",
          "displayed_literals_format": "parameter_name:no"
       },
+      "str": {
+         "shape": "box",
+         "color": "#91acdf",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "parameter_name:no"
+      },
       "Activity": {
          "shape": "box",
          "color": "#00FC10",

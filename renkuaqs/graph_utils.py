@@ -102,12 +102,10 @@ def extract_graph(revision, paths):
 
     aqs_graph = _aqs_graph(revision, paths)
 
-    # FIXME not the recommended approach but works in our case
+    # not the recommended approach but works in our case https://rdflib.readthedocs.io/en/stable/merging.html
     overall_graph = aqs_graph + renku_graph
 
     graph_str = overall_graph.serialize(format="n3")
-
-    print(graph_str)
 
     return graph_str
 
