@@ -1,7 +1,11 @@
 __pycache__
 renku-aqs-test-case
-tests/renku-aqs-test-case
+tests/renku-aqs-test-case/*
 **.nb2workflow**
 **.idea**
 venv
 test-repo
+oda-sdss
+oda-sdss-clean
+*.egg-info
+*.egg
