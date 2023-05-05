@@ -220,7 +220,7 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook:str = None):
             print(f"\033[31mEntity object extracted from entity_path: {entity_obj.path}, checksum: {entity_obj.checksum}\033[0m")
             print(f"\033[31mEntity checksum from the graph: {entity_checksum}\033[0m")
             if str(entity_obj.checksum) == str(entity_checksum):
-                # file present on disk based on a checksum check
+                # file present on disk based on the checksum equality
                 rdf_nb = ontology.nb2rdf(entity_path)
                 aqs_obj = AQS(entity_path)
                 G.parse(data=rdf_nb)
