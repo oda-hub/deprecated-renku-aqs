@@ -1,3 +1,6 @@
 __pycache__
 renku-aqs-test-case
 tests/renku-aqs-test-case
+**.nb2workflow**
+**.idea**
+venv
