@@ -105,6 +105,7 @@ def extract_graph(revision, paths):
     # not the recommended approach but works in our case https://rdflib.readthedocs.io/en/stable/merging.html
     overall_graph = aqs_graph + renku_graph
 
+    # TODO the path of the ontology should be taken from the subset configuration json file
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "oda_ontology.ttl")) as oo_fn:
         overall_graph.parse(oo_fn)
 
