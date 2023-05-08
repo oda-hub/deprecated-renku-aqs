@@ -102,16 +102,31 @@ def extract_graph(revision, paths):
 
     aqs_graph = _aqs_graph(revision, paths)
 
-    # not the recommended approach but works in our case https://rdflib.readthedocs.io/en/stable/merging.html
-    overall_graph = aqs_graph + renku_graph
+    ontologies_graph = _nodes_subset_ontologies_graph()
 
-    # TODO the path of the ontology should be taken from the subset configuration json file
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "oda_ontology.ttl")) as oo_fn:
-        overall_graph.parse(oo_fn)
+    # not the recommended approach but works in our case https://rdflib.readthedocs.io/en/stable/merging.html
+    overall_graph = aqs_graph + renku_graph + ontologies_graph
 
     graph_str = overall_graph.serialize(format="n3")
 
     return graph_str
+
+
+def _nodes_subset_ontologies_graph():
+    G = rdflib.Graph()
+    G.bind("aqs", "http://www.w3.org/ns/aqs#")
+    G.bind("oda", "http://odahub.io/ontology#")
+    G.bind("odas", "https://odahub.io/ontology#")
+    graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
+    with resources.open_text("renkuaqs", graph_nodes_subset_config_fn) as graph_nodes_subset_config_fn_f:
+        graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
+
+    for subset_obj_name, subset_obj_dict in graph_nodes_subset_config_obj.items():
+        if 'ontology_path' in subset_obj_dict:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), subset_obj_dict['ontology_path'])) as oo_fn:
+                G.parse(oo_fn)
+
+    return G
 
 
 def build_graph_html(revision, paths,
