@@ -39,9 +39,6 @@ graph_configuration = yaml.load(open(os.path.join(__this_dir__, "graph_config.ya
 
 def _aqs_graph(revision=None, paths=None):
     G = rdflib.Graph()
-    G.bind("aqs", "http://www.w3.org/ns/aqs#")
-    G.bind("oda", "http://odahub.io/ontology#")
-    G.bind("odas", "https://odahub.io/ontology#")
     if os.path.exists(ENTITY_METADATA_AQS_DIR):
         annotation_list = []
         entity_folder_list = glob.glob(f"{ENTITY_METADATA_AQS_DIR}/*")
@@ -68,13 +65,6 @@ def _renku_graph(revision=None, paths=None):
     if cmd_result.status == cmd_result.FAILURE:
         raise RenkuException("fail to export the renku graph")
     graph = cmd_result.output.as_rdflib_graph()
-
-    graph.bind("aqs", "http://www.w3.org/ns/aqs#")
-    graph.bind("oa", "http://www.w3.org/ns/oa#")
-    graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
-    graph.bind("oda", "http://odahub.io/ontology#")
-    graph.bind("odas", "https://odahub.io/ontology#")
-    graph.bind("local-renku", f"file://{paths}/")
 
     return graph
 
@@ -107,6 +97,13 @@ def extract_graph(revision, paths):
     # not the recommended approach but works in our case https://rdflib.readthedocs.io/en/stable/merging.html
     overall_graph = aqs_graph + renku_graph + ontologies_graph
 
+    overall_graph.bind("aqs", "http://www.w3.org/ns/aqs#")
+    overall_graph.bind("oa", "http://www.w3.org/ns/oa#")
+    overall_graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
+    overall_graph.bind("oda", "http://odahub.io/ontology#")
+    overall_graph.bind("odas", "https://odahub.io/ontology#")
+    overall_graph.bind("local-renku", f"file://{paths}/")
+
     graph_str = overall_graph.serialize(format="n3")
 
     return graph_str
@@ -114,9 +111,6 @@ def extract_graph(revision, paths):
 
 def _nodes_subset_ontologies_graph():
     G = rdflib.Graph()
-    G.bind("aqs", "http://www.w3.org/ns/aqs#")
-    G.bind("oda", "http://odahub.io/ontology#")
-    G.bind("odas", "https://odahub.io/ontology#")
     graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
     with resources.open_text("renkuaqs", graph_nodes_subset_config_fn) as graph_nodes_subset_config_fn_f:
         graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
