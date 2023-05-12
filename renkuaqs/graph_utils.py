@@ -167,11 +167,19 @@ def build_graph_html(revision, paths,
     with resources.open_text("renkuaqs", graph_nodes_subset_config_fn) as graph_nodes_subset_config_fn_f:
         graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
 
+    print(json.dumps(graph_nodes_subset_config_obj))
+    print("----------------------------------------")
+
     # for compatibility with Javascript
+    # FIXME there mus be a better way
     graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj)\
         .replace("\\\"", '\\\\"') \
+        .replace("\\\\s", '\\\\\\\\\\\\s') \
         .replace("\\n", '\\\\n') \
         .replace("\\t", '\\\\t')
+
+    print(graph_nodes_subset_config_obj_str)
+    print("----------------------------------------")
 
     net = Network(
         height='750px', width='100%',
