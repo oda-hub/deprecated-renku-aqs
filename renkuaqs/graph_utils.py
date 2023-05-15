@@ -168,7 +168,7 @@ def build_graph_html(revision, paths,
         graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
 
     # for compatibility with Javascript
-    # FIXME there mus be a better way
+    # FIXME there must be a better way
     graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj)\
         .replace("\\\"", '\\\\"') \
         .replace("\\\\s", '\\\\\\\\\\\\s') \
