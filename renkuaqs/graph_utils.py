@@ -178,9 +178,6 @@ def build_graph_html(revision, paths,
         .replace("\\n", '\\\\n') \
         .replace("\\t", '\\\\t')
 
-    print(graph_nodes_subset_config_obj_str)
-    print("----------------------------------------")
-
     net = Network(
         height='750px', width='100%',
         cdn_resources=template_location
