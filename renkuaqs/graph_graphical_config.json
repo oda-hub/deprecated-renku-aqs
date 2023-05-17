@@ -36,7 +36,7 @@
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
+         "displayed_literals_format": "parameter_name:no,value:yes"
       },
       "EndTime": {
          "shape": "box",
@@ -45,7 +45,7 @@
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
+         "displayed_literals_format": "parameter_name:no,value:yes"
       },
       "PointOfInterestRA": {
          "shape": "box",
@@ -54,7 +54,7 @@
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
+         "displayed_literals_format": "parameter_name:no,value:yes"
       },
       "PointOfInterestDEC": {
          "shape": "box",
@@ -63,7 +63,7 @@
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
+         "displayed_literals_format": "parameter_name:no,value:yes"
       },
       "int": {
          "shape": "box",
@@ -72,7 +72,7 @@
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
+         "displayed_literals_format": "parameter_name:no,value:yes"
       },
       "str": {
          "shape": "box",
@@ -81,7 +81,7 @@
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
+         "displayed_literals_format": "parameter_name:no,value:yes"
       },
       "Activity": {
          "shape": "box",
@@ -107,7 +107,7 @@
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "AstroObject:no,arg_name:yes,parameter_name:no"
+         "displayed_literals_format": "AstroObject:no,arg_name:yes,parameter_name:no,value:yes"
       },
       "AstrophysicalRegion": {
          "shape": "box",
