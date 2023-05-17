@@ -86,32 +86,6 @@ def activity_annotations(activity):
     # should be related to the input/output notebook
     # add the annotations to the plan
 
-    # if activity.usages is not None:
-    #     entity = activity.usages[0].entity
-    #     if isinstance(entity, list):
-    #         entity = activity.usages[0].entity[0]
-    #     entity_path = entity.path
-    #     entity_file_name, entity_file_extension = os.path.splitext(entity_path)
-    #     if entity_file_extension == '.ipynb':
-    #         print(f"\033[31mExtracting metadata from the input notebook: {entity_path}, id: {entity.id}\033[0m")
-    #         rdf_nb = ontology.nb2rdf(entity_path)
-    #         # TODO should this be stored as an annotation?
-    #         G = rdflib.Graph()
-    #         G.parse(data=rdf_nb)
-    #         rdf_jsonld_str = G.serialize(format="json-ld")
-    #         rdf_jsonld = json.loads(rdf_jsonld_str)
-    #         for nb2annotation in rdf_jsonld:
-    #             # TODO properly assign the entity
-    #             nb2annotation["http://odahub.io/ontology#entity_checksum"] = entity.checksum
-    #             print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
-    #             model_id = nb2annotation["@id"]
-    #             annotation_id = "{activity}/annotations/aqs/{id}".format(
-    #                 activity=activity.id, id=model_id
-    #             )
-    #             annotations.append(
-    #                 Annotation(id=annotation_id, source="AQS plugin", body=nb2annotation)
-    #             )
-
     if activity.generations is not None and len(activity.generations) >= 1:
         for generation in activity.generations:
             entity = generation.entity
