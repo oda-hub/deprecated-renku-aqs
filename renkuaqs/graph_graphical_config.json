@@ -29,7 +29,7 @@
       },
       "EndTime": {
          "shape": "box",
-         "color": "#a7a7d6",
+         "color": "#bcddc9",
          "style": "filled",
          "value": 35,
          "level": 1,
@@ -47,7 +47,7 @@
       },
       "PointOfInterestDEC": {
          "shape": "box",
-         "color": "#efdacb",
+         "color": "#91acc1",
          "style": "filled",
          "value": 35,
          "level": 1,
@@ -216,6 +216,15 @@
          "displayed_literals_format": "title:no"
       },
       "LightCurve": {
+         "shape": "box",
+         "color": "#91acca",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "output_name:no,parameter_name:no,value:yes"
+      },
+      "ODAPictureProduct": {
          "shape": "box",
          "color": "#91acca",
          "style": "filled",
