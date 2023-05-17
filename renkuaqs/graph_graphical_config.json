@@ -77,8 +77,7 @@
          "color": "#00FC10",
          "style": "filled",
          "value": 35,
-         "level": 0,
-         "displayed_literals_format": "command:no"
+         "level": 0
       },
       "AstroqueryModule": {
          "shape": "box",
