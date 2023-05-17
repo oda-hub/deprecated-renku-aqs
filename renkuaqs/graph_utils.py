@@ -155,8 +155,8 @@ def build_graph_html(revision, paths,
         edges_graph_config_obj.update(edges_graph_config_obj_loaded)
     graph_config_names_list.append(default_graph_graphical_config_fn)
     # for compatibility with Javascript
-    nodes_graph_config_obj_str = json.dumps(nodes_graph_config_obj)
-    edges_graph_config_obj_str = json.dumps(edges_graph_config_obj)
+    nodes_graph_config_obj_str = json.dumps(nodes_graph_config_obj).replace("\\\"", '\\\\"')
+    edges_graph_config_obj_str = json.dumps(edges_graph_config_obj).replace("\\\"", '\\\\"')
 
     with resources.open_text("renkuaqs", graph_reduction_config_fn) as graph_reduction_config_fn_f:
         graph_reduction_config_obj = json.load(graph_reduction_config_fn_f)
