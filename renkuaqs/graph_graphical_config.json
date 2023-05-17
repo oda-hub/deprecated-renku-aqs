@@ -18,17 +18,6 @@
          "displayed_literals_format": "title:no",
          "literals_keyword_to_substitute": "title:get_images,query_object,query_region"
       },
-      "ParameterBinding": {
-         "shape": "box",
-         "color": "#DFF0D8",
-         "style": "filled",
-         "font": {
-              "size": 16,
-              "face": "courier"
-          },
-         "displayed_information": "both",
-         "displayed_literals_format": "parameter_name:no"
-      },
       "StartTime": {
          "shape": "box",
          "color": "#bcddc9",
@@ -225,6 +214,15 @@
          "level": 2,
          "displayed_information": "both",
          "displayed_literals_format": "title:no"
+      },
+      "LightCurve": {
+         "shape": "box",
+         "color": "#91acca",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "output_name:no,parameter_name:no,value:yes"
       },
       "Coordinates": {
          "shape": "box",
