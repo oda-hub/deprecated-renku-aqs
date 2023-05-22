@@ -85,17 +85,17 @@
          "style": "filled",
          "value": 35,
          "level": 0,
-         "displayed_information": "both",
+         "displayed_information": "literals",
          "displayed_literals_format": "label:no",
          "displayed_type_name": "<i>OntologyClass</i>",
          "font": {
             "multi": "html",
             "face": "courier",
-            "size": 26,
-            "bold": {
-                "size": 30
+            "size": 38,
+            "boldital": {
+               "size": 21
             }
-        }
+         }
       },
       "AstroqueryModule": {
          "shape": "box",
