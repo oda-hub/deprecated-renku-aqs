@@ -18,7 +18,7 @@
          "displayed_literals_format": "title:no",
          "literals_keyword_to_substitute": "title:get_images,query_object,query_region"
       },
-      "StartTime": {
+      "StartTime,EndTime": {
          "shape": "box",
          "color": "#bcddc9",
          "style": "filled",
@@ -27,25 +27,7 @@
          "displayed_information": "literals",
          "displayed_literals_format": "parameter_name:no,value:yes"
       },
-      "EndTime": {
-         "shape": "box",
-         "color": "#bcddc9",
-         "style": "filled",
-         "value": 35,
-         "level": 1,
-         "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no,value:yes"
-      },
-      "PointOfInterestRA": {
-         "shape": "box",
-         "color": "#91acc1",
-         "style": "filled",
-         "value": 35,
-         "level": 1,
-         "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no,value:yes"
-      },
-      "PointOfInterestDEC": {
+      "PointOfInterestRA,PointOfInterestDEC": {
          "shape": "box",
          "color": "#91acc1",
          "style": "filled",
