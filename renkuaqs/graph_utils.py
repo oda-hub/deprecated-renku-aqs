@@ -7,6 +7,7 @@ import yaml
 import json
 import hashlib
 import glob
+import urllib.request
 
 from prettytable import PrettyTable
 from rdflib.tools.rdf2dot import LABEL_PROPERTIES
@@ -116,7 +117,10 @@ def _nodes_subset_ontologies_graph():
         graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
 
     for subset_obj_name, subset_obj_dict in graph_nodes_subset_config_obj.items():
-        if 'ontology_path' in subset_obj_dict:
+        if 'ontology_url' in subset_obj_dict:
+            data = urllib.request.urlopen(subset_obj_dict['ontology_url'])
+            G.parse(data)
+        elif 'ontology_path' in subset_obj_dict:
             with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), subset_obj_dict['ontology_path'])) as oo_fn:
                 G.parse(oo_fn)
 
