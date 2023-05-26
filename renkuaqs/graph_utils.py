@@ -279,16 +279,24 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook: str = None):
                 G.parse(data=rdf_nb)
                 rdf_jsonld_str = G.serialize(format="json-ld")
                 rdf_jsonld = json.loads(rdf_jsonld_str)
+
+                print(f"\033[32mlog_aqs_annotation\033[0m")
+
+                annotation_folder_path = Path(
+                    os.path.join(aqs_obj.aqs_annotation_path, entity_file_name, entity_checksum))
+                if annotation_folder_path.exists():
+                    # directory gets cleaned-up in order to avoid to generate duplicate jsonld files
+                    jsonld_files = glob.glob(str(annotation_folder_path.joinpath("*.jsonld")))
+                    print(str(annotation_folder_path.joinpath("*.jsonld")))
+                    for j_f in jsonld_files:
+                        os.remove(j_f)
+                else:
+                    annotation_folder_path.mkdir(parents=True)
+
                 for nb2annotation in rdf_jsonld:
                     nb2annotation["http://odahub.io/ontology#entity_checksum"] = entity_checksum
                     print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
                     nb2annotation_id_hash = hashlib.sha256(nb2annotation["@id"].encode()).hexdigest()[:8]
-
-                    print(f"\033[32mlog_aqs_annotation\033[0m")
-
-                    annotation_folder_path = Path(os.path.join(aqs_obj.aqs_annotation_path, entity_file_name, entity_checksum))
-                    if not annotation_folder_path.exists():
-                        annotation_folder_path.mkdir(parents=True)
 
                     jsonld_path = os.path.join(annotation_folder_path, nb2annotation_id_hash + ".jsonld")
                     with open(jsonld_path, mode="w") as f:
