@@ -286,6 +286,7 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook: str = None):
                     os.path.join(aqs_obj.aqs_annotation_path, entity_file_name, entity_checksum))
                 if annotation_folder_path.exists():
                     # directory gets cleaned-up in order to avoid to generate duplicate jsonld files
+                    # that can occur in case of new commits where input notebook is not affected
                     jsonld_files = glob.glob(str(annotation_folder_path.joinpath("*.jsonld")))
                     for j_f in jsonld_files:
                         os.remove(j_f)
