@@ -121,8 +121,11 @@ def _nodes_subset_ontologies_graph():
             data = urllib.request.urlopen(subset_obj_dict['ontology_url'])
             G.parse(data)
         elif 'ontology_path' in subset_obj_dict:
-            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), subset_obj_dict['ontology_path'])) as oo_fn:
-                G.parse(oo_fn)
+            if os.path.exists(subset_obj_dict['ontology_path']):
+                with open(subset_obj_dict['ontology_path']) as oo_fn:
+                    G.parse(oo_fn)
+            else:
+                print(f"\033[31m{subset_obj_dict['ontology_path']} not found\033[0m")
 
     return G
 
