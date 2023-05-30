@@ -10,3 +10,4 @@ oda-sdss
 oda-sdss-clean
 *.egg-info
 *.egg
+renkuaqs/ontology.ttl
