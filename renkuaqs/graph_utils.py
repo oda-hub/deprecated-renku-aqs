@@ -218,21 +218,17 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook: str = None):
 
     query_select = "SELECT DISTINCT ?entityInput ?entityInputLocation ?entityInputChecksum"
 
+    query_where = """WHERE {
+                    ?entityInput a <http://www.w3.org/ns/prov#Entity> ;
+                        <http://www.w3.org/ns/prov#atLocation> ?entityInputLocation ;
+                        <https://swissdatasciencecenter.github.io/renku-ontology#checksum> ?entityInputChecksum .
+
+            """
+
     if input_notebook is not None:
-        query_where = f"""WHERE {{
-                ?entityInput a <http://www.w3.org/ns/prov#Entity> ;
-                    <http://www.w3.org/ns/prov#atLocation> ?entityInputLocation ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#checksum> ?entityInputChecksum .
-
+        query_where += f"""
+        
                 FILTER ( ?entityInputLocation = '{input_notebook}' ) .
-
-        """
-    else:
-        query_where = """WHERE {
-                ?entityInput a <http://www.w3.org/ns/prov#Entity> ;
-                    <http://www.w3.org/ns/prov#atLocation> ?entityInputLocation ;
-                    <https://swissdatasciencecenter.github.io/renku-ontology#checksum> ?entityInputChecksum .
-
         """
 
     query_where += """
