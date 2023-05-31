@@ -222,7 +222,6 @@ def inspect_oda_graph_inputs(revision, paths, input_notebook: str = None):
                     ?entityInput a <http://www.w3.org/ns/prov#Entity> ;
                         <http://www.w3.org/ns/prov#atLocation> ?entityInputLocation ;
                         <https://swissdatasciencecenter.github.io/renku-ontology#checksum> ?entityInputChecksum .
-
             """
 
     if input_notebook is not None:
