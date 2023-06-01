@@ -36,7 +36,7 @@
          "displayed_information": "literals",
          "displayed_literals_format": "parameter_name:no,value:yes"
       },
-      "int,integer": {
+      "int,integer,Integer": {
          "shape": "box",
          "color": "#91acbf",
          "style": "filled",
