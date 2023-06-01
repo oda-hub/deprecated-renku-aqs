@@ -29,6 +29,7 @@ install_requires = [
     'nb2workflow @ git+https://github.com/oda-hub/nb2workflow@fix-jinja2-version#egg=nb2workflow',
     'pyvis==0.3.0',
     'pydotplus',
+    'jinja2<3.1.0',
     'lockfile'
 ]
 
