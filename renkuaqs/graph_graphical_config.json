@@ -45,7 +45,7 @@
          "displayed_information": "literals",
          "displayed_literals_format": "parameter_name:no,value:yes"
       },
-      "str": {
+      "str, String, string": {
          "shape": "box",
          "color": "#91acdf",
          "style": "filled",
