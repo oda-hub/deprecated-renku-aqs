@@ -27,6 +27,7 @@ install_requires = [
     'astroquery @ git+https://github.com/oda-hub/astroquery#egg=astroquery',
     'aqsconverters @ git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters',
     'nb2workflow @ git+https://github.com/oda-hub/nb2workflow@fix-jinja2-version#egg=nb2workflow',
+    'nbconvert==7.0.0',
     'pyvis==0.3.0',
     'pydotplus',
     'lockfile'
