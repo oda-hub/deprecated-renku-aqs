@@ -60,10 +60,12 @@ class HTTPGraphHandler(SimpleHTTPRequestHandler):
         mount_path_env = os.environ.get('MOUNT_PATH', None)
         logging.info(f'self.path = {self.path}, os.cwd = {os.getcwd()}, mount_path = {mount_path_env}')
         if self.path == '/':
+
             try:
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
+                graph_utils.inspect_oda_graph_inputs(None, paths=os.getcwd())
                 graph_html_content, ttl_content = graph_utils.build_graph_html(None, paths=os.getcwd(),
                                                                                template_location="remote",
                                                                                include_ttl_content_within_html=False)
@@ -149,7 +151,8 @@ def setup_graph_visualizer():
         'command': [
             'bash',
             '-c',
-            f'python -c \'import renkuaqs; renkuaqs._start_graph_http_server("{mount_dir}", "{{port}}")\''
+            f'python -c \'import renkuaqs; import os; from renku.domain_model.project_context import project_context; '
+                f'project_context.push_path(os.getcwd()); renkuaqs._start_graph_http_server("{mount_dir}", "{{port}}")\''
         ],
         'new_browser_tab': False,
         'launcher_entry': {

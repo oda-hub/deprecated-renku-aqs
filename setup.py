@@ -26,7 +26,7 @@ install_requires = [
     'renku==2.2.0',
     'astroquery @ git+https://github.com/oda-hub/astroquery#egg=astroquery',
     'aqsconverters @ git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters',
-    'nb2workflow @ git+https://github.com/oda-hub/nb2workflow.git#egg=nb2workflow',
+    'nb2workflow>=1.3.41',
     'pyvis==0.3.0',
     'pydotplus',
     'lockfile'

@@ -18,69 +18,66 @@
          "displayed_literals_format": "title:no",
          "literals_keyword_to_substitute": "title:get_images,query_object,query_region"
       },
-      "ParameterBinding": {
-         "shape": "box",
-         "color": "#DFF0D8",
-         "style": "filled",
-         "font": {
-              "size": 16,
-              "face": "courier"
-          },
-         "displayed_information": "both",
-         "displayed_literals_format": "parameter_name:no"
-      },
-      "StartTime": {
+      "StartTime,EndTime": {
          "shape": "box",
          "color": "#bcddc9",
          "style": "filled",
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
+         "displayed_literals_format": "parameter_name:no,value:yes"
       },
-      "EndTime": {
-         "shape": "box",
-         "color": "#a7a7d6",
-         "style": "filled",
-         "value": 35,
-         "level": 1,
-         "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
-      },
-      "PointOfInterestRA": {
+      "PointOfInterestRA,PointOfInterestDEC": {
          "shape": "box",
          "color": "#91acc1",
          "style": "filled",
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
+         "displayed_literals_format": "parameter_name:no,value:yes"
       },
-      "PointOfInterestDEC": {
-         "shape": "box",
-         "color": "#efdacb",
-         "style": "filled",
-         "value": 35,
-         "level": 1,
-         "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
-      },
-      "int": {
+      "int,integer,Integer": {
          "shape": "box",
          "color": "#91acbf",
          "style": "filled",
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "parameter_name:no"
+         "displayed_literals_format": "parameter_name:no,value:yes"
+      },
+      "str,String,string": {
+         "shape": "box",
+         "color": "#91acdf",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "parameter_name:no,value:yes"
       },
       "Activity": {
          "shape": "box",
          "color": "#00FC10",
          "style": "filled",
          "value": 35,
+         "level": 0
+      },
+      "Class": {
+         "shape": "box",
+         "color": "#ffffff",
+         "style": "filled",
+         "value": 35,
          "level": 0,
-         "displayed_literals_format": "command:no"
+         "displayed_information": "literals",
+         "displayed_literals_format": "label:no",
+         "displayed_type_name": "<i>OntologyClass</i>",
+         "font": {
+            "multi": "html",
+            "face": "courier",
+            "size": 38,
+            "boldital": {
+               "size": 21
+            }
+         }
       },
       "AstroqueryModule": {
          "shape": "box",
@@ -98,7 +95,7 @@
          "value": 35,
          "level": 1,
          "displayed_information": "literals",
-         "displayed_literals_format": "AstroObject:no,arg_name:yes,parameter_name:no"
+         "displayed_literals_format": "AstroObject:no,arg_name:yes,parameter_name:no,value:yes"
       },
       "AstrophysicalRegion": {
          "shape": "box",
@@ -216,6 +213,24 @@
          "level": 2,
          "displayed_information": "both",
          "displayed_literals_format": "title:no"
+      },
+      "LightCurve": {
+         "shape": "box",
+         "color": "#91acca",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "output_name:no,parameter_name:no,value:yes"
+      },
+      "ODAPictureProduct": {
+         "shape": "box",
+         "color": "#91acca",
+         "style": "filled",
+         "value": 35,
+         "level": 1,
+         "displayed_information": "literals",
+         "displayed_literals_format": "output_name:no,parameter_name:no,value:yes"
       },
       "Coordinates": {
          "shape": "box",

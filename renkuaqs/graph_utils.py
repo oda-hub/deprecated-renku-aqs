@@ -5,7 +5,11 @@ import pydotplus
 import rdflib
 import yaml
 import json
+import hashlib
+import glob
+import urllib.request
 
+from prettytable import PrettyTable
 from rdflib.tools.rdf2dot import LABEL_PROPERTIES
 from rdflib.tools import rdf2dot
 from lxml import etree
@@ -14,19 +18,47 @@ from astropy.coordinates import SkyCoord, Angle
 from IPython.display import display
 from pyvis.network import Network
 from importlib import resources
+from nb2workflow import ontology
+from pathlib import Path
 
 from renku.domain_model.project_context import project_context
 from renku.command.graph import export_graph_command
 from renku.core.errors import RenkuException
+from renku.core.util.git import get_entity_from_revision
 
 import renkuaqs.javascript_graph_utils as javascript_graph_utils
 
+from renkuaqs.config import ENTITY_METADATA_AQS_DIR
+from renkuaqs.plugin import AQS
+
 # TODO improve this
 __this_dir__ = os.path.join(os.path.abspath(os.path.dirname(__file__)))
+
+
 graph_configuration = yaml.load(open(os.path.join(__this_dir__, "graph_config.yaml")), Loader=yaml.SafeLoader)
 
 
-def _graph(revision=None, paths=None):
+def _aqs_graph(revision=None, paths=None):
+    G = rdflib.Graph()
+    if os.path.exists(ENTITY_METADATA_AQS_DIR):
+        annotation_list = []
+        entity_folder_list = glob.glob(f"{ENTITY_METADATA_AQS_DIR}/*")
+        for entity_folder in entity_folder_list:
+            print("Scanning entity folder: ", entity_folder)
+            revision_entity_folder_list = glob.glob(f"{entity_folder}/*")
+            for revision_entity_folder in revision_entity_folder_list:
+                print("Scanning entity folder checksum: ", revision_entity_folder)
+                annotation_object_list = glob.glob(f"{revision_entity_folder}/*.jsonld")
+                for annotation_object_file in annotation_object_list:
+                    with open(annotation_object_file) as annotation_object_file_fn:
+                        annotation_object = json.load(annotation_object_file_fn)
+                    annotation_list.append(annotation_object)
+                    G.parse(data=json.dumps(annotation_object), format="json-ld")
+
+    return G
+
+
+def _renku_graph(revision=None, paths=None):
     # FIXME: use (revision) filter
 
     cmd_result = export_graph_command().working_directory(paths).build().execute()
@@ -35,14 +67,8 @@ def _graph(revision=None, paths=None):
         raise RenkuException("fail to export the renku graph")
     graph = cmd_result.output.as_rdflib_graph()
 
-    graph.bind("aqs", "http://www.w3.org/ns/aqs#")
-    graph.bind("oa", "http://www.w3.org/ns/oa#")
-    graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
-    graph.bind("oda", "http://odahub.io/ontology#")
-    graph.bind("odas", "https://odahub.io/ontology#")
-    graph.bind("local-renku", f"file://{paths}/")
-
     return graph
+
 
 def write_graph_files(graph_html_content, ttl_content):
     html_fn = 'graph.html'
@@ -63,11 +89,45 @@ def extract_graph(revision, paths):
     if paths is None:
         paths = project_context.path
 
-    graph = _graph(revision, paths)
+    renku_graph = _renku_graph(revision, paths)
 
-    graph_str = graph.serialize(format="n3")
+    aqs_graph = _aqs_graph(revision, paths)
+
+    ontologies_graph = _nodes_subset_ontologies_graph()
+
+    # not the recommended approach but works in our case https://rdflib.readthedocs.io/en/stable/merging.html
+    overall_graph = aqs_graph + renku_graph + ontologies_graph
+
+    overall_graph.bind("aqs", "http://www.w3.org/ns/aqs#")
+    overall_graph.bind("oa", "http://www.w3.org/ns/oa#")
+    overall_graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
+    overall_graph.bind("oda", "http://odahub.io/ontology#")
+    overall_graph.bind("odas", "https://odahub.io/ontology#")
+    overall_graph.bind("local-renku", f"file://{paths}/")
+
+    graph_str = overall_graph.serialize(format="n3")
 
     return graph_str
+
+
+def _nodes_subset_ontologies_graph():
+    G = rdflib.Graph()
+    graph_nodes_subset_config_fn = 'graph_nodes_subset_config.json'
+    with resources.open_text("renkuaqs", graph_nodes_subset_config_fn) as graph_nodes_subset_config_fn_f:
+        graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
+
+    for subset_obj_name, subset_obj_dict in graph_nodes_subset_config_obj.items():
+        if 'ontology_url' in subset_obj_dict:
+            data = urllib.request.urlopen(subset_obj_dict['ontology_url'])
+            G.parse(data)
+        elif 'ontology_path' in subset_obj_dict:
+            if os.path.exists(subset_obj_dict['ontology_path']):
+                with open(subset_obj_dict['ontology_path']) as oo_fn:
+                    G.parse(oo_fn)
+            else:
+                print(f"\033[31m{subset_obj_dict['ontology_path']} not found\033[0m")
+
+    return G
 
 
 def build_graph_html(revision, paths,
@@ -102,8 +162,8 @@ def build_graph_html(revision, paths,
         edges_graph_config_obj.update(edges_graph_config_obj_loaded)
     graph_config_names_list.append(default_graph_graphical_config_fn)
     # for compatibility with Javascript
-    nodes_graph_config_obj_str = json.dumps(nodes_graph_config_obj)
-    edges_graph_config_obj_str = json.dumps(edges_graph_config_obj)
+    nodes_graph_config_obj_str = json.dumps(nodes_graph_config_obj).replace("\\\"", '\\\\"')
+    edges_graph_config_obj_str = json.dumps(edges_graph_config_obj).replace("\\\"", '\\\\"')
 
     with resources.open_text("renkuaqs", graph_reduction_config_fn) as graph_reduction_config_fn_f:
         graph_reduction_config_obj = json.load(graph_reduction_config_fn_f)
@@ -115,9 +175,11 @@ def build_graph_html(revision, paths,
         graph_nodes_subset_config_obj = json.load(graph_nodes_subset_config_fn_f)
 
     # for compatibility with Javascript
+    # FIXME there must be a better way
     graph_nodes_subset_config_obj_str = json.dumps(graph_nodes_subset_config_obj)\
-        .replace("\\\"", '\\\\"')\
-        .replace("\\n", '\\\\n')\
+        .replace("\\\"", '\\\\"') \
+        .replace("\\\\s", '\\\\\\\\\\\\s') \
+        .replace("\\n", '\\\\n') \
         .replace("\\t", '\\\\t')
 
     net = Network(
@@ -148,13 +210,103 @@ def build_graph_html(revision, paths,
     return net.html, graph_str
 
 
+def inspect_oda_graph_inputs(revision, paths, input_notebook: str = None):
+    if paths is None:
+        paths = project_context.path
+
+    graph = _renku_graph(revision, paths)
+
+    query_select = "SELECT DISTINCT ?entityInput ?entityInputLocation ?entityInputChecksum"
+
+    query_where = """WHERE {
+                    ?entityInput a <http://www.w3.org/ns/prov#Entity> ;
+                        <http://www.w3.org/ns/prov#atLocation> ?entityInputLocation ;
+                        <https://swissdatasciencecenter.github.io/renku-ontology#checksum> ?entityInputChecksum .
+            """
+
+    if input_notebook is not None:
+        query_where += f"""
+        
+                FILTER ( ?entityInputLocation = '{input_notebook}' ) .
+        """
+
+    query_where += """
+            ?activity a ?activityType ;
+                <http://www.w3.org/ns/prov#qualifiedUsage>/<http://www.w3.org/ns/prov#entity> ?entityInput .        
+    }
+    """
+
+    query = f"""{query_select}
+               {query_where}
+            """
+
+    r = graph.query(query)
+
+    G = rdflib.Graph()
+
+    output = PrettyTable()
+    output.field_names = ["Entity ID", "Entity checksum", "Entity input location"]
+    output.align["Entity ID"] = "l"
+    output.align["Entity checksum"] = "l"
+    output.align["Entity input location"] = "l"
+    for row in r:
+        entity_path = row.entityInputLocation
+        entity_checksum = row.entityInputChecksum
+        entity_id = row.entityInput
+        output.add_row([
+            entity_id,
+            entity_checksum,
+            entity_path
+        ])
+        entity_file_name, entity_file_extension = os.path.splitext(entity_path)
+        if entity_file_extension == '.ipynb':
+            print(f"\033[31mExtracting metadata from the input notebook: {entity_path}, id: {entity_id}\033[0m")
+            # get checksum from the path
+            repository = project_context.repository
+            revision = repository.head.commit.hexsha
+            entity_obj = get_entity_from_revision(repository=repository, path=entity_path, revision=revision, bypass_cache=True)
+            print(f"\033[31mEntity object extracted from entity_path: {entity_obj.path}, checksum: {entity_obj.checksum}\033[0m")
+            print(f"\033[31mEntity checksum from the graph: {entity_checksum}\033[0m")
+            if str(entity_obj.checksum) == str(entity_checksum):
+                # file present on disk based on the checksum equality
+                rdf_nb = ontology.nb2rdf(entity_path)
+                aqs_obj = AQS(entity_path)
+                G.parse(data=rdf_nb)
+                rdf_jsonld_str = G.serialize(format="json-ld")
+                rdf_jsonld = json.loads(rdf_jsonld_str)
+
+                print(f"\033[32mlog_aqs_annotation\033[0m")
+
+                annotation_folder_path = Path(
+                    os.path.join(aqs_obj.aqs_annotation_path, entity_file_name, entity_checksum))
+                if annotation_folder_path.exists():
+                    # directory gets cleaned-up in order to avoid to generate duplicate jsonld files
+                    # that can occur in case of new commits where input notebook is not affected
+                    jsonld_files = glob.glob(str(annotation_folder_path.joinpath("*.jsonld")))
+                    for j_f in jsonld_files:
+                        os.remove(j_f)
+                else:
+                    annotation_folder_path.mkdir(parents=True)
+
+                for nb2annotation in rdf_jsonld:
+                    nb2annotation["http://odahub.io/ontology#entity_checksum"] = entity_checksum
+                    print(f"found jsonLD annotation:\n", json.dumps(nb2annotation, sort_keys=True, indent=4))
+                    nb2annotation_id_hash = hashlib.sha256(nb2annotation["@id"].encode()).hexdigest()[:8]
+
+                    jsonld_path = os.path.join(annotation_folder_path, nb2annotation_id_hash + ".jsonld")
+                    with open(jsonld_path, mode="w") as f:
+                        print("writing", jsonld_path)
+                        f.write(json.dumps(nb2annotation, sort_keys=True, indent=4))
+
+    print(output, "\n")
+
+
 def build_graph_image(revision, paths, filename, no_oda_info, input_notebook):
-    """Simple graph visualization """
 
     if paths is None:
         paths = project_context.path
 
-    graph = _graph(revision, paths)
+    graph = _renku_graph(revision, paths)
     renku_path = paths
 
     query_where = build_query_where(input_notebook=input_notebook, no_oda_info=no_oda_info)

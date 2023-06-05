@@ -13,5 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-AQS_DIR = 'aqs'
-AQS_METADATA_FILE = 'metadata.jsonld'
+ENTITY_METADATA_AQS_DIR = '.aqs'
