@@ -25,7 +25,7 @@ install_requires = [
     'bs4',
     'renku==2.2.0',
     'astroquery @ git+https://github.com/oda-hub/astroquery#egg=astroquery',
-    'aqsconverters @ git+https://github.com/oda-hub/aqsmodel-converters@simple-autolog#egg=aqsconverters',
+    'aqsconverters @ git+https://github.com/oda-hub/aqsmodel-converters#egg=aqsconverters',
     'nb2workflow>=1.3.41',
     'pyvis==0.3.0',
     'pydotplus',
