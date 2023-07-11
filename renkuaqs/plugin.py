@@ -32,7 +32,7 @@ from renku.domain_model.project_context import project_context
 from renku.core.plugin import hookimpl
 from IPython.display import Image, HTML
 from prettytable import PrettyTable
-from aqsconverters.io import AQS_DIR, COMMON_DIR
+from aqsconverters.io import AQS_ANNOTATION_DIR, COMMON_DIR
 from renkuaqs.config import ENTITY_METADATA_AQS_DIR
 from nb2workflow import ontology
 
@@ -46,7 +46,7 @@ class AQS(object):
     @property
     def renku_aqs_path(self):
         """Return a ``Path`` instance of Renku AQS metadata folder."""
-        return Path(project_context.metadata_path).joinpath(AQS_DIR).joinpath(COMMON_DIR)
+        return Path(project_context.metadata_path).joinpath(AQS_ANNOTATION_DIR).joinpath(COMMON_DIR)
 
     @property
     def aqs_annotation_path(self):
@@ -74,7 +74,7 @@ def activity_annotations(activity):
     """``process_run_annotations`` hook implementation."""
     aqs = AQS(activity)
 
-    sitecustomize_path = pathlib.Path(os.path.join(project_context.metadata_path, AQS_DIR, "sitecustomize.py"))
+    sitecustomize_path = pathlib.Path(os.path.join(project_context.metadata_path, AQS_ANNOTATION_DIR, "sitecustomize.py"))
     if sitecustomize_path.exists():
         sitecustomize_path.unlink()
 
@@ -141,7 +141,7 @@ def activity_annotations(activity):
 def pre_run(tool):
     print(f"\033[31mhere we will prepare hooks for astroquery, tool given is {tool}\033[0m")
 
-    sitecustomize_dir = Path(project_context.metadata_path, AQS_DIR)
+    sitecustomize_dir = Path(project_context.metadata_path, AQS_ANNOTATION_DIR)
 
     if not sitecustomize_dir.exists():
         sitecustomize_dir.mkdir(parents=True)
