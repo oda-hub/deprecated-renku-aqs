@@ -307,6 +307,14 @@ def build_graph_image(revision, paths, filename, no_oda_info, input_notebook):
         paths = project_context.path
 
     graph = _renku_graph(revision, paths)
+
+    graph.bind("aqs", "http://www.w3.org/ns/aqs#")
+    graph.bind("oa", "http://www.w3.org/ns/oa#")
+    graph.bind("xsd", "http://www.w3.org/2001/XAQSchema#")
+    graph.bind("oda", "http://odahub.io/ontology#")
+    graph.bind("odas", "https://odahub.io/ontology#")
+    graph.bind("local-renku", f"file://{paths}/")
+
     renku_path = paths
 
     query_where = build_query_where(input_notebook=input_notebook, no_oda_info=no_oda_info)
